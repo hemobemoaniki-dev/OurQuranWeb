@@ -15,6 +15,21 @@ if [[ -f patches/v56-premium-sync.patch.gz.b64 ]]; then
   git apply --whitespace=nowarn --directory=_site /tmp/ourquran-v56.patch
 fi
 
+# V57 is the second-pass polish and correctness layer. It keeps the V56 sync/audio
+# work, fixes the UI/scroll issues found in preview QA, removes Bismillah from the
+# reader/reward flow, and uses Ayat al-Kursi for all reciter previews.
+if [[ -f patches/v57-polish-sync.bundle.tar.gz.b64 ]]; then
+  rm -rf /tmp/ourquran-v57
+  mkdir -p /tmp/ourquran-v57
+  base64 -d patches/v57-polish-sync.bundle.tar.gz.b64 | tar -xz -C /tmp/ourquran-v57
+  cp /tmp/ourquran-v57/v57-polish.css _site/v57-polish.css
+  cp /tmp/ourquran-v57/v57-runtime.js _site/v57-runtime.js
+  python3 /tmp/ourquran-v57/v57-build.py
+  node --check _site/app.js
+  node --check _site/account-sync.js
+  node --check _site/v57-runtime.js
+fi
+
 python3 - <<'PY'
 from pathlib import Path
 config = Path('_site/site-config.js')
