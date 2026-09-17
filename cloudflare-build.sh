@@ -4,14 +4,15 @@ set -euo pipefail
 rm -rf _site
 mkdir -p _site
 
-# Keep V55 as the binary-asset fallback, then overlay the editable V56+ source.
+# V55 remains the binary-asset baseline; V56 logic/UI is applied as a reviewable patch.
 unzip -q ourquran_v55_calendar_hasanaat_fix.zip -d _site
 rm -rf _site/src
 find _site -maxdepth 1 -type f -name '*.txt' -delete
 rm -f _site/preview.html _site/_headers _site/firestore.rules
 
-if [[ -d site ]]; then
-  cp -a site/. _site/
+if [[ -f patches/v56-premium-sync.patch.gz.b64 ]]; then
+  base64 -d patches/v56-premium-sync.patch.gz.b64 | gzip -dc > /tmp/ourquran-v56.patch
+  git apply --whitespace=nowarn --directory=_site /tmp/ourquran-v56.patch
 fi
 
 python3 - <<'PY'
