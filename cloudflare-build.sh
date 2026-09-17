@@ -2,37 +2,34 @@
 set -euo pipefail
 
 rm -rf _site
-mkdir _site
-unzip -q ourquran_v55_calendar_hasanaat_fix.zip -d _site
+mkdir -p _site
 
+# Keep V55 as the binary-asset fallback, then overlay the editable V56+ source.
+unzip -q ourquran_v55_calendar_hasanaat_fix.zip -d _site
 rm -rf _site/src
 find _site -maxdepth 1 -type f -name '*.txt' -delete
 rm -f _site/preview.html _site/_headers _site/firestore.rules
 
+if [[ -d site ]]; then
+  cp -a site/. _site/
+fi
+
 python3 - <<'PY'
 from pathlib import Path
-
 config = Path('_site/site-config.js')
-text = config.read_text()
-text = text.replace(
-    'publicSiteUrl: "https://ourquran.netlify.app/",',
-    'publicSiteUrl: "https://ourquran.pages.dev/",'
-)
-text = text.replace(
-    'publicSiteUrl: "https://hemobemoaniki-dev.github.io/OurQuranWeb/",',
-    'publicSiteUrl: "https://ourquran.pages.dev/",'
-)
-text = text.replace(
-    'publicSiteUrl: "https://ourquran.com/",',
-    'publicSiteUrl: "https://ourquran.pages.dev/",'
-)
-config.write_text(text)
-
+if config.exists():
+    text = config.read_text()
+    for old in (
+        'https://ourquran.netlify.app/',
+        'https://hemobemoaniki-dev.github.io/OurQuranWeb/',
+        'https://ourquran.com/'
+    ):
+        text = text.replace(old, 'https://ourquran.pages.dev/')
+    config.write_text(text)
 manifest = Path('_site/manifest.webmanifest')
-text = manifest.read_text()
-text = text.replace('"start_url": "./"', '"start_url": "/"')
-text = text.replace('"scope": "./"', '"scope": "/"')
-manifest.write_text(text)
+if manifest.exists():
+    text = manifest.read_text().replace('"start_url": "./"','"start_url": "/"').replace('"scope": "./"','"scope": "/"')
+    manifest.write_text(text)
 PY
 
 touch _site/.nojekyll
