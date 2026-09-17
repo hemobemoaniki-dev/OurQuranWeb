@@ -1,0 +1,71 @@
+name: Deploy OurQuran to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Build static site from uploaded OurQuran archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf _site
+          mkdir _site
+          unzip -q ourquran_v55_calendar_hasanaat_fix.zip -d _site
+
+          # The archive includes a duplicate src/ copy plus development reports.
+          rm -rf _site/src
+          find _site -maxdepth 1 -type f -name '*.txt' -delete
+          rm -f _site/preview.html _site/_headers _site/firestore.rules
+
+          # GitHub Pages project sites live below /<repo>/, not at the domain root.
+          python3 - <<'PY'
+          from pathlib import Path
+
+          config = Path('_site/site-config.js')
+          text = config.read_text()
+          text = text.replace(
+              'publicSiteUrl: "https://ourquran.netlify.app/",',
+              'publicSiteUrl: "https://hemobemoaniki-dev.github.io/OurQuranWeb/",'
+          )
+          config.write_text(text)
+
+          manifest = Path('_site/manifest.webmanifest')
+          text = manifest.read_text()
+          text = text.replace('"start_url": "/"', '"start_url": "./"')
+          text = text.replace('"scope": "/"', '"scope": "./"')
+          manifest.write_text(text)
+          PY
+
+          touch _site/.nojekyll
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v6
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
