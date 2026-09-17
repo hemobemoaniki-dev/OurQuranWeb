@@ -37,7 +37,7 @@ jobs:
           find _site -maxdepth 1 -type f -name '*.txt' -delete
           rm -f _site/preview.html _site/_headers _site/firestore.rules
 
-          # Configure the public app URL for the custom domain.
+          # GitHub Pages project sites live below /<repo>/, not at the domain root.
           python3 - <<'PY'
           from pathlib import Path
 
@@ -45,15 +45,14 @@ jobs:
           text = config.read_text()
           text = text.replace(
               'publicSiteUrl: "https://ourquran.netlify.app/",',
-              'publicSiteUrl: "https://ourquran.com/",'
+              'publicSiteUrl: "https://hemobemoaniki-dev.github.io/OurQuranWeb/",'
           )
           config.write_text(text)
 
-          # Custom domain is served from the domain root.
           manifest = Path('_site/manifest.webmanifest')
           text = manifest.read_text()
-          text = text.replace('"start_url": "./"', '"start_url": "/"')
-          text = text.replace('"scope": "./"', '"scope": "/"')
+          text = text.replace('"start_url": "/"', '"start_url": "./"')
+          text = text.replace('"scope": "/"', '"scope": "./"')
           manifest.write_text(text)
           PY
 
