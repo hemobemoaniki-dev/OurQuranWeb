@@ -1,5 +1,6 @@
-// Local Reader session clock. Survives reloads, resets at local midnight, runs
-// only while the Reader is active, and never syncs to Firebase.
+// Local Reader session clock. Signed-in clocks survive reloads; guest clocks
+// stay in memory only. Everything resets at local midnight and never syncs as
+// a standalone record to Firebase.
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { AppState } from "react-native";
 
@@ -26,6 +27,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
 function SessionClock({ children, owner }: { children: React.ReactNode; owner: string }) {
   const key = `session_clock_v2_${owner}`;
+  const persistent = owner !== "guest";
   const [seconds, setSeconds] = useState(0);
   const [running, setRunning] = useState(false);
   const interval = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -34,9 +36,17 @@ function SessionClock({ children, owner }: { children: React.ReactNode; owner: s
   const lastTick = useRef<number | null>(null);
   const dayRef = useRef(dateKey(new Date()));
 
-  // Load persisted clock (reset if it belongs to a previous day).
   useEffect(() => {
     let cancelled = false;
+    if (!persistent) {
+      void storage.removeItem(key);
+      void Promise.resolve().then(() => {
+        if (cancelled) return;
+        secondsRef.current = 0;
+        setSeconds(0);
+      });
+      return () => { cancelled = true; };
+    }
     (async () => {
       const saved = await storage.getItem<any>(key, null);
       if (cancelled || interval.current) return;
@@ -45,11 +55,12 @@ function SessionClock({ children, owner }: { children: React.ReactNode; owner: s
       setSeconds(value);
     })();
     return () => { cancelled = true; };
-  }, [key]);
+  }, [key, persistent]);
 
   const persist = useCallback((s: number) => {
-    storage.setItem<any>(key, { date: dateKey(new Date()), seconds: s });
-  }, [key]);
+    if (!persistent) return;
+    void storage.setItem<any>(key, { date: dateKey(new Date()), seconds: s });
+  }, [key, persistent]);
 
   const tick = useCallback(() => {
     const now = Date.now();
