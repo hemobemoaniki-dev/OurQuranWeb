@@ -368,59 +368,61 @@ export default function Reader() {
           </View>
         ) : (
           <Animated.View style={[
-            styles.readingGrid,
-            compactReader && styles.readingGridCompact,
+            styles.readingStack,
             {
               opacity: verseMotion.interpolate({ inputRange: [0, 1], outputRange: [0.35, 1] }),
               transform: [{ translateY: verseMotion.interpolate({ inputRange: [0, 1], outputRange: [8, 0] }) }],
             },
           ]}>
-          <View style={styles.card} testID="reader-ayah-card">
-            <LinearGradient pointerEvents="none" colors={[`${t.accent}20`, `${t.base}18`, `${t.end}24`]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.cardSheen} />
-            {/* Surah header */}
-            <View style={styles.cardTop}>
-              <Pressable style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]} accessibilityRole="button" accessibilityLabel={audio.isPlaying ? "Pause recitation" : "Play recitation"} onPress={() => audio.toggle(surahNum!, numberInSurah)} hitSlop={4} testID="reader-speaker">
-                {audio.isLoading ? <ActivityIndicator color={colors.gold} size="small" /> : <Icon name={audio.isPlaying ? "pause-circle" : "volume-high"} size={26} color={colors.gold} />}
-              </Pressable>
-              <Pressable style={styles.surahTitleBtn} onPress={openPicker} testID="reader-surah-picker-open">
-                <Text style={styles.surahTitle}>{meta.name}</Text>
-                <Icon name="chevron-down" size={20} color={colors.onSurface} />
-              </Pressable>
-              <Pressable style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]} accessibilityRole="button" accessibilityLabel={bookmarked ? "Remove bookmark" : "Bookmark verse"} onPress={() => surahNum && toggleBookmark(surahNum, numberInSurah)} hitSlop={4} testID="reader-bookmark">
-                <Icon name={bookmarked ? "heart" : "heart-outline"} size={24} color={colors.gold} />
-              </Pressable>
-            </View>
-            <Text style={styles.ayahCount}>
-              {numberInSurah} / {meta.ayahs}
-            </Text>
-            {audio.error ? <Text style={styles.audioError}>Audio unavailable for this verse.</Text> : null}
+            <View style={styles.card} testID="reader-ayah-card">
+              <LinearGradient pointerEvents="none" colors={[`${t.accent}20`, `${t.base}18`, `${t.end}24`]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.cardSheen} />
+              <View style={styles.cardTop}>
+                <Pressable style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]} accessibilityRole="button" accessibilityLabel={audio.isPlaying ? "Pause recitation" : "Play recitation"} onPress={() => audio.toggle(surahNum!, numberInSurah)} hitSlop={4} testID="reader-speaker">
+                  {audio.isLoading ? <ActivityIndicator color={colors.gold} size="small" /> : <Icon name={audio.isPlaying ? "pause-circle" : "volume-high"} size={26} color={colors.gold} />}
+                </Pressable>
+                <Pressable style={styles.surahTitleBtn} onPress={openPicker} testID="reader-surah-picker-open">
+                  <Text style={styles.surahTitle}>{meta.name}</Text>
+                  <Icon name="chevron-down" size={20} color={colors.onSurface} />
+                </Pressable>
+                <Pressable style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]} accessibilityRole="button" accessibilityLabel={bookmarked ? "Remove bookmark" : "Bookmark verse"} onPress={() => surahNum && toggleBookmark(surahNum, numberInSurah)} hitSlop={4} testID="reader-bookmark">
+                  <Icon name={bookmarked ? "heart" : "heart-outline"} size={24} color={colors.gold} />
+                </Pressable>
+              </View>
+              <Text style={styles.ayahCount}>{numberInSurah} / {meta.ayahs}</Text>
+              {audio.error ? <Text style={styles.audioError}>Audio unavailable for this verse.</Text> : null}
 
-            <ScrollView
-              ref={arabicScrollRef}
-              style={{ maxHeight: arabicViewportHeight, flexGrow: 0, marginTop: 14 }}
-              nestedScrollEnabled
-              showsVerticalScrollIndicator
-              persistentScrollbar
-              contentContainerStyle={{ paddingHorizontal: 4, paddingBottom: 10 }}
-              testID="reader-arabic-scroll"
-            >
-            {/* Arabic */}
-            <Text selectable maxFontSizeMultiplier={1} style={[styles.arabic, { fontSize: arabicSize, lineHeight: 44, fontWeight: "400" }]} testID="reader-arabic">
-              {ayah.arabic}
-            </Text>
-            </ScrollView>
-            <ReaderTextActions key={`ar-${surahNum}-${numberInSurah}`} text={ayah.arabic} reference={`${meta.name} ${surahNum}:${numberInSurah}`} theme={t} label="Arabic verse" />
-          </View>
-          <View style={[styles.translation, { overflow: "hidden" }]}>
-            <LinearGradient pointerEvents="none" colors={[`${t.accent}20`, `${t.base}18`, `${t.end}24`]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
-            <Text style={styles.translationLabel}>TRANSLATION</Text>
-            <ScrollView ref={translationScrollRef} nestedScrollEnabled persistentScrollbar showsVerticalScrollIndicator style={{ maxHeight: Math.max(100, windowHeight * 0.22), flexGrow: 0 }} testID="reader-translation-scroll">
-            <Text selectable maxFontSizeMultiplier={1.15} style={styles.english} testID="reader-english">
-              {ayah.english}
-            </Text>
-            </ScrollView>
-            <ReaderTextActions key={`en-${surahNum}-${numberInSurah}`} text={ayah.english} reference={`${meta.name} ${surahNum}:${numberInSurah}`} theme={t} label="translation" />
-          </View>
+              <ScrollView
+                ref={arabicScrollRef}
+                style={{ maxHeight: arabicViewportHeight, flexGrow: 0, marginTop: 22 }}
+                nestedScrollEnabled
+                showsVerticalScrollIndicator
+                persistentScrollbar
+                contentContainerStyle={styles.arabicScrollContent}
+                testID="reader-arabic-scroll"
+              >
+                <Text selectable maxFontSizeMultiplier={1} style={[styles.arabic, { fontSize: arabicSize, lineHeight: compactReader ? 46 : 58, fontWeight: "400" }]} testID="reader-arabic">
+                  {ayah.arabic}
+                </Text>
+              </ScrollView>
+              <ReaderTextActions key={`ar-${surahNum}-${numberInSurah}`} text={ayah.arabic} reference={`${meta.name} ${surahNum}:${numberInSurah}`} theme={t} label="Arabic verse" />
+
+              <View style={styles.translationDivider} />
+              <Text style={styles.translationLabel}>TRANSLATION</Text>
+              <ScrollView
+                ref={translationScrollRef}
+                nestedScrollEnabled
+                persistentScrollbar
+                showsVerticalScrollIndicator
+                style={styles.translationScroll}
+                contentContainerStyle={styles.translationScrollContent}
+                testID="reader-translation-scroll"
+              >
+                <Text selectable maxFontSizeMultiplier={1.15} style={styles.english} testID="reader-english">
+                  {ayah.english}
+                </Text>
+              </ScrollView>
+              <ReaderTextActions key={`en-${surahNum}-${numberInSurah}`} text={ayah.english} reference={`${meta.name} ${surahNum}:${numberInSurah}`} theme={t} label="translation" />
+            </View>
           </Animated.View>
         )}
 
@@ -519,31 +521,30 @@ export default function Reader() {
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.surface },
   backdrop: { position: "absolute", top: 0, right: 0, bottom: 0, left: 0 },
-  progressWrap: { width: "100%", maxWidth: 1180, alignSelf: "center", paddingHorizontal: 28, paddingTop: 14, paddingBottom: 8, gap: 10 },
+  progressWrap: { width: "100%", maxWidth: 1320, alignSelf: "center", paddingHorizontal: 34, paddingTop: 14, paddingBottom: 8, gap: 10 },
   progressTrack: { height: 3, borderRadius: 999, backgroundColor: colors.surfaceTertiary, overflow: "hidden" },
   progressFill: { height: 3, borderRadius: 999, backgroundColor: colors.brandPrimary },
   progressMeta: { flexDirection: "row", justifyContent: "space-between" },
   progressText: { color: colors.muted, fontSize: 12, fontWeight: "600" },
 
   readingViewport: { flex: 1, minHeight: 0 },
-  scroll: { width: "100%", maxWidth: 1180, alignSelf: "center", paddingHorizontal: 28, paddingTop: 18, paddingBottom: 26 },
-  readingGrid: { width: "100%", flexDirection: "row", alignItems: "stretch", gap: 16 },
-  readingGridCompact: { flexDirection: "column" },
+  scroll: { width: "100%", maxWidth: 1320, alignSelf: "center", paddingHorizontal: 34, paddingTop: 20, paddingBottom: 38 },
+  readingStack: { width: "100%", maxWidth: 1180, alignSelf: "center" },
   loader: { paddingVertical: 60, alignItems: "center", gap: 16 },
   errorText: { color: colors.muted, fontSize: 15 },
   retryBtn: { backgroundColor: colors.brandPrimary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12 },
   retryText: { color: colors.onBrandPrimary, fontWeight: "700" },
 
   card: {
-    flex: 1.28,
-    minHeight: 390,
+    width: "100%",
+    minHeight: 500,
     backgroundColor: "rgba(5,6,10,0.92)",
-    borderRadius: 24,
+    borderRadius: 28,
     borderWidth: 1,
     borderColor: colors.borderStrong,
-    paddingHorizontal: 28,
-    paddingTop: 20,
-    paddingBottom: 18,
+    paddingHorizontal: 46,
+    paddingTop: 24,
+    paddingBottom: 28,
     overflow: "hidden",
   },
   cardSheen: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, borderTopLeftRadius: 28, borderTopRightRadius: 28 },
@@ -557,6 +558,9 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
 
   bismillah: { color: colors.gold, textAlign: "center", marginTop: 18, writingDirection: "rtl" },
   arabic: {
+    width: "100%",
+    maxWidth: 1060,
+    alignSelf: "center",
     color: colors.onSurface,
     textAlign: "center",
     writingDirection: "rtl",
@@ -566,9 +570,12 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     marginTop: 14,
     marginBottom: 14,
   },
-  translation: { flex: 0.72, minHeight: 390, padding: 26, gap: 16, borderRadius: 24, borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: colors.surfaceSecondary },
-  translationLabel: { color: colors.gold, fontSize: 10, letterSpacing: 2.1, fontWeight: "900" },
-  english: { color: colors.onSurface, fontSize: 17, lineHeight: 29, fontWeight: "500" },
+  arabicScrollContent: { paddingHorizontal: 12, paddingBottom: 10 },
+  translationDivider: { height: 1, backgroundColor: colors.borderStrong, marginTop: 20, marginBottom: 22, opacity: 0.72 },
+  translationLabel: { color: colors.gold, fontSize: 10, letterSpacing: 2.1, fontWeight: "900", textAlign: "center", marginBottom: 10 },
+  translationScroll: { maxHeight: 230, flexGrow: 0, width: "100%", maxWidth: 960, alignSelf: "center" },
+  translationScrollContent: { paddingHorizontal: 20, paddingVertical: 4 },
+  english: { width: "100%", maxWidth: 900, alignSelf: "center", color: colors.onSurface, fontSize: 18, lineHeight: 30, fontWeight: "500", textAlign: "center" },
 
 
   actions: {
