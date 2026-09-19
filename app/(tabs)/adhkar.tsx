@@ -158,9 +158,9 @@ function Tasbeeh() {
       </Pressable>
       <Text style={styles.phraseMeaning}>{selected.meaning}</Text>
 
-      <Pressable style={styles.counterBtn} onPress={tap} testID="tasbeeh-counter">
-        <Text style={styles.counterNum} testID="tasbeeh-count">{count}</Text>
-        <Text style={styles.counterHint}>Tap to count</Text>
+      <Pressable style={styles.counterBtn} onPress={tap} testID="tasbeeh-counter" accessibilityRole="button" accessibilityLabel="Tasbeeh counter">
+        <Text selectable={false} style={styles.counterNum} testID="tasbeeh-count">{count}</Text>
+        <Text selectable={false} style={styles.counterHint}>Tap to count</Text>
       </Pressable>
 
       <View style={styles.targetRow}>
@@ -361,6 +361,8 @@ const useStyles = makeStyles((colors) => ({
     justifyContent: "center",
     borderWidth: 3,
     borderColor: colors.brandSecondary,
+    cursor: "pointer",
+    userSelect: "none",
   },
   counterNum: { color: colors.onBrandPrimary, fontSize: 68, fontWeight: "800", fontFamily: serifFont, textAlign: "center", lineHeight: 76, includeFontPadding: false },
   counterHint: { color: colors.onBrandPrimary, fontSize: 14, opacity: 0.85, textAlign: "center" },
