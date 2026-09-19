@@ -1,235 +1,158 @@
 import { Text } from "@/src/components/AppText";
-import { memo } from "react";
-import { Image, Pressable, StyleSheet, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Icon, type IconName } from "@/src/components/Icon";
-import { useAccount } from "@/src/context/AppState";
-import { useSession } from "@/src/context/SessionContext";
-import { formatClock, formatK, todayValue } from "@/src/lib/dates";
+import { BrandMark } from "@/src/components/BrandMark";
+import { Icon } from "@/src/components/Icon";
 import type { ReaderTheme } from "@/src/lib/reader-themes";
 import { serifFont } from "@/src/typography";
+import { memo } from "react";
+import { Pressable, StyleSheet, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export const ReaderHeader = memo(function ReaderHeader({
   theme: t,
+  surahName,
+  ayah,
+  totalAyahs,
   onBack,
   onOpenSettings,
 }: {
   theme: ReaderTheme;
+  surahName: string;
+  ayah: number;
+  totalAyahs: number;
   onBack: () => void;
   onOpenSettings: () => void;
 }) {
-  const { account } = useAccount();
   const insets = useSafeAreaInsets();
 
   return (
-    <View style={[styles.wrapper, { paddingTop: insets.top + 10 }]}>
-      <View style={{ paddingVertical: 2 }}>
-        <View style={styles.topRow}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Leave reader"
-            onPress={onBack}
-            testID="reader-leave"
-            style={({ pressed }) => [
-              styles.circleButton,
-              {
-                borderColor: t.accent + "66",
-                backgroundColor: "rgba(5,6,10,0.78)",
-                opacity: pressed ? 0.6 : 1,
-              },
-            ]}
-          >
-            <Icon name="arrow-left" color="#FFFFFF" size={23} />
-          </Pressable>
+    <View style={[styles.wrapper, { paddingTop: insets.top + 12 }]}>
+      <View style={styles.bar}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Leave reader"
+          onPress={onBack}
+          testID="reader-leave"
+          style={({ pressed }) => [
+            styles.iconButton,
+            { borderColor: t.accent + "66", backgroundColor: "rgba(4,5,8,0.72)" },
+            pressed && styles.pressed,
+          ]}
+        >
+          <Icon name="arrow-left" color="#FFFFFF" size={22} />
+        </Pressable>
 
-          <View style={styles.brand}>
-            <Image source={require("../../assets/images/ourquran-web-mark.png")} style={styles.brandMark} resizeMode="cover" />
-            <Text
-              numberOfLines={1}
-              adjustsFontSizeToFit
-              minimumFontScale={0.75}
-              maxFontSizeMultiplier={1.1}
-              style={styles.brandText}
-            >
-              OurQuran
-            </Text>
+        <View style={styles.brand}>
+          <BrandMark size={43} tint={t.accent} glow={t.accent} intensity="strong" />
+          <View style={styles.brandCopy}>
+            <Text style={styles.brandName}>OurQuran</Text>
+            <Text style={[styles.brandTag, { color: t.accent }]}>READ AND ASCEND</Text>
           </View>
-
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Open reader settings"
-            onPress={onOpenSettings}
-            testID="reader-quick-settings-open"
-            style={({ pressed }) => [
-              styles.circleButton,
-              {
-                borderColor: t.border + "99",
-                backgroundColor: t.glass,
-                opacity: pressed ? 0.6 : 1,
-              },
-            ]}
-          >
-            <Icon name="menu" color="#FFFFFF" size={27} />
-          </Pressable>
         </View>
 
-        <Text maxFontSizeMultiplier={1.15} style={styles.tagline}>
-          Read and Ascend
-        </Text>
-      </View>
+        <View style={styles.location}>
+          <Text style={styles.surahName} numberOfLines={1}>{surahName}</Text>
+          <Text style={styles.ayahMeta}>Ayah {ayah} / {totalAyahs}</Text>
+        </View>
 
-      <View style={[styles.metrics, { backgroundColor: "rgba(5,6,10,0.82)", borderColor: t.accent + "55" }]}>
-        <Metric
-          theme={t}
-          icon="heart"
-          value={formatK(todayValue(account.history, "hasanaat"))}
-          label="Hasanaat"
-        />
-        <View style={[styles.metricDivider, { backgroundColor: t.border }]} />
-        <Metric
-          theme={t}
-          icon="book-open-page-variant"
-          value={String(todayValue(account.history, "ayat"))}
-          label="Aya"
-        />
-        <View style={[styles.metricDivider, { backgroundColor: t.border }]} />
-        <SessionMetric theme={t} />
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Open reader settings"
+          onPress={onOpenSettings}
+          testID="reader-quick-settings-open"
+          style={({ pressed }) => [
+            styles.settingsButton,
+            { borderColor: t.accent + "55", backgroundColor: "rgba(4,5,8,0.72)" },
+            pressed && styles.pressed,
+          ]}
+        >
+          <Icon name="tune-variant" color={t.accent} size={21} />
+          <Text style={styles.settingsLabel}>Reader</Text>
+        </Pressable>
       </View>
     </View>
   );
 });
 
-function SessionMetric({ theme }: { theme: ReaderTheme }) {
-  const { seconds } = useSession();
-  return <Metric theme={theme} icon="fire" value={formatClock(seconds)} label="Session" />;
-}
-
-function Metric({
-  theme,
-  icon,
-  value,
-  label,
-}: {
-  theme: ReaderTheme;
-  icon: IconName;
-  value: string;
-  label: string;
-}) {
-  return (
-    <View style={styles.metric}>
-      <View style={styles.metricValueRow}>
-        <Icon name={icon} size={18} color={theme.accent} />
-        <Text
-          maxFontSizeMultiplier={1.05}
-          adjustsFontSizeToFit
-          numberOfLines={1}
-          minimumFontScale={0.72}
-          style={styles.metricValue}
-        >
-          {value}
-        </Text>
-      </View>
-      <Text numberOfLines={1} style={styles.metricLabel}>
-        {label}
-      </Text>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   wrapper: {
     width: "100%",
-    maxWidth: 1320,
+    maxWidth: 1500,
     alignSelf: "center",
-    paddingHorizontal: 24,
-    gap: 10,
+    paddingHorizontal: 28,
+    paddingBottom: 8,
   },
-  topRow: {
-    direction: "ltr",
+  bar: {
+    minHeight: 62,
     flexDirection: "row",
     alignItems: "center",
-    minHeight: 48,
+    gap: 14,
   },
-  circleButton: {
+  iconButton: {
     width: 44,
     height: 44,
-    borderRadius: 22,
+    borderRadius: 15,
     borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
   },
+  pressed: { opacity: 0.65, transform: [{ scale: 0.97 }] },
   brand: {
-    flex: 1,
-    minWidth: 0,
     flexDirection: "row",
-    justifyContent: "center",
     alignItems: "center",
-    gap: 7,
+    gap: 9,
+    minWidth: 190,
   },
-  brandMark: { width: 34, height: 34, borderRadius: 9 },
-  brandText: {
+  brandCopy: { gap: 0 },
+  brandName: {
     color: "#FFFFFF",
     fontFamily: serifFont,
-    fontSize: 24,
-    lineHeight: 32,
+    fontSize: 20,
+    lineHeight: 24,
     fontWeight: "800",
-    letterSpacing: -0.4,
-    flexShrink: 1,
-    paddingRight: 3,
+    letterSpacing: -0.35,
   },
-  tagline: {
-    width: "100%",
-    textAlign: "center",
-    color: "#ECE8F0",
-    fontSize: 10,
-    lineHeight: 17,
-    letterSpacing: 1.8,
-    paddingHorizontal: 8,
+  brandTag: {
+    fontSize: 7.5,
+    lineHeight: 10,
+    fontWeight: "900",
+    letterSpacing: 1.45,
   },
-  metrics: {
-    flexDirection: "row",
-    alignItems: "stretch",
-    minHeight: 70,
-    paddingHorizontal: 4,
-    paddingVertical: 7,
-    borderRadius: 22,
-    borderWidth: 1,
-  },
-  metric: {
+  location: {
     flex: 1,
     minWidth: 0,
     alignItems: "center",
     justifyContent: "center",
-    gap: 3,
-    paddingHorizontal: 3,
   },
-  metricValueRow: {
-    width: "100%",
-    minHeight: 23,
+  surahName: {
+    color: "#FFFFFF",
+    fontFamily: serifFont,
+    fontSize: 19,
+    lineHeight: 24,
+    fontWeight: "800",
+    letterSpacing: -0.25,
+  },
+  ayahMeta: {
+    color: "#D9D5DE",
+    fontSize: 9.5,
+    lineHeight: 13,
+    fontWeight: "700",
+    marginTop: 1,
+  },
+  settingsButton: {
+    minWidth: 98,
+    height: 42,
+    borderRadius: 14,
+    borderWidth: 1,
+    paddingHorizontal: 12,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 5,
+    gap: 7,
   },
-  metricValue: {
+  settingsLabel: {
     color: "#FFFFFF",
-    fontSize: 16,
-    lineHeight: 20,
+    fontSize: 10.5,
+    lineHeight: 14,
     fontWeight: "800",
-    fontVariant: ["tabular-nums"],
-    textAlign: "center",
-  },
-  metricLabel: {
-    width: "100%",
-    color: "#E5E2E8",
-    fontSize: 9,
-    lineHeight: 12,
-    fontWeight: "700",
-    letterSpacing: 0.55,
-    textAlign: "center",
-  },
-  metricDivider: {
-    width: 1,
-    marginVertical: 5,
   },
 });
