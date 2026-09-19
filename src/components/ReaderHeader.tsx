@@ -33,8 +33,8 @@ export const ReaderHeader = memo(function ReaderHeader({
             style={({ pressed }) => [
               styles.circleButton,
               {
-                borderColor: t.border + "99",
-                backgroundColor: t.glass,
+                borderColor: t.accent + "66",
+                backgroundColor: "rgba(5,6,10,0.78)",
                 opacity: pressed ? 0.6 : 1,
               },
             ]}
@@ -78,7 +78,7 @@ export const ReaderHeader = memo(function ReaderHeader({
         </Text>
       </View>
 
-      <View style={[styles.metrics, { backgroundColor: t.glass, borderColor: t.border }]}>
+      <View style={[styles.metrics, { backgroundColor: "rgba(5,6,10,0.82)", borderColor: t.accent + "55" }]}>
         <Metric
           theme={t}
           icon="heart"
@@ -139,7 +139,7 @@ function Metric({
 const styles = StyleSheet.create({
   wrapper: {
     width: "100%",
-    maxWidth: 1080,
+    maxWidth: 1180,
     alignSelf: "center",
     paddingHorizontal: 24,
     gap: 10,
@@ -169,8 +169,10 @@ const styles = StyleSheet.create({
   brandText: {
     color: "#FFFFFF",
     fontFamily: serifFont,
-    fontSize: 27,
-    lineHeight: 36,
+    fontSize: 24,
+    lineHeight: 32,
+    fontWeight: "800",
+    letterSpacing: -0.4,
     flexShrink: 1,
     paddingRight: 3,
   },
@@ -186,10 +188,10 @@ const styles = StyleSheet.create({
   metrics: {
     flexDirection: "row",
     alignItems: "stretch",
-    minHeight: 64,
+    minHeight: 70,
     paddingHorizontal: 4,
     paddingVertical: 7,
-    borderRadius: 20,
+    borderRadius: 22,
     borderWidth: 1,
   },
   metric: {
@@ -218,7 +220,7 @@ const styles = StyleSheet.create({
   },
   metricLabel: {
     width: "100%",
-    color: "#DCD8E0",
+    color: "#E5E2E8",
     fontSize: 9,
     lineHeight: 12,
     fontWeight: "700",
