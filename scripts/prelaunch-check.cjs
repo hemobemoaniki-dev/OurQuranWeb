@@ -639,6 +639,7 @@ test("Reader exit always reaches Home and browser back cleanup avoids stale rout
   assert.match(reader, /window\.addEventListener\("popstate", handleBrowserBack\)/);
   assert.match(reader, /onBack=\{\(\) => finishReaderAndGoHome\(true\)\}/);
   assert.match(reader, /onPress=\{imDone\}/);
+  assert.ok((reader.match(/runAfterPaint\(\(\) => \{\n\s*if \(exitingRef\.current\) return;/g) ?? []).length >= 4);
   const sessionStart = reader.indexOf('useFocusEffect(useCallback(() => {');
   const sessionEnd = reader.indexOf('// Quran text is bundled', sessionStart);
   assert.ok(sessionStart >= 0 && sessionEnd > sessionStart);
