@@ -177,9 +177,9 @@ export default function Reader() {
 
   const playAyah = audio.playAyah;
   useEffect(() => {
-    if (!pendingAudio || !readerFocused.current || data?.number !== pendingAudio.surah || data.ayahs[ayahIndex]?.numberInSurah !== pendingAudio.ayah) return;
+    if (exitingRef.current || !pendingAudio || !readerFocused.current || data?.number !== pendingAudio.surah || data.ayahs[ayahIndex]?.numberInSurah !== pendingAudio.ayah) return;
     playAyah(pendingAudio.surah, pendingAudio.ayah);
-    setPendingAudio(null);
+    if (mountedRef.current && !exitingRef.current) setPendingAudio(null);
   }, [pendingAudio, data, ayahIndex, playAyah]);
 
   const ayah = data?.ayahs[ayahIndex];
@@ -188,13 +188,16 @@ export default function Reader() {
   // Do not start network work while the user is rapidly jumping through Ayahs.
   // Once the visible verse has been stable for 650 ms, warm only that verse.
   useEffect(() => {
-    if (!readerFocused.current || !surahNum || data?.number !== surahNum || !ayah || audio.isPlaying || audio.isLoading) return;
+    if (exitingRef.current || !readerFocused.current || !surahNum || data?.number !== surahNum || !ayah || audio.isPlaying || audio.isLoading) return;
     const timer = setTimeout(() => {
-      if (readerFocused.current) prefetchAudio(surahNum, numberInSurah);
+      if (!exitingRef.current && readerFocused.current) prefetchAudio(surahNum, numberInSurah);
     }, 650);
     return () => clearTimeout(timer);
   }, [surahNum, data?.number, ayah, numberInSurah, prefetchAudio, audio.isPlaying, audio.isLoading]);
   const meta = surahMeta(surahNum ?? 1);
+  const activeReciter = reciterById(settings.reciter);
+  const todayHasanaat = todayValue(account.history, "hasanaat");
+  const todayAyat = todayValue(account.history, "ayat");
   const reward = ayah ? computeReward(ayah.arabic) : 0;
   const juz = juzForAyah(surahNum ?? 1, numberInSurah);
   const versesLeft = Math.max(0, meta.ayahs - numberInSurah);
@@ -203,7 +206,7 @@ export default function Reader() {
 
   const goNext = useCallback(
     (withReward: boolean) => {
-      if (!data || !ayah || surahNum == null || committing.current) return;
+      if (exitingRef.current || !data || !ayah || surahNum == null || committing.current) return;
       committing.current = true;
 
       const isLast = ayahIndex >= data.ayahs.length - 1;
@@ -246,7 +249,7 @@ export default function Reader() {
   );
 
   const goPrev = useCallback(() => {
-    if (!data || surahNum == null) return;
+    if (exitingRef.current || !data || surahNum == null) return;
     const continueAudio = settings.autoplay;
     setPendingAudio(null);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
@@ -278,28 +281,32 @@ export default function Reader() {
     runAfterPaint(() => audio.stop());
   }, [data, surahNum, ayahIndex, numberInSurah, saveReaderPosition, audio, settings.autoplay]);
 
-  const imDone = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+  const exitReader = useCallback((destination: "/" | "/read", withHaptic = false) => {
+    if (exitingRef.current) return;
+    exitingRef.current = true;
 
-    // Finalize today's session before Home receives focus. This makes the
-    // third-day crown deterministic even when "I'm Done" is the first action
-    // that records reading activity for the local calendar day.
+    if (withHaptic) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+
+    // All React state changes happen before navigation. Blur/unmount cleanup is
+    // resource-only, which prevents the web ErrorBoundary crash seen on Back.
+    setPendingAudio(null);
+    setQuickSettingsVisible(false);
+    setPickerVisible(false);
+
     const deltas = stopSession();
     for (const [day, seconds] of Object.entries(deltas)) {
       if (seconds > 0) addReadingSeconds(seconds, day);
     }
     if (surahNum != null) saveReaderPosition(surahNum, numberInSurah);
 
-    // Give React one paint to commit the local streak/crown state, then reveal
-    // the already-mounted Home screen. Native cleanup remains off the tap path.
-    requestAnimationFrame(() => {
-      router.replace("/");
-      runAfterPaint(() => {
-        audio.stop();
-        flush().catch(() => {});
-      });
-    });
-  }, [addReadingSeconds, audio, stopSession, surahNum, numberInSurah, saveReaderPosition, flush, router]);
+    exitReaderAudio();
+    router.replace(destination);
+    void flush().catch(() => {});
+  }, [addReadingSeconds, flush, numberInSurah, router, saveReaderPosition, stopSession, surahNum]);
+
+  const imDone = useCallback(() => {
+    exitReader("/", true);
+  }, [exitReader]);
 
   const openPicker = () => {
     setPickerSurah(surahNum ?? 1);
