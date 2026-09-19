@@ -582,7 +582,7 @@ test('bottom tabs stay mounted, switch without animation and load icon font befo
   assert.match(tabs, /lazy:\s*false/);
   assert.match(tabs, /animation:\s*"none"/);
   assert.doesNotMatch(tabs, /Animated\./);
-  assert.match(tabs, /<Icon name=\{meta\.icon\} size=\{26\}/);
+  assert.match(tabs, /<Icon name=\{meta\.icon\} size=\{29\}/);
   assert.match(tabs, /width:\s*128/);
   assert.match(tabs, /<BrandLockup/);
   assert.match(rootLayout, /"Material Design Icons":\s*require\("@react-native-vector-icons\/material-design-icons\/fonts\/MaterialDesignIcons\.ttf"\)/);
