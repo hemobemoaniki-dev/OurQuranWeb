@@ -1,11 +1,13 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { AppState } from "react-native";
+import { AppState, Platform } from "react-native";
 import {
   createUserWithEmailAndPassword,
   deleteUser,
   EmailAuthProvider,
+  GoogleAuthProvider,
   onAuthStateChanged,
   signInWithEmailAndPassword,
+  signInWithPopup,
   reauthenticateWithCredential,
   signOut as fbSignOut,
   updateProfile as fbUpdateProfile,
@@ -39,6 +41,7 @@ type AuthApi = {
   user: User | null;
   initializing: boolean;
   signIn: (email: string, password: string) => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
   signUp: (email: string, password: string, fullName: string, username: string) => Promise<void>;
   signOut: () => Promise<void>;
 };
@@ -310,7 +313,11 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
       if (cancelled) return;
       let localAcc = cached
         ? fromRemote(user.uid, cached)
-        : defaultAccount({ uid: user.uid, email: user.email ?? "" });
+        : defaultAccount({
+            uid: user.uid,
+            email: user.email ?? "",
+            fullName: user.displayName?.trim() ?? "",
+          });
       // 2) one-time in-memory guest carry-over. Signing in without
       // reloading keeps the reading just completed in this live session.
       const guest = guestCarryRef.current;
@@ -426,6 +433,17 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
 
   const signIn = useCallback(async (email: string, password: string) => {
     await signInWithEmailAndPassword(auth, email.trim(), password);
+  }, []);
+
+  const signInWithGoogle = useCallback(async () => {
+    if (Platform.OS !== "web") {
+      const error = new Error("Native Google sign-in is not configured yet.") as Error & { code?: string };
+      error.code = "auth/operation-not-supported-in-this-environment";
+      throw error;
+    }
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: "select_account" });
+    await signInWithPopup(auth, provider);
   }, []);
 
   const signUp = useCallback(
@@ -753,8 +771,8 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
   }, []);
 
   const authApi = useMemo<AuthApi>(
-    () => ({ user, initializing, signIn, signUp, signOut }),
-    [user, initializing, signIn, signUp, signOut],
+    () => ({ user, initializing, signIn, signInWithGoogle, signUp, signOut }),
+    [user, initializing, signIn, signInWithGoogle, signUp, signOut],
   );
 
   const accountApi = useMemo<AccountApi>(
