@@ -58,8 +58,27 @@ export default function Home() {
   const goalReached = todayAyat >= goal;
   const checking = initializing || (!!user && !hydrated);
   const saved = !!user && hydrated && syncStatus === "synced" && !!lastSyncAt;
-  const syncColor = checking ? colors.muted : (!user || syncStatus === "error" || syncStatus === "offline") ? (scheme === "dark" ? "#FF8497" : "#AE2645") : saved ? (scheme === "dark" ? "#6EE7B7" : "#16734E") : colors.gold;
-  const syncTitle = user && hydrated && (saved || syncStatus === "syncing") ? "Syncing" : "Not syncing";
+  const syncColor = checking
+    ? colors.muted
+    : !user
+      ? colors.gold
+      : (syncStatus === "error" || syncStatus === "offline")
+        ? (scheme === "dark" ? "#FF8497" : "#AE2645")
+        : saved
+          ? (scheme === "dark" ? "#6EE7B7" : "#16734E")
+          : colors.gold;
+  const syncTitle = !user
+    ? "Guest session · progress not saved"
+    : hydrated && (saved || syncStatus === "syncing")
+      ? (syncStatus === "syncing" ? "Syncing" : "Synced")
+      : "Not syncing";
+  const syncNote = !user
+    ? "Reading metrics are temporary. Sign in to keep Hasanaat, streaks, bookmarks and progress across devices."
+    : syncStatus === "offline"
+      ? "Offline. Your signed-in progress will sync when you reconnect."
+      : syncStatus === "error"
+        ? "Sync needs attention. Open sync settings to retry."
+        : "Your signed-in journey is saved to your account.";
   const greetingName = user && hydrated && account.uid === user.uid ? account.username || "Reader" : "Reader";
   const meta = surahMeta(account.currentSurah);
   const palette = scheme === "dark" ? ["#FF91B7", "#88C8FF", "#FFCA91", "#75E4C5"] : ["#AD285D", "#236AB0", "#955209", "#16745E"];
@@ -176,8 +195,13 @@ export default function Home() {
         <Text style={styles.helper}>{goalReached ? "Alhamdulillah. Keep the goodness growing." : `${Math.max(0, goal - todayAyat)} more to reach today’s goal.`}</Text>
       </Pressable>
 
-      <Pressable disabled={checking} onPress={() => router.push(user ? "/settings/sync" : "/auth")} style={({ pressed }) => [styles.syncCard, { opacity: pressed ? 0.7 : 1 }]} accessibilityRole="button" accessibilityLabel={saved ? "Syncing enabled. All changes saved. Open sync details." : `${syncTitle}. Open account sync.`} testID="home-sync-card">
-        <View style={[styles.syncDot, { backgroundColor: syncColor }]} /><View style={{ flex: 1, gap: 4 }}><Text style={styles.syncTitle}>{syncTitle}</Text></View><Icon name="chevron-right" size={18} color={colors.muted} />
+      <Pressable disabled={checking} onPress={() => router.push(user ? "/settings/sync" : "/auth")} style={({ pressed }) => [styles.syncCard, { opacity: pressed ? 0.7 : 1 }]} accessibilityRole="button" accessibilityLabel={`${syncTitle}. ${syncNote}`} testID="home-sync-card">
+        <View style={[styles.syncDot, { backgroundColor: syncColor }]} />
+        <View style={styles.syncCopy}>
+          <Text style={styles.syncTitle}>{syncTitle}</Text>
+          <Text style={styles.syncNote}>{syncNote}</Text>
+        </View>
+        <Icon name="chevron-right" size={18} color={colors.muted} />
       </Pressable>
 
 
@@ -206,7 +230,7 @@ const JourneyMetric = memo(function JourneyMetric({ label, value, icon, tint, in
 });
 
 const useStyles = makeStyles(c => ({
-  root: { flex: 1, backgroundColor: c.surface }, content: { width: "100%", maxWidth: 1180, alignSelf: "center", paddingHorizontal: 28, paddingBottom: 56, gap: 18 },
+  root: { flex: 1, backgroundColor: c.surface }, content: { width: "100%", maxWidth: 1480, alignSelf: "center", paddingHorizontal: 36, paddingBottom: 64, gap: 18 },
   welcome: { flexDirection: "row", alignItems: "center", gap: 14, paddingTop: 4, paddingBottom: 2 },
   headerActions: { flexDirection: "row", alignItems: "center", gap: 10 },
   themeToggle: {
@@ -231,6 +255,6 @@ const useStyles = makeStyles(c => ({
   periods: { position: "relative", flexDirection: "row", padding: 4, borderRadius: 18, overflow: "hidden", borderWidth: 1, borderColor: c.border, backgroundColor: "transparent" }, period: { flex: 1, minHeight: 46, paddingVertical: 11, alignItems: "center", justifyContent: "center", borderRadius: 14 }, periodActive: { backgroundColor: c.goldSoft, borderWidth: 1, borderColor: c.goldBorder }, periodText: { fontSize: 14, lineHeight: 18, fontWeight: "900", letterSpacing: -0.15 },
   grid: { flexDirection: "row", flexWrap: "wrap", gap: 14 }, statCard: { width: "23%", flexGrow: 1, minWidth: 220, minHeight: 154, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 15, gap: 5, alignItems: "flex-start", borderRadius: 22, borderWidth: 1, overflow: "hidden", backgroundColor: c.surfaceSecondary }, metricTop: { width: "100%", flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 6 }, metricStar: { width: 46, height: 46, alignItems: "center", justifyContent: "center" }, metricStarFacet: { position: "absolute", width: 31, height: 31, borderRadius: 7, borderWidth: 1, transform: [{ rotate: "45deg" }] }, metricStarFacetTurn: { transform: [{ rotate: "0deg" }, { scale: 0.88 }] }, metricStarCore: { width: 29, height: 29, borderRadius: 15, borderWidth: 1, alignItems: "center", justifyContent: "center" }, metricIndex: { fontSize: 9, lineHeight: 13, fontWeight: "900", letterSpacing: 1.5 }, statLabel: { color: c.muted, fontSize: 11, lineHeight: 15, fontWeight: "700", letterSpacing: 0.2 }, statValue: { fontSize: 29, lineHeight: 34, fontWeight: "900", letterSpacing: -0.8 }, metricRail: { position: "absolute", left: 16, right: 16, bottom: 0, height: 3, borderTopLeftRadius: 3, borderTopRightRadius: 3 },
   goalCard: { overflow: "hidden", padding: 22, gap: 14, borderRadius: 23, backgroundColor: c.surfaceSecondary, borderWidth: 1, borderColor: c.goldBorder }, goalHead: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" }, goalTitle: { flexDirection: "row", alignItems: "center", gap: 8, flex: 1 }, cardTitle: { color: c.onSurface, fontSize: 15, fontWeight: "600", flex: 1 }, goalCount: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" }, goalValue: { color: c.onSurface, fontSize: 24, fontWeight: "700" }, goalTotal: { color: c.muted, fontSize: 13, fontWeight: "400" }, percent: { color: c.gold, fontSize: 13, fontWeight: "700" }, track: { height: 6, borderRadius: 3, backgroundColor: c.surfaceTertiary, overflow: "hidden" }, trackFill: { height: 6, borderRadius: 3, backgroundColor: c.gold }, helper: { color: c.muted, fontSize: 11, lineHeight: 17 },
-  syncCard: { flexDirection: "row", alignItems: "center", gap: 11, padding: 15, borderRadius: 19, borderWidth: 1, borderColor: c.border, backgroundColor: c.surfaceSecondary }, syncDot: { width: 14, height: 14, borderRadius: 7 }, syncTitle: { color: c.onSurface, fontSize: 14, fontWeight: "600" },
+  syncCard: { flexDirection: "row", alignItems: "center", gap: 11, paddingHorizontal: 16, paddingVertical: 13, borderRadius: 19, borderWidth: 1, borderColor: c.border, backgroundColor: c.surfaceSecondary }, syncDot: { width: 12, height: 12, borderRadius: 6 }, syncCopy: { flex: 1, minWidth: 0, gap: 2 }, syncTitle: { color: c.onSurface, fontSize: 14, fontWeight: "700" }, syncNote: { color: c.muted, fontSize: 10.5, lineHeight: 15 },
   continueCard: { position: "relative", overflow: "hidden", minHeight: 136, paddingHorizontal: 24, paddingVertical: 22, borderRadius: 23, borderWidth: 1, borderColor: c.goldBorder, backgroundColor: "transparent", flexDirection: "row", alignItems: "center", gap: 14 }, continueName: { color: c.onSurface, fontSize: 30, lineHeight: 36, fontWeight: "900", letterSpacing: -0.6 }, play: { width: 52, height: 52, borderRadius: 18, borderWidth: 1.5, justifyContent: "center", alignItems: "center" },
 }));
