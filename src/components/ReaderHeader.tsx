@@ -22,7 +22,7 @@ export const ReaderHeader = memo(function ReaderHeader({
   const insets = useSafeAreaInsets();
 
   return (
-    <View style={{ paddingTop: insets.top + 4, paddingHorizontal: 16, gap: 8 }}>
+    <View style={[styles.wrapper, { paddingTop: insets.top + 10 }]}>
       <View style={{ paddingVertical: 2 }}>
         <View style={styles.topRow}>
           <Pressable
@@ -137,6 +137,13 @@ function Metric({
 }
 
 const styles = StyleSheet.create({
+  wrapper: {
+    width: "100%",
+    maxWidth: 1080,
+    alignSelf: "center",
+    paddingHorizontal: 24,
+    gap: 10,
+  },
   topRow: {
     direction: "ltr",
     flexDirection: "row",
@@ -179,10 +186,10 @@ const styles = StyleSheet.create({
   metrics: {
     flexDirection: "row",
     alignItems: "stretch",
-    minHeight: 68,
+    minHeight: 64,
     paddingHorizontal: 4,
     paddingVertical: 7,
-    borderRadius: 26,
+    borderRadius: 20,
     borderWidth: 1,
   },
   metric: {
