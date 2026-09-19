@@ -21,7 +21,7 @@ import { SURAHS, surahMeta } from "@/src/data/surahs";
 import { computeReward } from "@/src/lib/hasanaat";
 import { getBundledSurah } from "@/src/lib/quran";
 import { exitReaderAudio, useAyahAudio } from "@/src/lib/audio";
-import { formatClock, formatK, todayValue } from "@/src/lib/dates";
+import { formatClock } from "@/src/lib/dates";
 import { themes, type ThemeColors } from "@/src/theme";
 import { arabicFont, serifFont } from "@/src/typography";
 
@@ -196,8 +196,6 @@ export default function Reader() {
   }, [surahNum, data?.number, ayah, numberInSurah, prefetchAudio, audio.isPlaying, audio.isLoading]);
   const meta = surahMeta(surahNum ?? 1);
   const activeReciter = reciterById(settings.reciter);
-  const todayHasanaat = todayValue(account.history, "hasanaat");
-  const todayAyat = todayValue(account.history, "ayat");
   const reward = ayah ? computeReward(ayah.arabic) : 0;
   const juz = juzForAyah(surahNum ?? 1, numberInSurah);
   const versesLeft = Math.max(0, meta.ayahs - numberInSurah);
@@ -514,13 +512,13 @@ export default function Reader() {
                   </View>
                   <View style={styles.infoStat}>
                     <Icon name="book-open-page-variant" size={18} color={colors.gold} />
-                    <Text style={styles.infoStatValue}>{formatK(todayAyat)}</Text>
-                    <Text style={styles.infoStatLabel}>Today</Text>
+                    <Text style={styles.infoStatValue}>{numberInSurah}</Text>
+                    <Text style={styles.infoStatLabel}>Ayah</Text>
                   </View>
                   <View style={styles.infoStat}>
                     <Icon name="heart" size={18} color={colors.gold} />
-                    <Text style={styles.infoStatValue}>{formatK(todayHasanaat)}</Text>
-                    <Text style={styles.infoStatLabel}>Hasanaat</Text>
+                    <Text style={styles.infoStatValue}>+{reward}</Text>
+                    <Text style={styles.infoStatLabel}>Next reward</Text>
                   </View>
                 </View>
 
