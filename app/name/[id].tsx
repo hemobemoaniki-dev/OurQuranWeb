@@ -8,6 +8,10 @@ import { NAMES_99 } from "@/src/data/names99";
 import { makeStyles, useTheme } from "@/src/theme";
 import { arabicFont, serifFont } from "@/src/typography";
 
+export function generateStaticParams() {
+  return NAMES_99.map((name) => ({ id: String(name.number) }));
+}
+
 export default function NameDetail() {
   const styles = useStyles();
   const { colors } = useTheme();
