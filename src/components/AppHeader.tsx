@@ -4,7 +4,7 @@ import { useRouter } from "expo-router";
 import { Pressable, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { BrandMark } from "@/src/components/BrandMark";
+import { BrandLockup } from "@/src/components/BrandLockup";
 import { Icon } from "@/src/components/Icon";
 import { useAccount } from "@/src/context/AppState";
 import { useSession } from "@/src/context/SessionContext";
@@ -40,8 +40,7 @@ export const AppHeader = memo(function AppHeader({ showBack = false }: { showBac
         )}
 
         <View style={styles.logoWrap}>
-          <BrandMark size={34} tint={colors.gold} glow={colors.gold} intensity="medium" />
-          <Text style={styles.logoText}>OurQuran</Text>
+          <BrandLockup tint={colors.gold} size={46} />
         </View>
 
         <View style={styles.sideBtn} />
@@ -80,10 +79,10 @@ function Metric({ icon, value, label }: { icon: any; value: string; label: strin
 const useStyles = makeStyles((colors) => ({
   wrap: {
     width: "100%",
-    maxWidth: 1480,
+    maxWidth: 1580,
     alignSelf: "center",
     backgroundColor: colors.surface,
-    paddingHorizontal: 36,
+    paddingHorizontal: 34,
     paddingBottom: 12,
   },
   topRow: {
@@ -101,12 +100,6 @@ const useStyles = makeStyles((colors) => ({
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-  },
-  logoText: {
-    color: colors.onSurface,
-    fontSize: 20,
-    fontWeight: "600",
-    letterSpacing: 0.3,
   },
   capsule: {
     marginTop: 10,
@@ -134,12 +127,15 @@ const useStyles = makeStyles((colors) => ({
   },
   metricValue: {
     color: colors.onSurface,
-    fontSize: 15,
-    fontWeight: "700",
+    fontSize: 17,
+    lineHeight: 21,
+    fontWeight: "900",
   },
   metricLabel: {
     color: colors.muted,
-    fontSize: 10,
+    fontSize: 11.5,
+    lineHeight: 15,
+    fontWeight: "700",
     letterSpacing: 0.3,
   },
 }));
