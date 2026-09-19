@@ -230,6 +230,7 @@ export default function Reader() {
       if (withReward) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
 
       runAfterPaint(() => {
+        if (exitingRef.current) return;
         if (!isLast) {
           if (continueAudio) audio.playAyah(nextSurah, nextAyah);
           else audio.stop();
@@ -258,6 +259,7 @@ export default function Reader() {
       const prevAyah = numberInSurah - 1;
       setAyahIndex((index) => index - 1);
       runAfterPaint(() => {
+        if (exitingRef.current) return;
         if (continueAudio) audio.playAyah(surahNum, prevAyah);
         else audio.stop();
         saveReaderPosition(surahNum, prevAyah);
@@ -272,13 +274,16 @@ export default function Reader() {
       setSurahNum(prevSurah);
       if (continueAudio) setPendingAudio({ surah: prevSurah, ayah: prevAyah });
       runAfterPaint(() => {
+        if (exitingRef.current) return;
         if (!continueAudio) audio.stop();
         saveReaderPosition(prevSurah, prevAyah);
       });
       return;
     }
 
-    runAfterPaint(() => audio.stop());
+    runAfterPaint(() => {
+      if (!exitingRef.current) audio.stop();
+    });
   }, [data, surahNum, ayahIndex, numberInSurah, saveReaderPosition, audio, settings.autoplay]);
 
   const finishReaderAndGoHome = useCallback((withHaptic = false) => {
@@ -367,6 +372,7 @@ export default function Reader() {
     setPickerStep("surah");
 
     runAfterPaint(() => {
+      if (exitingRef.current) return;
       if (continueAudio && sameSurah) audio.playAyah(s, a);
       else if (!continueAudio) audio.stop();
       saveReaderPosition(s, a);
