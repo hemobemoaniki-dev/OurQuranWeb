@@ -453,7 +453,7 @@ export default function Reader() {
               },
             ]}>
               <View style={styles.card} testID="reader-ayah-card">
-                <LinearGradient pointerEvents="none" colors={[`${t.accent}20`, `${t.base}18`, `${t.end}24`]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.cardSheen} />
+                <LinearGradient pointerEvents="none" colors={[`${t.accent}34`, `${t.accent}12`, `${t.end}28`]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.cardSheen} />
                 {desktopReader ? (
                   <Pressable style={styles.desktopSurahHeader} onPress={openPicker} testID="reader-surah-picker-open">
                     <View style={styles.desktopSurahTitleRow}>
@@ -582,7 +582,7 @@ export default function Reader() {
         </Pressable>
 
         <Pressable style={({ pressed }) => [styles.doneBtn, pressed && styles.pressed]} onPress={imDone} testID="reader-im-done">
-          <LinearGradient pointerEvents="none" colors={[t.accent, t.end]} style={[StyleSheet.absoluteFill, { borderRadius: 30 }]} />
+          <LinearGradient pointerEvents="none" colors={[`${t.accent}F2`, `${t.end}DC`]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[StyleSheet.absoluteFill, { borderRadius: 30 }]} />
           <Text style={styles.doneText}>I&apos;m Done</Text>
         </Pressable>
 
@@ -684,7 +684,11 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderRadius: 24,
     borderWidth: 1,
     borderColor: colors.borderStrong,
-    backgroundColor: "rgba(5,6,10,0.82)",
+    backgroundColor: colors.surfaceSecondary,
+    shadowColor: colors.gold,
+    shadowOpacity: 0.10,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 6 },
     alignSelf: "flex-start",
   },
   toolRailEyebrow: {
@@ -701,7 +705,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderRadius: 17,
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: colors.surfaceTertiary,
+    backgroundColor: colors.goldSoft,
     alignItems: "center",
     justifyContent: "center",
     gap: 5,
@@ -775,7 +779,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   card: {
     width: "100%",
     minHeight: 520,
-    backgroundColor: "rgba(5,6,10,0.92)",
+    backgroundColor: "rgba(3,5,8,0.84)",
     borderRadius: 28,
     borderWidth: 1,
     borderColor: colors.borderStrong,
