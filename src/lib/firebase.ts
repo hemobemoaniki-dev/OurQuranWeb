@@ -8,8 +8,19 @@ import * as fbAuth from "firebase/auth";
 import { getFirestore, initializeFirestore } from "firebase/firestore";
 import { Platform } from "react-native";
 
+// Firebase web API keys are client-side identifiers, not server secrets, but
+// keeping the literal out of the public repository avoids accidental reuse and
+// GitHub secret-scanning alerts. Expo inlines EXPO_PUBLIC_* variables at build.
+const firebaseApiKey = process.env.EXPO_PUBLIC_FIREBASE_API_KEY;
+
+if (!firebaseApiKey) {
+  throw new Error(
+    "Missing EXPO_PUBLIC_FIREBASE_API_KEY. Set it in your local/deployment environment before starting or building OurQuran."
+  );
+}
+
 const firebaseConfig = {
-  apiKey: "AIzaSyBvVJLvPotrhBB4NLhWn4d-pHc1mxew_T0",
+  apiKey: firebaseApiKey,
   authDomain: "ourquran.firebaseapp.com",
   projectId: "ourquran",
   storageBucket: "ourquran.firebasestorage.app",
