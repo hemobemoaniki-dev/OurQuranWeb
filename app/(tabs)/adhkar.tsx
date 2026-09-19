@@ -1,3 +1,4 @@
+import Head from "expo-router/head";
 import { Text, TextInput } from "@/src/components/AppText";
 import { useEffect, useState } from "react";
 import { FlatList, Modal, Pressable, StyleSheet, View } from "react-native";
@@ -24,7 +25,9 @@ export default function Adhkar() {
   }, [resetAdhkarIfNewDay]);
 
   return (
-    <View style={styles.root}>
+    <>
+      <Head><title>Adhkar & Digital Tasbeeh — OurQuran</title><meta name="description" content="Read morning and evening Adhkar and use a clean digital Tasbeeh counter with OurQuran." /></Head>
+      <View style={styles.root}>
       <SubHeader title="Adhkar" showBack={false} />
       <View style={styles.segmentWrap}>
         <Segment label="Morning" icon="white-balance-sunny" active={mode === "morning"} onPress={() => setMode("morning")} testID="adhkar-tab-morning" />
@@ -33,6 +36,7 @@ export default function Adhkar() {
       </View>
       {mode === "tasbeeh" ? <Tasbeeh /> : <DhikrList time={mode} />}
     </View>
+    </>
   );
 }
 
