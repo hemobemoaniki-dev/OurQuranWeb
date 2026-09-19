@@ -328,10 +328,10 @@ export default function Home() {
               </View>
             </View>
             <View style={styles.quickGrid}>
-              <QuickAction icon="book-open-page-variant-outline" label="Read Quran" hint="114 Surahs" onPress={() => router.push("/read")} />
-              <QuickAction icon="hands-pray" label="Adhkar" hint="Daily remembrance" onPress={() => router.push("/adhkar")} />
-              <QuickAction icon="star-crescent" label="99 Names" hint="Reflect & learn" onPress={() => router.push("/names")} />
               <QuickAction icon="bookmark-multiple-outline" label="Bookmarks" hint="Saved ayahs" onPress={() => router.push("/settings/bookmarks")} />
+              <QuickAction icon="target" label="Daily Goal" hint="Adjust your target" onPress={() => router.push("/settings/goal")} />
+              <QuickAction icon="microphone-outline" label="Reciter" hint="Voice & playback" onPress={() => router.push("/settings/reciter")} />
+              <QuickAction icon="chart-line" label="Progress" hint="Streaks & metrics" onPress={() => router.push("/settings/progress")} />
             </View>
           </View>
         </View>
@@ -637,7 +637,11 @@ const useStyles = makeStyles((c) => ({
     borderRadius: 16,
     borderWidth: 1,
     borderColor: c.border,
-    backgroundColor: c.surfaceTertiary,
+    backgroundColor: c.goldSoft,
+    shadowColor: c.gold,
+    shadowOpacity: 0.07,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 3 },
     cursor: "pointer",
   },
   quickIcon: { width: 37, height: 37, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: c.goldSoft, borderWidth: 1, borderColor: c.goldBorder },
