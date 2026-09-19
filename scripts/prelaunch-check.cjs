@@ -403,7 +403,7 @@ test('reader quick settings stay in-reader and expose every recitation control',
   const header = fs.readFileSync(path.join(root, 'src/components/ReaderHeader.tsx'), 'utf8');
   const quick = fs.readFileSync(path.join(root, 'src/components/ReaderQuickSettings.tsx'), 'utf8');
   const state = fs.readFileSync(path.join(root, 'src/context/AppState.tsx'), 'utf8');
-  assert.match(header, /name="menu"/);
+  assert.match(header, /name="tune-variant"/);
   assert.match(header, /reader-quick-settings-open/);
   assert.match(reader, /<ReaderQuickSettings/);
   assert.match(reader, /onBeforeReciterChange=\{audio\.stop\}/);
@@ -538,15 +538,21 @@ test('critical navigation destinations exist before launch', () => {
   for (const route of routes) assert.ok(fs.existsSync(path.join(root, route)), 'Missing route: ' + route);
 });
 
-test("I'm Done finalizes the reader session before navigating home", () => {
+test("Reader exit finalizes the session before navigation and avoids blur state writes", () => {
   const reader = fs.readFileSync(path.join(root, 'app/reader.tsx'), 'utf8');
-  const start = reader.indexOf('const imDone = useCallback');
-  const end = reader.indexOf('const openPicker', start);
+  const start = reader.indexOf('const exitReader = useCallback');
+  const end = reader.indexOf('const imDone = useCallback', start);
   assert.ok(start >= 0 && end > start);
-  const done = reader.slice(start, end);
-  assert.match(done, /const deltas = stopSession\(\)/);
-  assert.match(done, /addReadingSeconds\(seconds, day\)/);
-  assert.ok(done.indexOf('stopSession()') < done.indexOf('router.back()'));
+  const exit = reader.slice(start, end);
+  assert.match(exit, /const deltas = stopSession\(\)/);
+  assert.match(exit, /addReadingSeconds\(seconds, day\)/);
+  assert.match(exit, /exitReaderAudio\(\)/);
+  assert.ok(exit.indexOf('stopSession()') < exit.indexOf('router.replace(destination)'));
+  const focusStart = reader.indexOf('useFocusEffect(\n    useCallback(() => {');
+  const focusEnd = reader.indexOf('// Seed reader position', focusStart);
+  assert.ok(focusStart >= 0 && focusEnd > focusStart);
+  const focus = reader.slice(focusStart, focusEnd);
+  assert.doesNotMatch(focus, /setPendingAudio|setQuickSettingsVisible|setPickerVisible/);
 });
 
 test('reader Quran text path is synchronous, fully offline and ships every bundle', () => {
@@ -573,9 +579,36 @@ test('bottom tabs stay mounted, switch without animation and load icon font befo
   assert.match(tabs, /lazy:\s*false/);
   assert.match(tabs, /animation:\s*"none"/);
   assert.doesNotMatch(tabs, /Animated\./);
-  assert.match(tabs, /<Icon name=\{meta\.icon\} size=\{24\}/);
-  assert.match(tabs, /scheme === "dark" \? "#FFFFFF" : "#111111"/);
+  assert.match(tabs, /<Icon name=\{meta\.icon\} size=\{26\}/);
+  assert.match(tabs, /width:\s*94/);
+  assert.match(tabs, /<BrandMark size=\{58\}/);
   assert.match(rootLayout, /MaterialDesignIcons:\s*require\("@react-native-vector-icons\/material-design-icons\/fonts\/MaterialDesignIcons\.ttf"\)/);
+});
+
+test('web desktop shell uses a compact rail, wide dashboard and adaptive Reader workspace', () => {
+  const tabs = fs.readFileSync(path.join(root, 'app/(tabs)/_layout.tsx'), 'utf8');
+  const home = fs.readFileSync(path.join(root, 'app/(tabs)/index.tsx'), 'utf8');
+  const reader = fs.readFileSync(path.join(root, 'app/reader.tsx'), 'utf8');
+  const brand = fs.readFileSync(path.join(root, 'src/components/BrandMark.tsx'), 'utf8');
+  assert.match(tabs, /width:\s*94/);
+  assert.match(home, /maxWidth:\s*1580/);
+  assert.match(home, /Quick access/);
+  assert.match(home, /Weekly journey/);
+  assert.match(reader, /styles\.toolRail/);
+  assert.match(reader, /styles\.infoPanel/);
+  assert.match(reader, /translationDivider/);
+  assert.match(reader, /desktopReader/);
+  assert.match(brand, /name="mosque"/);
+});
+
+test('web favicon uses the versioned asset in Expo config and document head', () => {
+  const config = fs.readFileSync(path.join(root, 'app.json'), 'utf8');
+  const layout = fs.readFileSync(path.join(root, 'app/_layout.tsx'), 'utf8');
+  assert.match(config, /favicon-web-v3\.png/);
+  assert.doesNotMatch(config, /"favicon": "\.\/assets\/images\/icon\.png"/);
+  assert.match(layout, /\/favicon-web-v3\.png/);
+  assert.ok(fs.existsSync(path.join(root, 'public/favicon-web-v3.png')));
+  assert.ok(fs.existsSync(path.join(root, 'assets/images/favicon-web-v3.png')));
 });
 
 test('top streak badge avoids duplicate red-green week state and links progress metrics', () => {
