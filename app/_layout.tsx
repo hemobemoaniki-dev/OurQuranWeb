@@ -17,7 +17,7 @@ import { ReaderWarmup } from "@/src/components/ReaderWarmup";
 import { AppProviders } from "@/src/context/AppState";
 import { SessionProvider } from "@/src/context/SessionContext";
 import { ThemeApplier } from "@/src/context/ThemeApplier";
-import { stopAllAyahAudio } from "@/src/lib/audio";
+import { exitReaderAudio, stopAllAyahAudio } from "@/src/lib/audio";
 import { queryClient } from "@/src/query-client";
 import { useTheme } from "@/src/theme";
 
@@ -36,7 +36,7 @@ function AudioRouteGuard() {
   const pathname = usePathname();
 
   useEffect(() => {
-    if (pathname !== "/reader") stopAllAyahAudio();
+    if (pathname !== "/reader") exitReaderAudio();
   }, [pathname]);
 
   useEffect(() => {
@@ -83,6 +83,9 @@ export default function RootLayout() {
         />
         <meta name="twitter:card" content="summary" />
         <meta name="theme-color" content="#030303" />
+        <link rel="icon" type="image/png" href="/favicon-web-v3.png" />
+        <link rel="shortcut icon" href="/favicon-web-v3.png" />
+        <link rel="manifest" href="/site.webmanifest" />
       </Head>
       <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
