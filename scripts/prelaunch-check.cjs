@@ -569,6 +569,42 @@ test('settings normalization rejects unsupported reciters and playback speeds', 
   assert.equal(valid.settings.speed, 1.25);
 });
 
+test('all static internal navigation targets resolve to an app route', () => {
+  const appDir = path.join(root, 'app');
+  const files = [];
+  function walk(dir) {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) walk(full);
+      else if (entry.isFile() && /\.tsx$/.test(entry.name)) files.push(full);
+    }
+  }
+  walk(appDir);
+
+  const routes = new Set(['/']);
+  for (const file of files) {
+    let rel = path.relative(appDir, file).replace(/\\/g, '/').replace(/\.tsx$/, '');
+    const segments = rel.split('/').filter(Boolean).filter(segment => !/^\(.+\)$/.test(segment));
+    if (segments.at(-1) === '_layout') continue;
+    if (segments.at(-1) === 'index') segments.pop();
+    routes.add('/' + segments.join('/'));
+  }
+  routes.add('/(tabs)');
+
+  const refs = [];
+  for (const file of files) {
+    const code = fs.readFileSync(file, 'utf8');
+    for (const match of code.matchAll(/router\.(?:push|replace)\(\s*["']([^"']+)["']/g)) refs.push([file, match[1]]);
+    for (const match of code.matchAll(/pathname:\s*["']([^"']+)["']/g)) refs.push([file, match[1]]);
+    for (const match of code.matchAll(/<Redirect\s+href=["']([^"']+)["']/g)) refs.push([file, match[1]]);
+  }
+
+  for (const [file, target] of refs) {
+    if (/^https?:/.test(target)) continue;
+    assert.ok(routes.has(target), `Missing app route for "${target}" referenced by ${path.relative(root, file)}`);
+  }
+});
+
 test('critical navigation destinations exist before launch', () => {
   const routes = [
     'app/reader.tsx',
