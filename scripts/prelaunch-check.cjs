@@ -401,6 +401,55 @@ test('audio reuses one native player across ayahs and exit still releases it', a
   assert.equal(modes, 1);
 });
 
+test('reader play-pause resumes the same loaded ayah instead of restarting it', async () => {
+  const players = [];
+  const native = {
+    createAudioPlayer: () => {
+      const p = {
+        play() { this.played = (this.played ?? 0) + 1; },
+        pause() { this.paused = (this.paused ?? 0) + 1; },
+        remove() {},
+        replace(source) { this.source = source; this.replaced = (this.replaced ?? 0) + 1; },
+        setPlaybackRate() {},
+        addListener(_, fn) { this.emit = fn; return { remove() {} }; },
+      };
+      players.push(p);
+      return p;
+    },
+    preload: async () => {},
+    clearPreloadedSource: async () => {},
+    setAudioModeAsync: async () => {},
+    setIsAudioActiveAsync: async () => {},
+  };
+  const audio = load('src/lib/audio.ts', {
+    'expo-audio': native,
+    '@/src/lib/audio-cache': {
+      getCachedAyahUri: async () => null,
+      queueAyahAudio: async () => null,
+      warmAudioNeighborhood() {},
+      warmVisibleAyahs() {},
+    },
+    react: { useCallback: f => f, useEffect() {}, useSyncExternalStore: (_, get) => get() },
+  });
+  const hook = () => audio.useAyahAudio({ reciterId: 'alafasy', speed: 1 });
+
+  hook().toggle(2, 255);
+  await settle();
+  players[0].emit({ isLoaded: true, playing: false });
+  await settle();
+  assert.equal(players[0].played, 1);
+  assert.equal(players[0].replaced, 1);
+
+  hook().toggle(2, 255);
+  assert.equal(players[0].paused, 2); // one pre-replace pause + actual user pause
+  hook().toggle(2, 255);
+  assert.equal(players[0].played, 2);
+  assert.equal(players[0].replaced, 1);
+  assert.equal(players.length, 1);
+
+  audio.stopAllAyahAudio();
+});
+
 test('reader quick settings stay in-reader and expose every recitation control', () => {
   const reader = fs.readFileSync(path.join(root, 'app/reader.tsx'), 'utf8');
   const header = fs.readFileSync(path.join(root, 'src/components/ReaderHeader.tsx'), 'utf8');
@@ -605,9 +654,19 @@ test('every statically referenced web icon has a real SVG mapping', () => {
     }
   }
 
-  function collectStrings(node, out) {
-    if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) out.add(node.text);
-    ts.forEachChild(node, child => collectStrings(child, out));
+  function collectIconChoices(node, out) {
+    if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) {
+      out.add(node.text);
+      return;
+    }
+    if (ts.isConditionalExpression(node)) {
+      collectIconChoices(node.whenTrue, out);
+      collectIconChoices(node.whenFalse, out);
+      return;
+    }
+    if (ts.isParenthesizedExpression(node) || ts.isAsExpression(node) || ts.isTypeAssertionExpression(node)) {
+      collectIconChoices(node.expression, out);
+    }
   }
 
   function checkFile(file) {
@@ -619,7 +678,7 @@ test('every statically referenced web icon has a real SVG mapping', () => {
         const attr = node.attributes.properties.find(p => ts.isJsxAttribute(p) && p.name.getText(ast) === 'name');
         if (attr?.initializer) {
           if (ts.isStringLiteral(attr.initializer)) names.add(attr.initializer.text);
-          else if (ts.isJsxExpression(attr.initializer) && attr.initializer.expression) collectStrings(attr.initializer.expression, names);
+          else if (ts.isJsxExpression(attr.initializer) && attr.initializer.expression) collectIconChoices(attr.initializer.expression, names);
         }
       }
       ts.forEachChild(node, walk);
