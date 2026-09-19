@@ -1,7 +1,7 @@
 import { Text } from "@/src/components/AppText";
 import { memo } from "react";
 import { useRouter } from "expo-router";
-import { Pressable, View } from "react-native";
+import { Image, Pressable, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Icon } from "@/src/components/Icon";
@@ -39,7 +39,7 @@ export const AppHeader = memo(function AppHeader({ showBack = false }: { showBac
         )}
 
         <View style={styles.logoWrap}>
-          <Icon name="mosque" size={20} color={colors.gold} />
+          <Image source={require("../../assets/images/ourquran-web-mark.png")} style={styles.logoMark} resizeMode="cover" />
           <Text style={styles.logoText}>OurQuran</Text>
         </View>
 
@@ -78,9 +78,12 @@ function Metric({ icon, value, label }: { icon: any; value: string; label: strin
 
 const useStyles = makeStyles((colors) => ({
   wrap: {
+    width: "100%",
+    maxWidth: 1480,
+    alignSelf: "center",
     backgroundColor: colors.surface,
-    paddingHorizontal: 16,
-    paddingBottom: 10,
+    paddingHorizontal: 36,
+    paddingBottom: 12,
   },
   topRow: {
     flexDirection: "row",
@@ -98,6 +101,7 @@ const useStyles = makeStyles((colors) => ({
     alignItems: "center",
     gap: 8,
   },
+  logoMark: { width: 28, height: 28, borderRadius: 8 },
   logoText: {
     color: colors.onSurface,
     fontSize: 20,
