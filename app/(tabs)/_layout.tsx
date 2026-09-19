@@ -2,22 +2,28 @@ import { Text } from "@/src/components/AppText";
 import { Tabs } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { memo } from "react";
-import { Image, Pressable, View } from "react-native";
+import { Pressable, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { BrandMark } from "@/src/components/BrandMark";
 import { Icon, type IconName } from "@/src/components/Icon";
 import { useAccount, useAuth } from "@/src/context/AppState";
 import { makeStyles, useTheme } from "@/src/theme";
 
 const TABS: { name: string; label: string; icon: IconName }[] = [
   { name: "index", label: "Home", icon: "home-variant-outline" },
-  { name: "read", label: "Read Quran", icon: "book-open-page-variant-outline" },
+  { name: "read", label: "Quran", icon: "book-open-page-variant-outline" },
   { name: "adhkar", label: "Adhkar", icon: "hands-pray" },
-  { name: "names", label: "99 Names", icon: "star-crescent" },
+  { name: "names", label: "Names", icon: "star-crescent" },
   { name: "preferences", label: "Settings", icon: "tune-variant" },
 ];
 
-const TabItem = memo(function TabItem({ route, meta, focused, navigation }: {
+const TabItem = memo(function TabItem({
+  route,
+  meta,
+  focused,
+  navigation,
+}: {
   route: { key: string; name: string };
   meta: typeof TABS[number];
   focused: boolean;
@@ -25,8 +31,7 @@ const TabItem = memo(function TabItem({ route, meta, focused, navigation }: {
 }) {
   const styles = useStyles();
   const { colors, scheme } = useTheme();
-  const inactive = scheme === "dark" ? "#E8E5DF" : "#28251F";
-  const tint = focused ? colors.gold : inactive;
+  const tint = focused ? colors.gold : scheme === "dark" ? "#E8E5DF" : "#3A352D";
 
   return (
     <Pressable
@@ -45,13 +50,22 @@ const TabItem = memo(function TabItem({ route, meta, focused, navigation }: {
       accessibilityState={{ selected: focused }}
       testID={`tab-${meta.name}`}
     >
-      <View style={[styles.iconSlot, focused && { backgroundColor: colors.goldSoft, borderColor: colors.goldBorder }]}>
-        <Icon name={meta.icon} size={24} color={tint} />
+      {focused ? (
+        <LinearGradient
+          pointerEvents="none"
+          colors={[colors.goldSoft, "transparent"]}
+          start={{ x: 0.15, y: 0 }}
+          end={{ x: 0.9, y: 1 }}
+          style={styles.itemGlow}
+        />
+      ) : null}
+      <View style={[styles.iconSlot, focused && styles.iconSlotFocused]}>
+        <Icon name={meta.icon} size={26} color={tint} />
       </View>
       <Text style={[styles.label, { color: tint }]} numberOfLines={1}>
         {meta.label}
       </Text>
-      {focused ? <View style={[styles.activeRail, { backgroundColor: colors.gold }]} /> : null}
+      {focused ? <View style={styles.activeDot} /> : null}
     </Pressable>
   );
 });
@@ -60,38 +74,29 @@ function CustomTabBar({ state, navigation }: any) {
   const styles = useStyles();
   const { scheme, colors } = useTheme();
   const insets = useSafeAreaInsets();
-  const { hydrated, syncStatus, lastSyncAt } = useAccount();
+  const { hydrated, syncStatus } = useAccount();
   const { user, initializing } = useAuth();
 
   const checking = initializing || (!!user && !hydrated);
-  let statusLabel = "Guest session · progress not saved";
-  let statusColor = colors.gold;
-  if (checking) {
-    statusLabel = "Checking account…";
-    statusColor = colors.muted;
-  } else if (user) {
-    if (syncStatus === "offline") {
-      statusLabel = "Offline · changes saved locally";
-      statusColor = colors.gold;
-    } else if (syncStatus === "error") {
-      statusLabel = "Sync needs attention";
-      statusColor = scheme === "dark" ? "#FF8497" : "#AE2645";
-    } else if (syncStatus === "syncing" || !lastSyncAt) {
-      statusLabel = "Syncing your journey…";
-      statusColor = colors.gold;
-    } else {
-      statusLabel = "Your Quran journey, synced.";
-      statusColor = scheme === "dark" ? "#6EE7B7" : "#16734E";
-    }
-  }
+  const statusColor = checking
+    ? colors.muted
+    : !user
+      ? colors.gold
+      : syncStatus === "error"
+        ? "#D6505A"
+        : syncStatus === "offline"
+          ? "#D89B3A"
+          : syncStatus === "synced"
+            ? "#2E9B70"
+            : colors.gold;
 
   return (
     <View
       style={[
         styles.base,
         {
-          paddingTop: Math.max(insets.top, 20),
-          paddingBottom: Math.max(insets.bottom, 18),
+          paddingTop: Math.max(insets.top, 18),
+          paddingBottom: Math.max(insets.bottom, 16),
           borderRightColor: scheme === "dark" ? "rgba(255,255,255,0.09)" : "rgba(0,0,0,0.08)",
         },
       ]}
@@ -100,35 +105,42 @@ function CustomTabBar({ state, navigation }: any) {
       <LinearGradient
         pointerEvents="none"
         colors={scheme === "dark"
-          ? ["rgba(44,35,17,0.98)", "rgba(13,13,13,0.99)", "rgba(4,4,4,1)"]
-          : ["rgba(249,240,210,0.98)", "rgba(255,253,247,0.99)", "rgba(246,242,231,1)"]}
-        locations={[0, 0.42, 1]}
+          ? ["rgba(42,32,14,0.98)", "rgba(10,10,10,0.995)", "rgba(3,3,3,1)"]
+          : ["rgba(250,241,210,0.99)", "rgba(255,253,247,0.995)", "rgba(247,243,233,1)"]}
+        locations={[0, 0.38, 1]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.background}
       />
 
       <View style={styles.brand}>
-        <Image source={require("../../assets/images/ourquran-web-mark.png")} style={styles.brandMark} resizeMode="cover" />
-        <View style={styles.brandCopy}>
-          <Text style={[styles.brandName, { color: scheme === "dark" ? "#FFFFFF" : "#15120D" }]}>OurQuran</Text>
-          <Text style={styles.brandTag}>READ · REFLECT · ASCEND</Text>
-        </View>
+        <BrandMark size={58} tint={colors.gold} glow={colors.gold} intensity="strong" />
       </View>
 
       <View style={styles.row}>
         {state.routes.map((route: any, index: number) => {
           const meta = TABS.find((tab) => tab.name === route.name);
-          return meta
-            ? <TabItem key={route.key} route={route} meta={meta} focused={state.index === index} navigation={navigation} />
-            : null;
+          return meta ? (
+            <TabItem
+              key={route.key}
+              route={route}
+              meta={meta}
+              focused={state.index === index}
+              navigation={navigation}
+            />
+          ) : null;
         })}
       </View>
 
-      <View style={styles.footer}>
-        <View style={[styles.footerDot, { backgroundColor: statusColor }]} />
-        <Text style={styles.footerText}>{statusLabel}</Text>
-      </View>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={user ? "Open settings" : "Guest account settings"}
+        onPress={() => navigation.navigate("preferences")}
+        style={({ pressed }) => [styles.accountButton, pressed && styles.itemPressed]}
+      >
+        <Icon name={user ? "account-circle-outline" : "account-outline"} size={25} color={colors.onSurface} />
+        <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
+      </Pressable>
     </View>
   );
 }
@@ -144,6 +156,7 @@ export default function TabsLayout() {
         animation: "none",
         tabBarHideOnKeyboard: true,
         tabBarPosition: "left",
+        tabBarStyle: { width: 94, borderTopWidth: 0 },
       }}
       tabBar={(props) => <CustomTabBar {...props} />}
     >
@@ -158,16 +171,16 @@ export default function TabsLayout() {
 
 const useStyles = makeStyles((c) => ({
   base: {
-    width: 248,
-    minWidth: 248,
+    width: 94,
+    minWidth: 94,
     height: "100%",
-    paddingHorizontal: 14,
+    paddingHorizontal: 8,
     backgroundColor: c.surface,
     borderRightWidth: 1,
     shadowColor: "#000000",
-    shadowOpacity: 0.34,
-    shadowRadius: 24,
-    shadowOffset: { width: 10, height: 0 },
+    shadowOpacity: 0.28,
+    shadowRadius: 22,
+    shadowOffset: { width: 8, height: 0 },
     overflow: "hidden",
   },
   background: {
@@ -178,65 +191,92 @@ const useStyles = makeStyles((c) => ({
     left: 0,
   },
   brand: {
-    minHeight: 76,
-    flexDirection: "row",
+    height: 76,
     alignItems: "center",
-    gap: 11,
-    paddingHorizontal: 8,
-    marginBottom: 20,
+    justifyContent: "center",
+    marginBottom: 16,
   },
-  brandMark: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
+  row: {
+    flex: 1,
+    gap: 10,
+    alignItems: "center",
   },
-  brandCopy: { flex: 1, minWidth: 0, gap: 2 },
-  brandName: { fontSize: 19, lineHeight: 23, fontWeight: "900", letterSpacing: -0.4 },
-  brandTag: { color: c.gold, fontSize: 7, lineHeight: 10, fontWeight: "900", letterSpacing: 1.25 },
-  row: { flex: 1, gap: 7 },
   item: {
     position: "relative",
-    minHeight: 56,
-    flexDirection: "row",
+    width: 76,
+    minHeight: 72,
     alignItems: "center",
-    gap: 11,
-    paddingHorizontal: 10,
+    justifyContent: "center",
+    gap: 5,
     paddingVertical: 8,
-    borderRadius: 15,
+    borderRadius: 18,
     overflow: "hidden",
+    cursor: "pointer",
   },
   itemFocused: {
-    backgroundColor: c.goldSoft,
     borderWidth: 1,
     borderColor: c.goldBorder,
+    backgroundColor: c.goldSoft,
+    shadowColor: c.gold,
+    shadowOpacity: 0.13,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 0 },
   },
-  itemPressed: { opacity: 0.72, transform: [{ scale: 0.985 }] },
+  itemGlow: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+  },
+  itemPressed: { opacity: 0.68, transform: [{ scale: 0.97 }] },
   iconSlot: {
     width: 38,
     height: 38,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "transparent",
+    borderRadius: 13,
     alignItems: "center",
     justifyContent: "center",
   },
-  label: { flex: 1, fontSize: 13.5, lineHeight: 18, fontWeight: "800", letterSpacing: -0.1 },
-  activeRail: {
-    position: "absolute",
-    right: 0,
-    top: 13,
-    bottom: 13,
-    width: 3,
-    borderTopLeftRadius: 3,
-    borderBottomLeftRadius: 3,
+  iconSlotFocused: {
+    backgroundColor: c.goldSoft,
   },
-  footer: {
-    flexDirection: "row",
+  label: {
+    fontSize: 10.5,
+    lineHeight: 13,
+    fontWeight: "800",
+    letterSpacing: 0.1,
+    textAlign: "center",
+  },
+  activeDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: c.gold,
+    shadowColor: c.gold,
+    shadowOpacity: 0.65,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 0 },
+  },
+  accountButton: {
+    width: 58,
+    height: 52,
+    borderRadius: 17,
+    alignSelf: "center",
     alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 8,
-    paddingTop: 16,
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: c.border,
+    backgroundColor: c.surfaceSecondary,
+    cursor: "pointer",
   },
-  footerDot: { width: 7, height: 7, borderRadius: 4 },
-  footerText: { flex: 1, color: c.muted, fontSize: 10.5, lineHeight: 15, fontWeight: "600" },
+  statusDot: {
+    position: "absolute",
+    right: 8,
+    bottom: 8,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: c.surface,
+  },
 }));
