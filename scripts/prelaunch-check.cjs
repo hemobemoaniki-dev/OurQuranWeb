@@ -604,14 +604,15 @@ test('web desktop shell uses a compact rail, wide dashboard and adaptive Reader 
   assert.match(brand, /name="mosque"/);
 });
 
-test('web favicon uses the versioned asset in Expo config and document head', () => {
+test('web favicon uses a validated export asset plus the versioned glowing browser icon', () => {
   const config = fs.readFileSync(path.join(root, 'app.json'), 'utf8');
   const layout = fs.readFileSync(path.join(root, 'app/_layout.tsx'), 'utf8');
-  assert.match(config, /favicon-web-v4\.png/);
+  const manifest = fs.readFileSync(path.join(root, 'public/site.webmanifest'), 'utf8');
+  assert.match(config, /favicon-web-v3\.png/);
   assert.doesNotMatch(config, /"favicon": "\.\/assets\/images\/icon\.png"/);
-  assert.match(layout, /\/favicon-web-v4\.png/);
-  assert.ok(fs.existsSync(path.join(root, 'public/favicon-web-v4.png')));
-  assert.ok(fs.existsSync(path.join(root, 'assets/images/favicon-web-v4.png')));
+  assert.match(layout, /\/favicon-web-v4\.svg\?v=4/);
+  assert.match(manifest, /\/favicon-web-v4\.svg/);
+  assert.ok(fs.existsSync(path.join(root, 'public/favicon-web-v4.svg')));
 });
 
 test('top streak badge avoids duplicate red-green week state and links progress metrics', () => {
