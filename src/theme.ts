@@ -20,7 +20,7 @@ const dark = {
   onSurfaceTertiary: "#FFFFFF",
   surfaceInverse: "#FDFBF7",
   onSurfaceInverse: "#080808",
-  muted: "#BDBAB3", // refined secondary/caption text
+  muted: "#D2CEC6", // higher-contrast secondary/caption text
 
   brand: GOLD,
   onBrand: "#121212",
@@ -61,7 +61,7 @@ const light: typeof dark = {
   onSurfaceTertiary: "#1A1814",
   surfaceInverse: "#121212",
   onSurfaceInverse: "#FFF7E6",
-  muted: "#57534D",
+  muted: "#484239",
 
   brand: GOLD,
   onBrand: "#121212",
