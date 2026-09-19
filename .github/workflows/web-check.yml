@@ -29,6 +29,9 @@ jobs:
       - name: TypeScript
         run: npx tsc --noEmit
 
+      - name: Regression checks
+        run: node ./scripts/prelaunch-check.cjs
+
       - name: Generate production SEO assets
         env:
           CF_PAGES_BRANCH: main
