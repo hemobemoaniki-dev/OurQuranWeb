@@ -345,12 +345,11 @@ export default function Reader() {
       <LinearGradient pointerEvents="none" colors={[`${t.base}F2`, `${t.base}D8`, `${t.base}F5`]} locations={[0, 0.46, 1]} style={StyleSheet.absoluteFill} />
       <ReaderHeader
         theme={t}
+        surahName={meta.name}
+        ayah={numberInSurah}
+        totalAyahs={meta.ayahs}
         onOpenSettings={() => setQuickSettingsVisible(true)}
-        onBack={() => {
-          setPendingAudio(null);
-          audio.stop();
-          router.replace('/read');
-        }}
+        onBack={() => exitReader("/read")}
       />
       <ReaderQuickSettings
         visible={quickSettingsVisible}
@@ -381,63 +380,161 @@ export default function Reader() {
             <ActivityIndicator size="large" color={colors.gold} />
           </View>
         ) : (
-          <Animated.View style={[
-            styles.readingStack,
-            {
-              opacity: verseMotion.interpolate({ inputRange: [0, 1], outputRange: [0.35, 1] }),
-              transform: [{ translateY: verseMotion.interpolate({ inputRange: [0, 1], outputRange: [8, 0] }) }],
-            },
-          ]}>
-            <View style={styles.card} testID="reader-ayah-card">
-              <LinearGradient pointerEvents="none" colors={[`${t.accent}20`, `${t.base}18`, `${t.end}24`]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.cardSheen} />
-              <View style={styles.cardTop}>
-                <Pressable style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]} accessibilityRole="button" accessibilityLabel={audio.isPlaying ? "Pause recitation" : "Play recitation"} onPress={() => audio.toggle(surahNum!, numberInSurah)} hitSlop={4} testID="reader-speaker">
-                  {audio.isLoading ? <ActivityIndicator color={colors.gold} size="small" /> : <Icon name={audio.isPlaying ? "pause-circle" : "volume-high"} size={26} color={colors.gold} />}
+          <View style={[styles.workspace, !desktopReader && styles.workspaceCompact]}>
+            {desktopReader ? (
+              <View style={styles.toolRail}>
+                <Pressable style={({ pressed }) => [styles.toolButton, pressed && styles.pressed]} onPress={goPrev} accessibilityLabel="Previous ayah">
+                  <Icon name="arrow-up" size={21} color={colors.gold} />
+                  <Text style={styles.toolLabel}>Previous</Text>
                 </Pressable>
-                <Pressable style={styles.surahTitleBtn} onPress={openPicker} testID="reader-surah-picker-open">
-                  <Text style={styles.surahTitle}>{meta.name}</Text>
-                  <Icon name="chevron-down" size={20} color={colors.onSurface} />
+                <Pressable
+                  style={({ pressed }) => [styles.toolButton, styles.toolButtonPrimary, pressed && styles.pressed]}
+                  onPress={() => audio.toggle(surahNum!, numberInSurah)}
+                  accessibilityLabel={audio.isPlaying ? "Pause recitation" : "Play recitation"}
+                >
+                  {audio.isLoading
+                    ? <ActivityIndicator color={colors.gold} size="small" />
+                    : <Icon name={audio.isPlaying ? "pause" : "play"} size={25} color={colors.gold} />}
+                  <Text style={styles.toolLabel}>{audio.isPlaying ? "Pause" : "Listen"}</Text>
                 </Pressable>
-                <Pressable style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]} accessibilityRole="button" accessibilityLabel={bookmarked ? "Remove bookmark" : "Bookmark verse"} onPress={() => surahNum && toggleBookmark(surahNum, numberInSurah)} hitSlop={4} testID="reader-bookmark">
-                  <Icon name={bookmarked ? "heart" : "heart-outline"} size={24} color={colors.gold} />
+                <Pressable
+                  style={({ pressed }) => [styles.toolButton, pressed && styles.pressed]}
+                  onPress={() => surahNum && toggleBookmark(surahNum, numberInSurah)}
+                  accessibilityLabel={bookmarked ? "Remove bookmark" : "Bookmark ayah"}
+                >
+                  <Icon name={bookmarked ? "bookmark" : "bookmark-outline"} size={22} color={colors.gold} />
+                  <Text style={styles.toolLabel}>Save</Text>
+                </Pressable>
+                <Pressable style={({ pressed }) => [styles.toolButton, pressed && styles.pressed]} onPress={() => goNext(true)} accessibilityLabel="Next ayah">
+                  <Icon name="arrow-down" size={21} color={colors.gold} />
+                  <Text style={styles.toolLabel}>Next</Text>
                 </Pressable>
               </View>
-              <Text style={styles.ayahCount}>{numberInSurah} / {meta.ayahs}</Text>
-              {audio.error ? <Text style={styles.audioError}>Audio unavailable for this verse.</Text> : null}
+            ) : null}
 
-              <ScrollView
-                ref={arabicScrollRef}
-                style={{ maxHeight: arabicViewportHeight, flexGrow: 0, marginTop: 22 }}
-                nestedScrollEnabled
-                showsVerticalScrollIndicator
-                persistentScrollbar
-                contentContainerStyle={styles.arabicScrollContent}
-                testID="reader-arabic-scroll"
-              >
-                <Text selectable maxFontSizeMultiplier={1} style={[styles.arabic, { fontSize: arabicSize, lineHeight: compactReader ? 46 : 58, fontWeight: "400" }]} testID="reader-arabic">
-                  {ayah.arabic}
-                </Text>
-              </ScrollView>
-              <ReaderTextActions key={`ar-${surahNum}-${numberInSurah}`} text={ayah.arabic} reference={`${meta.name} ${surahNum}:${numberInSurah}`} theme={t} label="Arabic verse" />
+            <Animated.View style={[
+              styles.readingStack,
+              desktopReader && styles.readingStackDesktop,
+              {
+                opacity: verseMotion.interpolate({ inputRange: [0, 1], outputRange: [0.35, 1] }),
+                transform: [{ translateY: verseMotion.interpolate({ inputRange: [0, 1], outputRange: [8, 0] }) }],
+              },
+            ]}>
+              <View style={styles.card} testID="reader-ayah-card">
+                <LinearGradient pointerEvents="none" colors={[`${t.accent}20`, `${t.base}18`, `${t.end}24`]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.cardSheen} />
+                {desktopReader ? (
+                  <Pressable style={styles.desktopSurahHeader} onPress={openPicker} testID="reader-surah-picker-open">
+                    <Text style={styles.surahTitle}>{meta.name}</Text>
+                    <Icon name="chevron-down" size={19} color={colors.muted} />
+                    <Text style={styles.ayahCount}>{numberInSurah} / {meta.ayahs}</Text>
+                  </Pressable>
+                ) : (
+                  <>
+                    <View style={styles.cardTop}>
+                      <Pressable style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]} accessibilityRole="button" accessibilityLabel={audio.isPlaying ? "Pause recitation" : "Play recitation"} onPress={() => audio.toggle(surahNum!, numberInSurah)} hitSlop={4} testID="reader-speaker">
+                        {audio.isLoading ? <ActivityIndicator color={colors.gold} size="small" /> : <Icon name={audio.isPlaying ? "pause-circle" : "volume-high"} size={26} color={colors.gold} />}
+                      </Pressable>
+                      <Pressable style={styles.surahTitleBtn} onPress={openPicker} testID="reader-surah-picker-open">
+                        <Text style={styles.surahTitle}>{meta.name}</Text>
+                        <Icon name="chevron-down" size={20} color={colors.onSurface} />
+                      </Pressable>
+                      <Pressable style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]} accessibilityRole="button" accessibilityLabel={bookmarked ? "Remove bookmark" : "Bookmark verse"} onPress={() => surahNum && toggleBookmark(surahNum, numberInSurah)} hitSlop={4} testID="reader-bookmark">
+                        <Icon name={bookmarked ? "heart" : "heart-outline"} size={24} color={colors.gold} />
+                      </Pressable>
+                    </View>
+                    <Text style={styles.ayahCount}>{numberInSurah} / {meta.ayahs}</Text>
+                  </>
+                )}
+                {audio.error ? <Text style={styles.audioError}>Audio unavailable for this verse.</Text> : null}
 
-              <View style={styles.translationDivider} />
-              <Text style={styles.translationLabel}>TRANSLATION</Text>
-              <ScrollView
-                ref={translationScrollRef}
-                nestedScrollEnabled
-                persistentScrollbar
-                showsVerticalScrollIndicator
-                style={styles.translationScroll}
-                contentContainerStyle={styles.translationScrollContent}
-                testID="reader-translation-scroll"
-              >
-                <Text selectable maxFontSizeMultiplier={1.15} style={styles.english} testID="reader-english">
-                  {ayah.english}
-                </Text>
-              </ScrollView>
-              <ReaderTextActions key={`en-${surahNum}-${numberInSurah}`} text={ayah.english} reference={`${meta.name} ${surahNum}:${numberInSurah}`} theme={t} label="translation" />
-            </View>
-          </Animated.View>
+                <ScrollView
+                  ref={arabicScrollRef}
+                  style={{ maxHeight: arabicViewportHeight, flexGrow: 0, marginTop: desktopReader ? 28 : 22 }}
+                  nestedScrollEnabled
+                  showsVerticalScrollIndicator
+                  persistentScrollbar
+                  contentContainerStyle={styles.arabicScrollContent}
+                  testID="reader-arabic-scroll"
+                >
+                  <Text selectable maxFontSizeMultiplier={1} style={[styles.arabic, { fontSize: arabicSize, lineHeight: compactReader ? 46 : 58, fontWeight: "400" }]} testID="reader-arabic">
+                    {ayah.arabic}
+                  </Text>
+                </ScrollView>
+                <ReaderTextActions key={`ar-${surahNum}-${numberInSurah}`} text={ayah.arabic} reference={`${meta.name} ${surahNum}:${numberInSurah}`} theme={t} label="Arabic verse" />
+
+                <View style={styles.translationDivider} />
+                <Text style={styles.translationLabel}>TRANSLATION</Text>
+                <ScrollView
+                  ref={translationScrollRef}
+                  nestedScrollEnabled
+                  persistentScrollbar
+                  showsVerticalScrollIndicator
+                  style={styles.translationScroll}
+                  contentContainerStyle={styles.translationScrollContent}
+                  testID="reader-translation-scroll"
+                >
+                  <Text selectable maxFontSizeMultiplier={1.15} style={styles.english} testID="reader-english">
+                    {ayah.english}
+                  </Text>
+                </ScrollView>
+                <ReaderTextActions key={`en-${surahNum}-${numberInSurah}`} text={ayah.english} reference={`${meta.name} ${surahNum}:${numberInSurah}`} theme={t} label="translation" />
+              </View>
+            </Animated.View>
+
+            {desktopReader ? (
+              <View style={styles.infoPanel}>
+                <View>
+                  <Text style={styles.infoEyebrow}>READING SESSION</Text>
+                  <Text style={styles.infoTitle}>{meta.name}</Text>
+                  <Text style={styles.infoMeta}>Ayah {numberInSurah} of {meta.ayahs}</Text>
+                </View>
+
+                <View style={styles.infoDivider} />
+
+                <View style={styles.infoBlock}>
+                  <View style={styles.infoLine}>
+                    <Text style={styles.infoLabel}>Progress</Text>
+                    <Text style={styles.infoValue}>{percent}%</Text>
+                  </View>
+                  <View style={styles.infoTrack}><View style={[styles.infoTrackFill, { width: `${percent}%` }]} /></View>
+                  <Text style={styles.infoFoot}>Juz {juz} · {versesLeft} verses left</Text>
+                </View>
+
+                <View style={styles.infoBlock}>
+                  <Text style={styles.infoLabel}>Recitation</Text>
+                  <Text style={styles.infoStrong}>{activeReciter.name}</Text>
+                  <Text style={styles.infoFoot}>{settings.speed.toFixed(2).replace(/0$/, "")}× speed · {settings.autoplay ? "Autoplay on" : "Autoplay off"}</Text>
+                </View>
+
+                <View style={styles.infoStats}>
+                  <View style={styles.infoStat}>
+                    <Icon name="clock-outline" size={18} color={colors.gold} />
+                    <Text style={styles.infoStatValue}>{formatClock(sessionView.seconds)}</Text>
+                    <Text style={styles.infoStatLabel}>Session</Text>
+                  </View>
+                  <View style={styles.infoStat}>
+                    <Icon name="book-open-page-variant" size={18} color={colors.gold} />
+                    <Text style={styles.infoStatValue}>{formatK(todayAyat)}</Text>
+                    <Text style={styles.infoStatLabel}>Today</Text>
+                  </View>
+                  <View style={styles.infoStat}>
+                    <Icon name="heart" size={18} color={colors.gold} />
+                    <Text style={styles.infoStatValue}>{formatK(todayHasanaat)}</Text>
+                    <Text style={styles.infoStatLabel}>Hasanaat</Text>
+                  </View>
+                </View>
+
+                <Pressable
+                  onPress={() => setQuickSettingsVisible(true)}
+                  style={({ pressed }) => [styles.infoSettings, pressed && styles.pressed]}
+                >
+                  <Icon name="tune-variant" size={19} color={colors.gold} />
+                  <Text style={styles.infoSettingsText}>Reader settings</Text>
+                  <Icon name="chevron-right" size={17} color={colors.muted} />
+                </Pressable>
+              </View>
+            ) : null}
+          </View>
         )}
 
       </ScrollView>
