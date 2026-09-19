@@ -46,7 +46,7 @@ test('dashboard periods and streak markers respect local days and week boundarie
   assert.equal(dashboard.readingDayState(history, '2026-09-16', '2026-09-17'), 'read');
   assert.equal(dashboard.readingDayState({ '2026-09-15': { hasanaat: 0, ayat: 0, seconds: 45 } }, '2026-09-15', '2026-09-17'), 'read');
   assert.equal(dashboard.readingDayState({}, '2026-09-17', '2026-09-17'), 'pending');
-  assert.equal(dashboard.readingDayState({}, '2026-09-15', '2026-09-17'), 'untracked');
+  assert.equal(dashboard.readingDayState({}, '2026-09-15', '2026-09-17'), 'missed');
   assert.equal(dashboard.readingDayState({}, '2026-09-18', '2026-09-17'), 'future');
   assert.equal(dates.computeStreak(history, ref), 2);
   assert.equal(dates.computeStreak({
@@ -583,8 +583,8 @@ test('bottom tabs stay mounted, switch without animation and load icon font befo
   assert.match(tabs, /animation:\s*"none"/);
   assert.doesNotMatch(tabs, /Animated\./);
   assert.match(tabs, /<Icon name=\{meta\.icon\} size=\{26\}/);
-  assert.match(tabs, /width:\s*94/);
-  assert.match(tabs, /<BrandMark size=\{58\}/);
+  assert.match(tabs, /width:\s*128/);
+  assert.match(tabs, /<BrandLockup/);
   assert.match(rootLayout, /"Material Design Icons":\s*require\("@react-native-vector-icons\/material-design-icons\/fonts\/MaterialDesignIcons\.ttf"\)/);
 });
 
@@ -593,7 +593,7 @@ test('web desktop shell uses a compact rail, wide dashboard and adaptive Reader 
   const home = fs.readFileSync(path.join(root, 'app/(tabs)/index.tsx'), 'utf8');
   const reader = fs.readFileSync(path.join(root, 'app/reader.tsx'), 'utf8');
   const brand = fs.readFileSync(path.join(root, 'src/components/BrandMark.tsx'), 'utf8');
-  assert.match(tabs, /width:\s*94/);
+  assert.match(tabs, /width:\s*128/);
   assert.match(home, /maxWidth:\s*1580/);
   assert.match(home, /Quick access/);
   assert.match(home, /Weekly journey/);
@@ -607,11 +607,11 @@ test('web desktop shell uses a compact rail, wide dashboard and adaptive Reader 
 test('web favicon uses the versioned asset in Expo config and document head', () => {
   const config = fs.readFileSync(path.join(root, 'app.json'), 'utf8');
   const layout = fs.readFileSync(path.join(root, 'app/_layout.tsx'), 'utf8');
-  assert.match(config, /favicon-web-v3\.png/);
+  assert.match(config, /favicon-web-v4\.png/);
   assert.doesNotMatch(config, /"favicon": "\.\/assets\/images\/icon\.png"/);
-  assert.match(layout, /\/favicon-web-v3\.png/);
-  assert.ok(fs.existsSync(path.join(root, 'public/favicon-web-v3.png')));
-  assert.ok(fs.existsSync(path.join(root, 'assets/images/favicon-web-v3.png')));
+  assert.match(layout, /\/favicon-web-v4\.png/);
+  assert.ok(fs.existsSync(path.join(root, 'public/favicon-web-v4.png')));
+  assert.ok(fs.existsSync(path.join(root, 'assets/images/favicon-web-v4.png')));
 });
 
 test('top streak badge avoids duplicate red-green week state and links progress metrics', () => {
