@@ -103,7 +103,6 @@ export default function Reader() {
     mountedRef.current = true;
     return () => {
       mountedRef.current = false;
-      exitingRef.current = true;
     };
   }, []);
 
@@ -332,7 +331,7 @@ export default function Reader() {
     });
   };
 
-  const arabicSize = compactReader ? 27 : 34;
+  const arabicSize = compactReader ? 31 : 39;
   const arabicViewportHeight = Math.max(180, Math.min(420, windowHeight * 0.42));
 
   return (
@@ -347,7 +346,7 @@ export default function Reader() {
         ayah={numberInSurah}
         totalAyahs={meta.ayahs}
         onOpenSettings={() => setQuickSettingsVisible(true)}
-        onBack={() => exitReader("/read")}
+        onBack={imDone}
       />
       <ReaderQuickSettings
         visible={quickSettingsVisible}
@@ -381,10 +380,7 @@ export default function Reader() {
           <View style={[styles.workspace, !desktopReader && styles.workspaceCompact]}>
             {desktopReader ? (
               <View style={styles.toolRail}>
-                <Pressable style={({ pressed }) => [styles.toolButton, pressed && styles.pressed]} onPress={goPrev} accessibilityLabel="Previous ayah">
-                  <Icon name="arrow-up" size={21} color={colors.gold} />
-                  <Text style={styles.toolLabel}>Previous</Text>
-                </Pressable>
+                <Text style={styles.toolRailEyebrow}>AYAH TOOLS</Text>
                 <Pressable
                   style={({ pressed }) => [styles.toolButton, styles.toolButtonPrimary, pressed && styles.pressed]}
                   onPress={() => audio.toggle(surahNum!, numberInSurah)}
@@ -392,7 +388,7 @@ export default function Reader() {
                 >
                   {audio.isLoading
                     ? <ActivityIndicator color={colors.gold} size="small" />
-                    : <Icon name={audio.isPlaying ? "pause" : "play"} size={25} color={colors.gold} />}
+                    : <Icon name={audio.isPlaying ? "pause" : "play"} size={27} color={colors.gold} />}
                   <Text style={styles.toolLabel}>{audio.isPlaying ? "Pause" : "Listen"}</Text>
                 </Pressable>
                 <Pressable
@@ -400,12 +396,8 @@ export default function Reader() {
                   onPress={() => surahNum && toggleBookmark(surahNum, numberInSurah)}
                   accessibilityLabel={bookmarked ? "Remove bookmark" : "Bookmark ayah"}
                 >
-                  <Icon name={bookmarked ? "bookmark" : "bookmark-outline"} size={22} color={colors.gold} />
-                  <Text style={styles.toolLabel}>Save</Text>
-                </Pressable>
-                <Pressable style={({ pressed }) => [styles.toolButton, pressed && styles.pressed]} onPress={() => goNext(true)} accessibilityLabel="Next ayah">
-                  <Icon name="arrow-down" size={21} color={colors.gold} />
-                  <Text style={styles.toolLabel}>Next</Text>
+                  <Icon name={bookmarked ? "bookmark" : "bookmark-outline"} size={25} color={colors.gold} />
+                  <Text style={styles.toolLabel}>{bookmarked ? "Saved" : "Save"}</Text>
                 </Pressable>
               </View>
             ) : null}
@@ -422,9 +414,11 @@ export default function Reader() {
                 <LinearGradient pointerEvents="none" colors={[`${t.accent}20`, `${t.base}18`, `${t.end}24`]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.cardSheen} />
                 {desktopReader ? (
                   <Pressable style={styles.desktopSurahHeader} onPress={openPicker} testID="reader-surah-picker-open">
-                    <Text style={styles.surahTitle}>{meta.name}</Text>
-                    <Icon name="chevron-down" size={19} color={colors.muted} />
-                    <Text style={styles.ayahCount}>{numberInSurah} / {meta.ayahs}</Text>
+                    <View style={styles.desktopSurahTitleRow}>
+                      <Text style={styles.surahTitle}>{meta.name}</Text>
+                      <Icon name="chevron-down" size={21} color={colors.muted} />
+                    </View>
+                    <Text style={styles.ayahCount}>Ayah {numberInSurah} of {meta.ayahs}</Text>
                   </Pressable>
                 ) : (
                   <>
@@ -454,7 +448,7 @@ export default function Reader() {
                   contentContainerStyle={styles.arabicScrollContent}
                   testID="reader-arabic-scroll"
                 >
-                  <Text selectable maxFontSizeMultiplier={1} style={[styles.arabic, { fontSize: arabicSize, lineHeight: compactReader ? 46 : 58, fontWeight: "400" }]} testID="reader-arabic">
+                  <Text selectable maxFontSizeMultiplier={1} style={[styles.arabic, { fontSize: arabicSize, lineHeight: compactReader ? 52 : 66, fontWeight: "400" }]} testID="reader-arabic">
                     {ayah.arabic}
                   </Text>
                 </ScrollView>
@@ -634,25 +628,34 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   progressTrack: { height: 3, borderRadius: 999, backgroundColor: colors.surfaceTertiary, overflow: "hidden" },
   progressFill: { height: 3, borderRadius: 999, backgroundColor: colors.brandPrimary },
   progressMeta: { flexDirection: "row", justifyContent: "space-between" },
-  progressText: { color: colors.muted, fontSize: 12, fontWeight: "600" },
+  progressText: { color: colors.onSurface, fontSize: 14, lineHeight: 18, fontWeight: "800" },
 
   readingViewport: { flex: 1, minHeight: 0 },
   scroll: { width: "100%", maxWidth: 1500, alignSelf: "center", paddingHorizontal: 28, paddingTop: 14, paddingBottom: 28 },
   workspace: { width: "100%", flexDirection: "row", alignItems: "stretch", justifyContent: "center", gap: 16 },
   workspaceCompact: { flexDirection: "column", alignItems: "center" },
   toolRail: {
-    width: 78,
-    minWidth: 78,
-    padding: 8,
-    gap: 9,
+    width: 92,
+    minWidth: 92,
+    padding: 10,
+    gap: 10,
     borderRadius: 24,
     borderWidth: 1,
     borderColor: colors.borderStrong,
-    backgroundColor: "rgba(5,6,10,0.78)",
+    backgroundColor: "rgba(5,6,10,0.82)",
     alignSelf: "flex-start",
   },
+  toolRailEyebrow: {
+    color: colors.gold,
+    fontSize: 9.5,
+    lineHeight: 12,
+    fontWeight: "900",
+    letterSpacing: 1.1,
+    textAlign: "center",
+    marginBottom: 1,
+  },
   toolButton: {
-    minHeight: 64,
+    minHeight: 74,
     borderRadius: 17,
     borderWidth: 1,
     borderColor: colors.border,
@@ -667,7 +670,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderColor: colors.borderStrong,
     backgroundColor: colors.goldSoft,
   },
-  toolLabel: { color: colors.muted, fontSize: 8.5, lineHeight: 11, fontWeight: "800", textAlign: "center" },
+  toolLabel: { color: colors.onSurface, fontSize: 11.5, lineHeight: 15, fontWeight: "900", textAlign: "center" },
   readingStack: { width: "100%", maxWidth: 1060, alignSelf: "center" },
   readingStackDesktop: { flex: 1, minWidth: 0, maxWidth: 1040 },
   infoPanel: {
@@ -681,16 +684,16 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     backgroundColor: "rgba(5,6,10,0.82)",
     alignSelf: "flex-start",
   },
-  infoEyebrow: { color: colors.gold, fontSize: 8.5, lineHeight: 11, fontWeight: "900", letterSpacing: 1.45 },
-  infoTitle: { color: colors.onSurface, fontFamily: serifFont, fontSize: 22, lineHeight: 27, fontWeight: "800", marginTop: 5 },
-  infoMeta: { color: colors.muted, fontSize: 10, lineHeight: 14, marginTop: 2 },
+  infoEyebrow: { color: colors.gold, fontSize: 10.5, lineHeight: 14, fontWeight: "900", letterSpacing: 1.55 },
+  infoTitle: { color: colors.onSurface, fontFamily: serifFont, fontSize: 27, lineHeight: 33, fontWeight: "900", marginTop: 6 },
+  infoMeta: { color: colors.muted, fontSize: 12.5, lineHeight: 17, fontWeight: "700", marginTop: 3 },
   infoDivider: { height: 1, backgroundColor: colors.border, opacity: 0.8 },
   infoBlock: { gap: 7 },
   infoLine: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
-  infoLabel: { color: colors.muted, fontSize: 9.5, lineHeight: 13, fontWeight: "800" },
-  infoValue: { color: colors.gold, fontSize: 11, lineHeight: 14, fontWeight: "900" },
-  infoStrong: { color: colors.onSurface, fontSize: 12.5, lineHeight: 17, fontWeight: "800" },
-  infoFoot: { color: colors.muted, fontSize: 9, lineHeight: 13 },
+  infoLabel: { color: colors.onSurface, fontSize: 11.5, lineHeight: 15, fontWeight: "900" },
+  infoValue: { color: colors.gold, fontSize: 13.5, lineHeight: 17, fontWeight: "900" },
+  infoStrong: { color: colors.onSurface, fontSize: 14.5, lineHeight: 19, fontWeight: "900" },
+  infoFoot: { color: colors.muted, fontSize: 10.5, lineHeight: 15, fontWeight: "600" },
   infoTrack: { height: 4, borderRadius: 3, backgroundColor: colors.surfaceTertiary, overflow: "hidden" },
   infoTrackFill: { height: 4, borderRadius: 3, backgroundColor: colors.gold },
   infoStats: { flexDirection: "row", gap: 6 },
@@ -707,8 +710,8 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     justifyContent: "center",
     gap: 2,
   },
-  infoStatValue: { color: colors.onSurface, fontSize: 11, lineHeight: 14, fontWeight: "900" },
-  infoStatLabel: { color: colors.muted, fontSize: 7.5, lineHeight: 10, fontWeight: "700" },
+  infoStatValue: { color: colors.onSurface, fontSize: 13, lineHeight: 17, fontWeight: "900" },
+  infoStatLabel: { color: colors.muted, fontSize: 9, lineHeight: 12, fontWeight: "800" },
   infoSettings: {
     minHeight: 42,
     borderRadius: 14,
@@ -721,7 +724,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     gap: 8,
     cursor: "pointer",
   },
-  infoSettingsText: { flex: 1, color: colors.onSurface, fontSize: 10.5, lineHeight: 14, fontWeight: "800" },
+  infoSettingsText: { flex: 1, color: colors.onSurface, fontSize: 12.5, lineHeight: 16, fontWeight: "900" },
   loader: { paddingVertical: 60, alignItems: "center", gap: 16 },
   errorText: { color: colors.muted, fontSize: 15 },
   retryBtn: { backgroundColor: colors.brandPrimary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12 },
@@ -747,10 +750,11 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   iconButton: { width: 44, height: 44, alignItems: "center", justifyContent: "center", borderRadius: 22, backgroundColor: colors.goldSoft, borderWidth: 1, borderColor: colors.borderStrong },
   pressed: { opacity: 0.7, transform: [{ scale: 0.97 }] },
   cardTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  desktopSurahHeader: { alignSelf: "center", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 5, paddingHorizontal: 14, paddingVertical: 7, borderRadius: 13, backgroundColor: colors.surfaceTertiary, cursor: "pointer" },
+  desktopSurahHeader: { alignSelf: "center", minWidth: 250, alignItems: "center", justifyContent: "center", gap: 3, paddingHorizontal: 18, paddingVertical: 10, borderRadius: 16, backgroundColor: colors.surfaceTertiary, cursor: "pointer" },
+  desktopSurahTitleRow: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 5 },
   surahTitleBtn: { flex: 1, flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 4, paddingHorizontal: 8 },
-  surahTitle: { flexShrink: 1, textAlign: "center", color: colors.onSurface, fontSize: 26, fontFamily: serifFont, fontWeight: "800", letterSpacing: -0.45 },
-  ayahCount: { color: colors.muted, fontSize: 12, fontWeight: "700", textAlign: "center", marginTop: 4, letterSpacing: 0.35 },
+  surahTitle: { flexShrink: 1, textAlign: "center", color: colors.onSurface, fontSize: 31, lineHeight: 37, fontFamily: serifFont, fontWeight: "900", letterSpacing: -0.7 },
+  ayahCount: { color: colors.muted, fontSize: 13, lineHeight: 17, fontWeight: "800", textAlign: "center", marginTop: 2, letterSpacing: 0.3 },
   audioError: { color: colors.warning, fontSize: 12, textAlign: "center", marginTop: 6 },
 
   bismillah: { color: colors.gold, textAlign: "center", marginTop: 18, writingDirection: "rtl" },
@@ -769,10 +773,10 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   arabicScrollContent: { paddingHorizontal: 12, paddingBottom: 10 },
   translationDivider: { height: 1, backgroundColor: colors.borderStrong, marginTop: 20, marginBottom: 22, opacity: 0.72 },
-  translationLabel: { color: colors.gold, fontSize: 10, letterSpacing: 2.1, fontWeight: "900", textAlign: "center", marginBottom: 10 },
+  translationLabel: { color: colors.gold, fontSize: 12.5, lineHeight: 16, letterSpacing: 2.25, fontWeight: "900", textAlign: "center", marginBottom: 12 },
   translationScroll: { maxHeight: 230, flexGrow: 0, width: "100%", maxWidth: 860, alignSelf: "center" },
   translationScrollContent: { paddingHorizontal: 20, paddingVertical: 4 },
-  english: { width: "100%", maxWidth: 820, alignSelf: "center", color: colors.onSurface, fontSize: 18, lineHeight: 30, fontWeight: "500", textAlign: "center" },
+  english: { width: "100%", maxWidth: 820, alignSelf: "center", color: colors.onSurface, fontSize: 21, lineHeight: 34, fontWeight: "700", textAlign: "center" },
 
 
   actions: {
@@ -808,7 +812,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderColor: colors.borderStrong,
     backgroundColor: colors.goldSoft,
   },
-  sideActionLabel: { color: colors.gold, fontSize: 10.5, fontWeight: "700" },
+  sideActionLabel: { color: colors.gold, fontSize: 12.5, lineHeight: 16, fontWeight: "900" },
   doneBtn: {
     flex: 1.35,
     backgroundColor: colors.brandPrimary,
@@ -818,7 +822,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     paddingVertical: 12,
     alignItems: "center",
   },
-  doneText: { color: colors.onBrandPrimary, fontSize: 14, fontWeight: "900" },
+  doneText: { color: colors.onBrandPrimary, fontSize: 16.5, lineHeight: 20, fontWeight: "900" },
   nextAction: {
     flex: 1,
     minHeight: 50,
@@ -832,8 +836,8 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderColor: colors.borderStrong,
   },
   nextInner: { flexDirection: "row", alignItems: "center", gap: 3 },
-  nextValue: { color: colors.onSurface, fontSize: 15, fontWeight: "800" },
-  nextLabel: { color: colors.onSurface, fontSize: 11, opacity: 0.85 },
+  nextValue: { color: colors.onSurface, fontSize: 17, lineHeight: 20, fontWeight: "900" },
+  nextLabel: { color: colors.onSurface, fontSize: 12.5, lineHeight: 16, fontWeight: "800", opacity: 0.9 },
 
   modalBackdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.6)" },
   sheet: {
