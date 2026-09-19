@@ -1,5 +1,5 @@
 import { Text } from "@/src/components/AppText";
-import { usePathname, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import { Pressable, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -11,11 +11,9 @@ export function SubHeader({ title, showBack = true }: { title: string; showBack?
   const styles = useStyles();
   const { colors } = useTheme();
   const router = useRouter();
-  const pathname = usePathname();
   const insets = useSafeAreaInsets();
   const goBack = () => {
-    if (pathname.startsWith("/settings/")) router.replace("/preferences");
-    else if (pathname.startsWith("/name/")) router.replace("/names");
+    if (router.canGoBack()) router.back();
     else router.replace("/");
   };
   return (
@@ -38,6 +36,6 @@ const useStyles = makeStyles((colors) => ({
     paddingBottom: 12,
     backgroundColor: colors.surface,
   },
-  side: { width: 40, height: 40, alignItems: "center", justifyContent: "center" },
-  title: { color: colors.onSurface, fontSize: 19, fontWeight: "700" },
+  side: { width: 44, height: 44, borderRadius: 14, alignItems: "center", justifyContent: "center" },
+  title: { color: colors.onSurface, fontSize: 23, lineHeight: 28, fontWeight: "900", letterSpacing: -0.35 },
 }));
