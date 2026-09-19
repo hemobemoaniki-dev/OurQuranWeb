@@ -3,7 +3,6 @@ import { Tabs } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { memo } from "react";
 import { Pressable, View } from "react-native";
-import { Image } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Icon, type IconName } from "@/src/components/Icon";
@@ -86,13 +85,8 @@ function CustomTabBar({ state, navigation }: any) {
 
       <View style={styles.brand}>
         <View style={[styles.brandMark, { borderColor: colors.goldBorder, backgroundColor: colors.goldSoft }]}>
-          <Image
-            source={require("../../assets/images/icon.png")}
-            style={styles.brandLogo}
-            contentFit="cover"
-            transition={0}
-            accessibilityLabel="OurQuran"
-          />
+          <Icon name="star-crescent" size={23} color={colors.gold} />
+          <View style={[styles.brandSpark, { backgroundColor: colors.gold }]} />
         </View>
         <View style={styles.brandCopy}>
           <Text style={[styles.brandName, { color: scheme === "dark" ? "#FFFFFF" : "#15120D" }]}>OurQuran</Text>
@@ -148,6 +142,10 @@ const useStyles = makeStyles((c) => ({
     paddingHorizontal: 14,
     backgroundColor: c.surface,
     borderRightWidth: 1,
+    shadowColor: "#000000",
+    shadowOpacity: 0.34,
+    shadowRadius: 24,
+    shadowOffset: { width: 10, height: 0 },
     overflow: "hidden",
   },
   background: {
@@ -173,7 +171,7 @@ const useStyles = makeStyles((c) => ({
     alignItems: "center",
     justifyContent: "center",
   },
-  brandLogo: { width: 36, height: 36, borderRadius: 10 },
+  brandSpark: { position: "absolute", right: 7, bottom: 7, width: 4, height: 4, borderRadius: 2 },
   brandCopy: { flex: 1, minWidth: 0, gap: 2 },
   brandName: { fontSize: 19, lineHeight: 23, fontWeight: "900", letterSpacing: -0.4 },
   brandTag: { color: c.gold, fontSize: 7, lineHeight: 10, fontWeight: "900", letterSpacing: 1.25 },
@@ -194,7 +192,7 @@ const useStyles = makeStyles((c) => ({
     borderWidth: 1,
     borderColor: c.goldBorder,
   },
-  itemPressed: { opacity: 0.68 },
+  itemPressed: { opacity: 0.72, transform: [{ scale: 0.985 }] },
   iconSlot: {
     width: 38,
     height: 38,
