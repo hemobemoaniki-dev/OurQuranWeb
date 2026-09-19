@@ -67,7 +67,8 @@ function ErrorFallback({ error, resetError }: { error: Error; resetError: () => 
         <View style={styles.actions}>
           <Pressable
             onPress={() => {
-              resetError();
+              // Changing the route changes resetKey; the boundary then clears
+              // itself without re-rendering the crashing route first.
               router.replace("/");
             }}
             testID="error-fallback-home"
