@@ -589,6 +589,55 @@ test('dashboard quick access complements rather than duplicates primary sidebar 
   assert.doesNotMatch(home, /<QuickAction[^>]+label="99 Names"/);
 });
 
+test('every statically referenced web icon has a real SVG mapping', () => {
+  const iconSource = fs.readFileSync(path.join(root, 'src/components/Icon.web.tsx'), 'utf8');
+  const aliasesBlock = iconSource.match(/const aliases:[\s\S]*?=\s*\{([\s\S]*?)\n\};/)?.[1] ?? '';
+  const nodesBlock = iconSource.match(/const nodes:[\s\S]*?=\s*\{([\s\S]*?)\n\};/)?.[1] ?? '';
+  const supported = new Set();
+  for (const match of aliasesBlock.matchAll(/["']([^"']+)["']\s*:/g)) supported.add(match[1]);
+  for (const match of nodesBlock.matchAll(/^\s*([A-Za-z][A-Za-z0-9_]*)\s*:/gm)) supported.add(match[1]);
+
+  function visit(dir) {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) visit(full);
+      else if (entry.isFile() && /\.tsx$/.test(entry.name)) checkFile(full);
+    }
+  }
+
+  function collectStrings(node, out) {
+    if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) out.add(node.text);
+    ts.forEachChild(node, child => collectStrings(child, out));
+  }
+
+  function checkFile(file) {
+    const code = fs.readFileSync(file, 'utf8');
+    const ast = ts.createSourceFile(file, code, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+    const names = new Set();
+    function walk(node) {
+      if ((ts.isJsxSelfClosingElement(node) || ts.isJsxOpeningElement(node)) && node.tagName.getText(ast) === 'Icon') {
+        const attr = node.attributes.properties.find(p => ts.isJsxAttribute(p) && p.name.getText(ast) === 'name');
+        if (attr?.initializer) {
+          if (ts.isStringLiteral(attr.initializer)) names.add(attr.initializer.text);
+          else if (ts.isJsxExpression(attr.initializer) && attr.initializer.expression) collectStrings(attr.initializer.expression, names);
+        }
+      }
+      ts.forEachChild(node, walk);
+    }
+    walk(ast);
+    for (const name of names) assert.ok(supported.has(name), `Missing web icon mapping for "${name}" referenced by ${path.relative(root, file)}`);
+  }
+
+  visit(path.join(root, 'app'));
+  visit(path.join(root, 'src/components'));
+
+  // Dynamic icon configuration objects also feed <Icon name={...}>.
+  for (const dynamic of ['cellphone', 'calendar-check']) {
+    assert.ok(supported.has(dynamic), `Missing dynamic web icon mapping for "${dynamic}"`);
+  }
+  assert.doesNotMatch(iconSource, /M9 12h6M12 9v6/);
+});
+
 test('web icon set renders pause bookmark close and account glyphs instead of fallback plus', () => {
   const icons = fs.readFileSync(path.join(root, 'src/components/Icon.web.tsx'), 'utf8');
   assert.match(icons, /"pause": "pause"/);
