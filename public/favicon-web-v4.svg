@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <radialGradient id="bg" cx="42%" cy="38%" r="70%">
+      <stop offset="0" stop-color="#4b370c"/>
+      <stop offset="0.58" stop-color="#2f2108"/>
+      <stop offset="1" stop-color="#171006"/>
+    </radialGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fff0a2"/>
+      <stop offset="0.42" stop-color="#f3cb45"/>
+      <stop offset="1" stop-color="#b98212"/>
+    </linearGradient>
+    <filter id="glow" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="2.6" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <rect x="0" y="0" width="64" height="64" rx="15" fill="#1a1207"/>
+  <circle cx="31" cy="33" r="23" fill="url(#bg)"/>
+  <circle cx="31" cy="33" r="20.5" fill="none" stroke="#d6a629" stroke-opacity=".30" stroke-width="1.2"/>
+
+  <g filter="url(#glow)" stroke="url(#gold)" fill="none" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M18 48h27" stroke-width="3"/>
+    <path d="M20 48V31h4v-6c0-4.8 3.2-8.5 7-8.5s7 3.7 7 8.5v6h5v17" stroke-width="3.2"/>
+    <path d="M25 31h12" stroke-width="3.2"/>
+    <path d="M28 16.6c.5-3 1.6-4.8 3-6 .2 2.6 1.5 4.2 3.7 5.7" stroke-width="2.1"/>
+    <path d="M29 48v-8.7c0-2.1 1.2-3.8 3-3.8s3 1.7 3 3.8V48" stroke-width="2.5"/>
+  </g>
+
+  <path d="M51 9l2.7 2.7L51 14.4l-2.7-2.7z" fill="url(#gold)" filter="url(#glow)"/>
+</svg>
