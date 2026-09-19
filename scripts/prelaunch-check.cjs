@@ -700,15 +700,16 @@ test('account sync avoids Firestore Listen streams and refreshes only while acti
   assert.match(source, /15000/);
 });
 
-test('home primary actions share the high-contrast translucent visual language', () => {
+test('home primary actions use the new compact web-native visual language', () => {
   const home = fs.readFileSync(path.join(root, 'app/(tabs)/index.tsx'), 'utf8');
-  assert.match(home, /const highContrast = scheme === "dark" \? "#FFFFFF" : "#111111"/);
   assert.match(home, /continue-reading-card/);
-  assert.match(home, /<Icon name="arrow-right" size=\{31\} color=\{highContrast\}/);
+  assert.match(home, /Read now/);
   assert.match(home, /dashboard-period-/);
-  assert.match(home, /period === p\.key \? colors\.gold : highContrast/);
-  assert.match(home, /rgba\(212,175,55,0\.16\)/);
-  assert.match(home, /rgba\(212,175,55,0\.11\)/);
+  assert.match(home, /Quick access/);
+  assert.match(home, /Weekly journey/);
+  assert.match(home, /maxWidth:\s*1580/);
+  assert.match(home, /<BrandMark size=\{148\}/);
+  assert.match(home, /rgba\(212,175,55,0\.24\)/);
 });
 
 test('reminder replacements serialize; disable cancels; denied permission rejects', async () => {
