@@ -24,6 +24,7 @@ import {
   defaultAccount,
   fromRemote,
   mergeAccounts,
+  normalizeSettings,
 } from "@/src/lib/account";
 import { todayKey } from "@/src/lib/dates";
 import { queueCrownCelebrationIfEarned } from "@/src/lib/streak-crown";
@@ -78,6 +79,7 @@ type ReaderApi = Pick<AccountApi, "hydrated" | "saveReaderPosition" | "commitRew
 const ReaderContext = createContext<ReaderApi | null>(null);
 
 const GUEST_KEY = "guest_account_v2";
+const GUEST_PREFS_KEY = "guest_preferences_v1";
 const accountKey = (uid: string) => `account_v1_${uid}`;
 
 function strip<T>(obj: T): T {
@@ -111,6 +113,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
 
   const accountRef = useRef(account);
   const userRef = useRef(user);
+  const guestCarryRef = useRef<Account | null>(null);
   const readyRef = useRef(false);
   const deviceRef = useRef("");
   const setAccount = useCallback((value: Account | ((a: Account) => Account)) => {
@@ -128,8 +131,12 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
 
   // --- persistence ---------------------------------------------------------
   const persist = useCallback((a: Account) => {
-    const key = a.uid ? accountKey(a.uid) : GUEST_KEY;
-    void accountWriter.current(key, a);
+    if (!a.uid) {
+      // Anonymous reading activity is session-only. Only personalization stays local.
+      void storage.setItem<any>(GUEST_PREFS_KEY, { settings: a.settings });
+      return;
+    }
+    void accountWriter.current(accountKey(a.uid), a);
   }, []);
 
   // --- firestore push (transaction merge) ----------------------------------
@@ -242,6 +249,12 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
   // --- auth listener -------------------------------------------------------
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => {
+      const previousUser = userRef.current;
+      if (u && !previousUser && !accountRef.current.uid) {
+        guestCarryRef.current = accountRef.current;
+      } else if (!u) {
+        guestCarryRef.current = null;
+      }
       authGeneration.current += 1;
       readyRef.current = false;
       pendingSync.current = false;
@@ -271,25 +284,20 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
       if (!existingDevice) await storage.setItem("sync_device_v1", deviceRef.current);
       if (cancelled) return;
       if (!user) {
-        let g = await storage.getItem<any>(GUEST_KEY, null);
-        // Never show or import an account-shaped legacy cache as a guest.
-        // Leave the original cache intact for recovery; do not delete progress.
-        const migrated = await storage.getItem<boolean>("guest_v2_migrated", false);
-        if (!g && !migrated) {
-          const legacy = await storage.getItem<any>("guest_account_v1", null);
-          if (legacy && !legacy.uid && !legacy.email && !legacy.fullName && !legacy.username && !legacy.photoURL) g = legacy;
-        }
+        // Guest reading activity never survives a refresh. Purge legacy guest
+        // progress while keeping harmless local preferences.
+        const guestPrefs = await storage.getItem<any>(GUEST_PREFS_KEY, null);
+        await Promise.all([
+          storage.removeItem(GUEST_KEY),
+          storage.removeItem("guest_account_v1"),
+          storage.removeItem("guest_v2_migrated"),
+          storage.removeItem("session_clock_v1"),
+          storage.removeItem("session_clock_v2_guest"),
+        ]);
         if (cancelled) return;
-        const guestAccount = g && !g.uid ? fromRemote("", g) : defaultAccount();
-        guestAccount.email = "";
-        guestAccount.fullName = "";
-        guestAccount.username = "";
-        guestAccount.photoURL = "";
-        guestAccount.profile = { bio: "" };
+        const guestAccount = defaultAccount();
+        if (guestPrefs?.settings) guestAccount.settings = normalizeSettings(guestPrefs.settings);
         setAccount(guestAccount);
-        const stored = await accountWriter.current(GUEST_KEY, guestAccount);
-        if (stored) await storage.setItem("guest_v2_migrated", true);
-        if (cancelled) return;
         setIsGuest(true);
         setSyncStatus("synced");
         readyRef.current = true;
@@ -303,19 +311,23 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
       let localAcc = cached
         ? fromRemote(user.uid, cached)
         : defaultAccount({ uid: user.uid, email: user.email ?? "" });
-      // 2) one-time guest absorb
-      const guest = await storage.getItem<any>(GUEST_KEY, null);
-      if (cancelled) return;
-      let hadGuest = false;
-      if (guest && !guest.uid && !guest.email && !guest.fullName) {
-        localAcc = absorbGuest(localAcc, fromRemote("", guest));
-        hadGuest = true;
-      }
+      // 2) one-time in-memory guest carry-over. Signing in without
+      // reloading keeps the reading just completed in this live session.
+      const guest = guestCarryRef.current;
+      guestCarryRef.current = null;
+      const hadGuest = !!guest && !guest.uid && (
+        guest.totalHasanaat > 0 ||
+        guest.completedReads > 0 ||
+        guest.totalSeconds > 0 ||
+        Object.keys(guest.history).length > 0 ||
+        guest.currentSurah !== 1 ||
+        guest.currentAyah !== 1 ||
+        guest.appState.bookmarks.length > 0
+      );
+      if (hadGuest && guest) localAcc = absorbGuest(localAcc, guest);
       if (cancelled) return;
       setAccount(localAcc);
-      const savedLocally = await accountWriter.current(accountKey(user.uid), localAcc);
-      if (cancelled) return;
-      if (hadGuest && savedLocally) await storage.removeItem(GUEST_KEY);
+      await accountWriter.current(accountKey(user.uid), localAcc);
       if (cancelled) return;
       // Offline reading must not wait for a Firestore network response.
       readyRef.current = true;
@@ -470,11 +482,11 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     if (local.uid) await accountWriter.current(accountKey(local.uid), local);
     await Promise.race([pushNow(), new Promise<void>((resolve) => setTimeout(resolve, 3000))]);
 
-    // A signed-in profile and a guest are separate identities. Seed a clean
-    // guest cache before Firebase emits the signed-out auth state so stale
-    // account history, streaks or session clocks can never bleed into guest UI.
-    await accountWriter.current(GUEST_KEY, defaultAccount());
-    await storage.setItem("guest_v2_migrated", true);
+    // Keep only personalization after sign-out. Anonymous progress resets.
+    guestCarryRef.current = null;
+    await storage.setItem<any>(GUEST_PREFS_KEY, { settings: local.settings });
+    await storage.removeItem(GUEST_KEY);
+    await storage.removeItem("guest_v2_migrated");
     await storage.removeItem("guest_account_v1");
     await storage.removeItem("session_clock_v1");
     await storage.removeItem("session_clock_v2_guest");
@@ -698,8 +710,9 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
       await storage.removeItem(accountKey(u.uid));
       await storage.removeItem(`session_clock_v2_${u.uid}`);
       await storage.removeItem("session_clock_v1");
-      await accountWriter.current(GUEST_KEY, defaultAccount());
-      await storage.setItem("guest_v2_migrated", true);
+      await storage.removeItem(GUEST_KEY);
+      await storage.removeItem(GUEST_PREFS_KEY);
+      await storage.removeItem("guest_v2_migrated");
       await storage.removeItem("guest_account_v1");
       await storage.removeItem("session_clock_v2_guest");
 
@@ -726,8 +739,10 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     readyRef.current = false;
     pendingSync.current = false;
     if (syncTimer.current) clearTimeout(syncTimer.current);
-    await accountWriter.current(GUEST_KEY, defaultAccount());
-    await storage.setItem("guest_v2_migrated", true);
+    guestCarryRef.current = null;
+    await storage.removeItem(GUEST_KEY);
+    await storage.removeItem(GUEST_PREFS_KEY);
+    await storage.removeItem("guest_v2_migrated");
     await storage.removeItem("guest_account_v1");
     await storage.removeItem("session_clock_v1");
     await storage.removeItem("session_clock_v2_guest");
