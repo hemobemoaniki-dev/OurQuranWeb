@@ -3,7 +3,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import Head from "expo-router/head";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, AccessibilityInfo, Animated, AppState, Easing, FlatList, Modal, Platform, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from "react-native";
+import { ActivityIndicator, AccessibilityInfo, Animated, AppState, Easing, FlatList, Modal, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 
@@ -14,12 +14,14 @@ import { ReaderTextActions } from "@/src/components/ReaderTextActions";
 import { readerTheme } from "@/src/lib/reader-themes";
 import { Icon } from "@/src/components/Icon";
 import { useReaderAccount } from "@/src/context/AppState";
-import { useSessionControls } from "@/src/context/SessionContext";
+import { useSession, useSessionControls } from "@/src/context/SessionContext";
 import { juzForAyah } from "@/src/data/juz";
+import { reciterById } from "@/src/data/reciters";
 import { SURAHS, surahMeta } from "@/src/data/surahs";
 import { computeReward } from "@/src/lib/hasanaat";
 import { getBundledSurah } from "@/src/lib/quran";
-import { useAyahAudio } from "@/src/lib/audio";
+import { exitReaderAudio, useAyahAudio } from "@/src/lib/audio";
+import { formatClock, formatK, todayValue } from "@/src/lib/dates";
 import { themes, type ThemeColors } from "@/src/theme";
 import { arabicFont, serifFont } from "@/src/typography";
 
@@ -33,6 +35,7 @@ export default function Reader() {
   const insets = useSafeAreaInsets();
   const { height: windowHeight, width: windowWidth } = useWindowDimensions();
   const compactReader = windowWidth < 980;
+  const desktopReader = windowWidth >= 1180;
   const arabicScrollRef = useRef<ScrollView>(null);
   const params = useLocalSearchParams<{ surah?: string; ayah?: string }>();
   const {
@@ -50,11 +53,14 @@ export default function Reader() {
   const styles = useMemo(() => createStyles(colors), [colors]);
   const translationScrollRef = useRef<ScrollView>(null);
   const session = useSessionControls();
+  const sessionView = useSession();
 
   const [surahNum, setSurahNum] = useState<number | null>(null);
   const [ayahIndex, setAyahIndex] = useState(0);
   const [pendingAudio, setPendingAudio] = useState<{ surah: number; ayah: number } | null>(null);
   const readerFocused = useRef(false);
+  const mountedRef = useRef(true);
+  const exitingRef = useRef(false);
   const seeded = useRef(false);
   const committing = useRef(false);
   const [verseMotion] = useState(() => new Animated.Value(1));
@@ -93,25 +99,26 @@ export default function Reader() {
     reciterId: settings.reciter,
     speed: settings.speed,
   });
-  const disposeAudio = audio.dispose;
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      exitingRef.current = true;
+    };
+  }, []);
 
-  // Stack screens can remain mounted after navigating away. Let navigation
-  // paint first, then release native audio. Synchronous player teardown during
-  // blur was making "I'm Done" feel frozen on Android.
+  // Navigation teardown must never schedule React state updates after the route
+  // has blurred. The explicit exit function handles state before navigation;
+  // this cleanup only releases external audio resources.
   useFocusEffect(
     useCallback(() => {
       readerFocused.current = true;
+      exitingRef.current = false;
       return () => {
         readerFocused.current = false;
-        setPendingAudio(null);
-        setQuickSettingsVisible(false);
-        runAfterPaint(() => {
-          if (readerFocused.current) return;
-          if (Platform.OS === "web") audio.stop();
-          else disposeAudio();
-        });
+        exitReaderAudio();
       };
-    }, [disposeAudio]),
+    }, []),
   );
 
   // Seed reader position once account is hydrated.
