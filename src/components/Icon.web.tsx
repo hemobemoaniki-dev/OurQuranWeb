@@ -159,7 +159,9 @@ const nodes: Record<string, SvgNode[]> = {
 };
 
 function fallback(): SvgNode[] {
-  return [["circle",{cx:12,cy:12,r:8}],["path",{d:"M9 12h6M12 9v6"}]];
+  // Unknown glyphs should never masquerade as an "add" action. A quiet
+  // neutral ring is safer while regression checks catch the missing mapping.
+  return [["circle",{cx:12,cy:12,r:7}],["circle",{cx:12,cy:12,r:1.2,fill:"currentColor"}]];
 }
 
 export function Icon({ name, size = 22, color }: Props) {
