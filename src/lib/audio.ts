@@ -207,6 +207,12 @@ export function stopAllAyahAudio() {
   }
 }
 
+/** Route-level Reader teardown. Kept explicit so navigation never depends on
+ * hook cleanup timing or on a component still being mounted. */
+export function exitReaderAudio() {
+  stopAllAyahAudio();
+}
+
 function pauseAyahAudio() {
   requestId += 1;
   wantsPlayback = false;
