@@ -2,10 +2,11 @@ import { Text } from "@/src/components/AppText";
 import { Tabs } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { memo } from "react";
-import { Pressable, View } from "react-native";
+import { Image, Pressable, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Icon, type IconName } from "@/src/components/Icon";
+import { useAccount, useAuth } from "@/src/context/AppState";
 import { makeStyles, useTheme } from "@/src/theme";
 
 const TABS: { name: string; label: string; icon: IconName }[] = [
@@ -59,6 +60,30 @@ function CustomTabBar({ state, navigation }: any) {
   const styles = useStyles();
   const { scheme, colors } = useTheme();
   const insets = useSafeAreaInsets();
+  const { hydrated, syncStatus, lastSyncAt } = useAccount();
+  const { user, initializing } = useAuth();
+
+  const checking = initializing || (!!user && !hydrated);
+  let statusLabel = "Guest session · progress not saved";
+  let statusColor = colors.gold;
+  if (checking) {
+    statusLabel = "Checking account…";
+    statusColor = colors.muted;
+  } else if (user) {
+    if (syncStatus === "offline") {
+      statusLabel = "Offline · changes saved locally";
+      statusColor = colors.gold;
+    } else if (syncStatus === "error") {
+      statusLabel = "Sync needs attention";
+      statusColor = scheme === "dark" ? "#FF8497" : "#AE2645";
+    } else if (syncStatus === "syncing" || !lastSyncAt) {
+      statusLabel = "Syncing your journey…";
+      statusColor = colors.gold;
+    } else {
+      statusLabel = "Your Quran journey, synced.";
+      statusColor = scheme === "dark" ? "#6EE7B7" : "#16734E";
+    }
+  }
 
   return (
     <View
@@ -84,10 +109,7 @@ function CustomTabBar({ state, navigation }: any) {
       />
 
       <View style={styles.brand}>
-        <View style={[styles.brandMark, { borderColor: colors.goldBorder, backgroundColor: colors.goldSoft }]}>
-          <Icon name="star-crescent" size={23} color={colors.gold} />
-          <View style={[styles.brandSpark, { backgroundColor: colors.gold }]} />
-        </View>
+        <Image source={require("../../assets/images/ourquran-web-mark.png")} style={styles.brandMark} resizeMode="cover" />
         <View style={styles.brandCopy}>
           <Text style={[styles.brandName, { color: scheme === "dark" ? "#FFFFFF" : "#15120D" }]}>OurQuran</Text>
           <Text style={styles.brandTag}>READ · REFLECT · ASCEND</Text>
@@ -104,8 +126,8 @@ function CustomTabBar({ state, navigation }: any) {
       </View>
 
       <View style={styles.footer}>
-        <View style={[styles.footerDot, { backgroundColor: colors.gold }]} />
-        <Text style={styles.footerText}>Your Quran journey, synced.</Text>
+        <View style={[styles.footerDot, { backgroundColor: statusColor }]} />
+        <Text style={styles.footerText}>{statusLabel}</Text>
       </View>
     </View>
   );
@@ -136,8 +158,8 @@ export default function TabsLayout() {
 
 const useStyles = makeStyles((c) => ({
   base: {
-    width: 232,
-    minWidth: 232,
+    width: 248,
+    minWidth: 248,
     height: "100%",
     paddingHorizontal: 14,
     backgroundColor: c.surface,
@@ -164,14 +186,10 @@ const useStyles = makeStyles((c) => ({
     marginBottom: 20,
   },
   brandMark: {
-    width: 42,
-    height: 42,
-    borderRadius: 13,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
+    width: 48,
+    height: 48,
+    borderRadius: 14,
   },
-  brandSpark: { position: "absolute", right: 7, bottom: 7, width: 4, height: 4, borderRadius: 2 },
   brandCopy: { flex: 1, minWidth: 0, gap: 2 },
   brandName: { fontSize: 19, lineHeight: 23, fontWeight: "900", letterSpacing: -0.4 },
   brandTag: { color: c.gold, fontSize: 7, lineHeight: 10, fontWeight: "900", letterSpacing: 1.25 },
