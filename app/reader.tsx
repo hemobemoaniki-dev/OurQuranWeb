@@ -285,7 +285,7 @@ export default function Reader() {
     requestAnimationFrame(() => {
       router.replace("/(tabs)");
       runAfterPaint(() => {
-        audio.dispose();
+        audio.stop();
         flush().catch(() => {});
       });
     });
@@ -329,8 +329,8 @@ export default function Reader() {
         onOpenSettings={() => setQuickSettingsVisible(true)}
         onBack={() => {
           setPendingAudio(null);
+          audio.stop();
           router.replace('/(tabs)/read');
-          runAfterPaint(() => disposeAudio());
         }}
       />
       <ReaderQuickSettings
