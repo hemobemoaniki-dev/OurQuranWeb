@@ -3,6 +3,7 @@ name: Web desktop check
 on:
   push:
     branches:
+      - main
       - "web/**"
   workflow_dispatch:
 
