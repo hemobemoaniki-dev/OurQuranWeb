@@ -1,5 +1,5 @@
 import { Text } from "@/src/components/AppText";
-import { BrandMark } from "@/src/components/BrandMark";
+import { BrandLockup } from "@/src/components/BrandLockup";
 import { Icon } from "@/src/components/Icon";
 import type { ReaderTheme } from "@/src/lib/reader-themes";
 import { serifFont } from "@/src/typography";
@@ -25,49 +25,51 @@ export const ReaderHeader = memo(function ReaderHeader({
   const insets = useSafeAreaInsets();
 
   return (
-    <View style={[styles.wrapper, { paddingTop: insets.top + 12 }]}>
+    <View style={[styles.wrapper, { paddingTop: insets.top + 10 }]}>
       <View style={styles.bar}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Leave reader"
-          onPress={onBack}
-          testID="reader-leave"
-          style={({ pressed }) => [
-            styles.iconButton,
-            { borderColor: t.accent + "66", backgroundColor: "rgba(4,5,8,0.72)" },
-            pressed && styles.pressed,
-          ]}
-        >
-          <Icon name="arrow-left" color="#FFFFFF" size={22} />
-        </Pressable>
+        <View style={styles.sideZone}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Finish reading and return home"
+            onPress={onBack}
+            testID="reader-leave"
+            style={({ pressed }) => [
+              styles.iconButton,
+              { borderColor: t.accent + "72", backgroundColor: "rgba(4,5,8,0.78)" },
+              pressed && styles.pressed,
+            ]}
+          >
+            <Icon name="arrow-left" color="#FFFFFF" size={24} />
+          </Pressable>
 
-        <View style={styles.brand}>
-          <BrandMark size={43} tint={t.accent} glow={t.accent} intensity="strong" />
-          <View style={styles.brandCopy}>
-            <Text style={styles.brandName}>OurQuran</Text>
-            <Text style={[styles.brandTag, { color: t.accent }]}>READ AND ASCEND</Text>
+          <View style={styles.brandWrap}>
+            <BrandLockup tint={t.accent} size={56} lightText />
           </View>
         </View>
 
         <View style={styles.location}>
           <Text style={styles.surahName} numberOfLines={1}>{surahName}</Text>
-          <Text style={styles.ayahMeta}>Ayah {ayah} / {totalAyahs}</Text>
+          <View style={styles.ayahPill}>
+            <Text style={[styles.ayahMeta, { color: t.accent }]}>Ayah {ayah} of {totalAyahs}</Text>
+          </View>
         </View>
 
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Open reader settings"
-          onPress={onOpenSettings}
-          testID="reader-quick-settings-open"
-          style={({ pressed }) => [
-            styles.settingsButton,
-            { borderColor: t.accent + "55", backgroundColor: "rgba(4,5,8,0.72)" },
-            pressed && styles.pressed,
-          ]}
-        >
-          <Icon name="tune-variant" color={t.accent} size={21} />
-          <Text style={styles.settingsLabel}>Reader</Text>
-        </Pressable>
+        <View style={[styles.sideZone, styles.sideZoneRight]}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Open reader settings"
+            onPress={onOpenSettings}
+            testID="reader-quick-settings-open"
+            style={({ pressed }) => [
+              styles.settingsButton,
+              { borderColor: t.accent + "66", backgroundColor: "rgba(4,5,8,0.78)" },
+              pressed && styles.pressed,
+            ]}
+          >
+            <Icon name="tune-variant" color={t.accent} size={22} />
+            <Text style={styles.settingsLabel}>Reader settings</Text>
+          </Pressable>
+        </View>
       </View>
     </View>
   );
@@ -82,77 +84,90 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
   },
   bar: {
-    minHeight: 62,
+    minHeight: 82,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 18,
+  },
+  sideZone: {
+    flex: 1,
+    minWidth: 0,
     flexDirection: "row",
     alignItems: "center",
     gap: 14,
   },
+  sideZoneRight: {
+    justifyContent: "flex-end",
+  },
   iconButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 15,
+    width: 48,
+    height: 48,
+    borderRadius: 16,
     borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
+    shadowColor: "#000000",
+    shadowOpacity: 0.22,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
   },
   pressed: { opacity: 0.65, transform: [{ scale: 0.97 }] },
-  brand: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 9,
-    minWidth: 190,
-  },
-  brandCopy: { gap: 0 },
-  brandName: {
-    color: "#FFFFFF",
-    fontFamily: serifFont,
-    fontSize: 20,
-    lineHeight: 24,
-    fontWeight: "800",
-    letterSpacing: -0.35,
-  },
-  brandTag: {
-    fontSize: 7.5,
-    lineHeight: 10,
-    fontWeight: "900",
-    letterSpacing: 1.45,
+  brandWrap: {
+    minWidth: 220,
+    alignItems: "flex-start",
   },
   location: {
-    flex: 1,
-    minWidth: 0,
+    width: 360,
+    minWidth: 300,
     alignItems: "center",
     justifyContent: "center",
   },
   surahName: {
     color: "#FFFFFF",
     fontFamily: serifFont,
-    fontSize: 19,
-    lineHeight: 24,
-    fontWeight: "800",
-    letterSpacing: -0.25,
+    fontSize: 28,
+    lineHeight: 34,
+    fontWeight: "900",
+    letterSpacing: -0.7,
+    textAlign: "center",
+  },
+  ayahPill: {
+    minHeight: 26,
+    paddingHorizontal: 12,
+    borderRadius: 999,
+    marginTop: 5,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255,255,255,0.055)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.10)",
   },
   ayahMeta: {
-    color: "#D9D5DE",
-    fontSize: 9.5,
-    lineHeight: 13,
-    fontWeight: "700",
-    marginTop: 1,
+    fontSize: 11.5,
+    lineHeight: 15,
+    fontWeight: "900",
+    letterSpacing: 0.35,
+    textAlign: "center",
   },
   settingsButton: {
-    minWidth: 98,
-    height: 42,
-    borderRadius: 14,
+    minWidth: 150,
+    height: 46,
+    borderRadius: 15,
     borderWidth: 1,
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 7,
+    gap: 8,
+    shadowColor: "#000000",
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
   },
   settingsLabel: {
     color: "#FFFFFF",
-    fontSize: 10.5,
-    lineHeight: 14,
-    fontWeight: "800",
+    fontSize: 12.5,
+    lineHeight: 16,
+    fontWeight: "900",
   },
 });
