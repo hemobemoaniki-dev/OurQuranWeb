@@ -541,21 +541,62 @@ test('critical navigation destinations exist before launch', () => {
   for (const route of routes) assert.ok(fs.existsSync(path.join(root, route)), 'Missing route: ' + route);
 });
 
-test("Reader exit finalizes the session before navigation and avoids blur state writes", () => {
+test("Reader exit always reaches Home and browser back cleanup avoids stale route writes", () => {
   const reader = fs.readFileSync(path.join(root, 'app/reader.tsx'), 'utf8');
-  const start = reader.indexOf('const exitReader = useCallback');
+  const start = reader.indexOf('const finishReaderAndGoHome = useCallback');
   const end = reader.indexOf('const imDone = useCallback', start);
   assert.ok(start >= 0 && end > start);
   const exit = reader.slice(start, end);
-  assert.match(exit, /const deltas = stopSession\(\)/);
-  assert.match(exit, /addReadingSeconds\(seconds, day\)/);
+  assert.match(exit, /stopSession\(\)/);
   assert.match(exit, /exitReaderAudio\(\)/);
-  assert.ok(exit.indexOf('stopSession()') < exit.indexOf('router.replace(destination)'));
-  const focusStart = reader.indexOf('useFocusEffect(\n    useCallback(() => {');
-  const focusEnd = reader.indexOf('// Seed reader position', focusStart);
-  assert.ok(focusStart >= 0 && focusEnd > focusStart);
-  const focus = reader.slice(focusStart, focusEnd);
-  assert.doesNotMatch(focus, /setPendingAudio|setQuickSettingsVisible|setPickerVisible/);
+  assert.match(exit, /router\.replace\("\/\(tabs\)"\)/);
+  assert.ok(exit.indexOf('router.replace("/(tabs)")') < exit.indexOf('addReadingSeconds(seconds, day)'));
+  assert.match(reader, /window\.addEventListener\("popstate", handleBrowserBack\)/);
+  assert.match(reader, /onBack=\{\(\) => finishReaderAndGoHome\(true\)\}/);
+  assert.match(reader, /onPress=\{imDone\}/);
+  const sessionStart = reader.indexOf('useFocusEffect(useCallback(() => {');
+  const sessionEnd = reader.indexOf('// Quran text is bundled', sessionStart);
+  assert.ok(sessionStart >= 0 && sessionEnd > sessionStart);
+  assert.doesNotMatch(reader.slice(sessionStart, sessionEnd), /runAfterPaint\(\(\) => persistDeltas/);
+});
+
+test('subpage back buttons use actual navigation history with a safe Home fallback', () => {
+  const header = fs.readFileSync(path.join(root, 'src/components/SubHeader.tsx'), 'utf8');
+  assert.match(header, /router\.canGoBack\(\)/);
+  assert.match(header, /router\.back\(\)/);
+  assert.match(header, /router\.replace\("\/"\)/);
+  assert.doesNotMatch(header, /pathname\.startsWith\("\/settings\/"\)/);
+});
+
+test('desktop sidebar exposes privacy deletion account actions and a Tasbeeh Adhkar mark', () => {
+  const tabs = fs.readFileSync(path.join(root, 'app/(tabs)/_layout.tsx'), 'utf8');
+  assert.match(tabs, /ourquran\.web\.app\/privacy/);
+  assert.match(tabs, /ourquran\.web\.app\/delete-account/);
+  assert.match(tabs, /label="Privacy"/);
+  assert.match(tabs, /label="Delete"/);
+  assert.match(tabs, /<TasbeehIcon/);
+  assert.match(tabs, /router\.push\(meta\.href\)/);
+});
+
+test('dashboard quick access complements rather than duplicates primary sidebar destinations', () => {
+  const home = fs.readFileSync(path.join(root, 'app/(tabs)/index.tsx'), 'utf8');
+  assert.match(home, /label="Bookmarks"/);
+  assert.match(home, /label="Daily Goal"/);
+  assert.match(home, /label="Reciter"/);
+  assert.match(home, /label="Progress"/);
+  assert.doesNotMatch(home, /<QuickAction[^>]+label="Read Quran"/);
+  assert.doesNotMatch(home, /<QuickAction[^>]+label="Adhkar"/);
+  assert.doesNotMatch(home, /<QuickAction[^>]+label="99 Names"/);
+});
+
+test('web icon set renders pause bookmark close and account glyphs instead of fallback plus', () => {
+  const icons = fs.readFileSync(path.join(root, 'src/components/Icon.web.tsx'), 'utf8');
+  assert.match(icons, /"pause": "pause"/);
+  assert.match(icons, /"bookmark-outline": "bookmark"/);
+  assert.match(icons, /"bookmark-multiple-outline": "bookmarks"/);
+  assert.match(icons, /"account-circle-outline": "account"/);
+  assert.match(icons, /close:\s*\[/);
+  assert.match(icons, /pause:\s*\[/);
 });
 
 test('reader Quran text path is synchronous, fully offline and ships every bundle', () => {
