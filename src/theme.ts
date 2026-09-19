@@ -12,15 +12,15 @@ const GOLD = "#D4AF37";
 const GOLD_DEEP = "#B8962E";
 
 const dark = {
-  surface: "#000000", // pitch-black app canvas
+  surface: "#030303", // deep desktop canvas
   onSurface: "#FFFFFF", // cream text on canvas
-  surfaceSecondary: "#080808", // cards, rows
+  surfaceSecondary: "rgba(255,255,255,0.045)", // translucent desktop cards
   onSurfaceSecondary: "#FFFFFF",
-  surfaceTertiary: "#141414", // inputs, chips, elevated
+  surfaceTertiary: "rgba(255,255,255,0.075)", // inputs, chips, elevated
   onSurfaceTertiary: "#FFFFFF",
   surfaceInverse: "#FDFBF7",
   onSurfaceInverse: "#080808",
-  muted: "#CACACA", // secondary/caption text
+  muted: "#BDBAB3", // refined secondary/caption text
 
   brand: GOLD,
   onBrand: "#121212",
@@ -40,14 +40,14 @@ const dark = {
   info: "#457B9D",
   onInfo: "#FFFFFF",
 
-  border: "#292929", // neutral hairline
-  borderStrong: "#383838",
-  divider: "#141414",
+  border: "rgba(255,255,255,0.13)", // neutral glass hairline
+  borderStrong: "rgba(236,202,105,0.34)",
+  divider: "rgba(255,255,255,0.08)",
 
   // OurQuran extras
   gold: GOLD, // gold text/icon on dark
-  goldBorder: "rgba(236,202,105,0.38)", // intentional gold hairline for elevation
-  goldSoft: "rgba(236,202,105,0.10)", // faint gold fill
+  goldBorder: "rgba(236,202,105,0.44)", // intentional gold hairline for elevation
+  goldSoft: "rgba(236,202,105,0.12)", // faint gold fill
   overlay: "rgba(0,0,0,0.62)", // image scrim base
   streakDim: "#141414",
 };
