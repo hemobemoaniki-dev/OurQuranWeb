@@ -25,6 +25,8 @@ export default function ReaderSettings({ section = "reciter" }: { section?: "rec
   const [previewId, setPreviewId] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewError, setPreviewError] = useState(false);
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
   const previewRequest = useRef(0);
   const selectedPreview = useRef<string | null>(null);
 
@@ -38,8 +40,10 @@ export default function ReaderSettings({ section = "reciter" }: { section?: "rec
     try { p?.pause(); } catch {}
     try { sub?.remove(); } catch {}
     try { p?.remove(); } catch {}
-    setPreviewId(null);
-    setPreviewLoading(false);
+    if (mountedRef.current) {
+      setPreviewId(null);
+      setPreviewLoading(false);
+    }
   }, []);
 
   const previewReciter = async (reciterId: string) => {

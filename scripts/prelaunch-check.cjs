@@ -401,6 +401,55 @@ test('audio reuses one native player across ayahs and exit still releases it', a
   assert.equal(modes, 1);
 });
 
+test('reader play-pause resumes the same loaded ayah instead of restarting it', async () => {
+  const players = [];
+  const native = {
+    createAudioPlayer: () => {
+      const p = {
+        play() { this.played = (this.played ?? 0) + 1; },
+        pause() { this.paused = (this.paused ?? 0) + 1; },
+        remove() {},
+        replace(source) { this.source = source; this.replaced = (this.replaced ?? 0) + 1; },
+        setPlaybackRate() {},
+        addListener(_, fn) { this.emit = fn; return { remove() {} }; },
+      };
+      players.push(p);
+      return p;
+    },
+    preload: async () => {},
+    clearPreloadedSource: async () => {},
+    setAudioModeAsync: async () => {},
+    setIsAudioActiveAsync: async () => {},
+  };
+  const audio = load('src/lib/audio.ts', {
+    'expo-audio': native,
+    '@/src/lib/audio-cache': {
+      getCachedAyahUri: async () => null,
+      queueAyahAudio: async () => null,
+      warmAudioNeighborhood() {},
+      warmVisibleAyahs() {},
+    },
+    react: { useCallback: f => f, useEffect() {}, useSyncExternalStore: (_, get) => get() },
+  });
+  const hook = () => audio.useAyahAudio({ reciterId: 'alafasy', speed: 1 });
+
+  hook().toggle(2, 255);
+  await settle();
+  players[0].emit({ isLoaded: true, playing: false });
+  await settle();
+  assert.equal(players[0].played, 1);
+  assert.equal(players[0].replaced, 1);
+
+  hook().toggle(2, 255);
+  assert.equal(players[0].paused, 2); // one pre-replace pause + actual user pause
+  hook().toggle(2, 255);
+  assert.equal(players[0].played, 2);
+  assert.equal(players[0].replaced, 1);
+  assert.equal(players.length, 1);
+
+  audio.stopAllAyahAudio();
+});
+
 test('reader quick settings stay in-reader and expose every recitation control', () => {
   const reader = fs.readFileSync(path.join(root, 'app/reader.tsx'), 'utf8');
   const header = fs.readFileSync(path.join(root, 'src/components/ReaderHeader.tsx'), 'utf8');
@@ -520,6 +569,42 @@ test('settings normalization rejects unsupported reciters and playback speeds', 
   assert.equal(valid.settings.speed, 1.25);
 });
 
+test('all static internal navigation targets resolve to an app route', () => {
+  const appDir = path.join(root, 'app');
+  const files = [];
+  function walk(dir) {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) walk(full);
+      else if (entry.isFile() && /\.tsx$/.test(entry.name)) files.push(full);
+    }
+  }
+  walk(appDir);
+
+  const routes = new Set(['/']);
+  for (const file of files) {
+    let rel = path.relative(appDir, file).replace(/\\/g, '/').replace(/\.tsx$/, '');
+    const segments = rel.split('/').filter(Boolean).filter(segment => !/^\(.+\)$/.test(segment));
+    if (segments.at(-1) === '_layout') continue;
+    if (segments.at(-1) === 'index') segments.pop();
+    routes.add('/' + segments.join('/'));
+  }
+  routes.add('/(tabs)');
+
+  const refs = [];
+  for (const file of files) {
+    const code = fs.readFileSync(file, 'utf8');
+    for (const match of code.matchAll(/router\.(?:push|replace)\(\s*["']([^"']+)["']/g)) refs.push([file, match[1]]);
+    for (const match of code.matchAll(/pathname:\s*["']([^"']+)["']/g)) refs.push([file, match[1]]);
+    for (const match of code.matchAll(/<Redirect\s+href=["']([^"']+)["']/g)) refs.push([file, match[1]]);
+  }
+
+  for (const [file, target] of refs) {
+    if (/^https?:/.test(target)) continue;
+    assert.ok(routes.has(target), `Missing app route for "${target}" referenced by ${path.relative(root, file)}`);
+  }
+});
+
 test('critical navigation destinations exist before launch', () => {
   const routes = [
     'app/reader.tsx',
@@ -554,10 +639,20 @@ test("Reader exit always reaches Home and browser back cleanup avoids stale rout
   assert.match(reader, /window\.addEventListener\("popstate", handleBrowserBack\)/);
   assert.match(reader, /onBack=\{\(\) => finishReaderAndGoHome\(true\)\}/);
   assert.match(reader, /onPress=\{imDone\}/);
+  assert.ok((reader.match(/runAfterPaint\(\(\) => \{\n\s*if \(exitingRef\.current\) return;/g) ?? []).length >= 4);
   const sessionStart = reader.indexOf('useFocusEffect(useCallback(() => {');
   const sessionEnd = reader.indexOf('// Quran text is bundled', sessionStart);
   assert.ok(sessionStart >= 0 && sessionEnd > sessionStart);
   assert.doesNotMatch(reader.slice(sessionStart, sessionEnd), /runAfterPaint\(\(\) => persistDeltas/);
+});
+
+test('route error recovery never remounts the global provider tree during normal navigation', () => {
+  const layout = fs.readFileSync(path.join(root, 'app/_layout.tsx'), 'utf8');
+  const boundary = fs.readFileSync(path.join(root, 'src/components/error-boundary.tsx'), 'utf8');
+  assert.match(layout, /<ErrorBoundary resetKey=\{pathname\}>/);
+  assert.doesNotMatch(layout, /<ErrorBoundary key=\{pathname\}>/);
+  assert.match(boundary, /componentDidUpdate\(prevProps: ErrorBoundaryProps\)/);
+  assert.match(boundary, /prevProps\.resetKey !== this\.props\.resetKey/);
 });
 
 test('subpage back buttons use actual navigation history with a safe Home fallback', () => {
@@ -566,6 +661,17 @@ test('subpage back buttons use actual navigation history with a safe Home fallba
   assert.match(header, /router\.back\(\)/);
   assert.match(header, /router\.replace\("\/"\)/);
   assert.doesNotMatch(header, /pathname\.startsWith\("\/settings\/"\)/);
+});
+
+test('custom detail and shared-header back buttons preserve actual history', () => {
+  const detail = fs.readFileSync(path.join(root, 'app/name/[id].tsx'), 'utf8');
+  const appHeader = fs.readFileSync(path.join(root, 'src/components/AppHeader.tsx'), 'utf8');
+  for (const source of [detail, appHeader]) {
+    assert.match(source, /router\.canGoBack\(\)/);
+    assert.match(source, /router\.back\(\)/);
+  }
+  assert.match(detail, /router\.replace\("\/names"\)/);
+  assert.match(appHeader, /router\.replace\("\/"\)/);
 });
 
 test('desktop sidebar exposes privacy deletion account actions and a Tasbeeh Adhkar mark', () => {
@@ -587,6 +693,62 @@ test('dashboard quick access complements rather than duplicates primary sidebar 
   assert.doesNotMatch(home, /<QuickAction[^>]+label="Read Quran"/);
   assert.doesNotMatch(home, /<QuickAction[^>]+label="Adhkar"/);
   assert.doesNotMatch(home, /<QuickAction[^>]+label="99 Names"/);
+});
+
+test('every statically referenced web icon has a real SVG mapping', () => {
+  const iconSource = fs.readFileSync(path.join(root, 'src/components/Icon.web.tsx'), 'utf8');
+  const aliasesBlock = iconSource.match(/const aliases:[\s\S]*?=\s*\{([\s\S]*?)\n\};/)?.[1] ?? '';
+  const nodesBlock = iconSource.match(/const nodes:[\s\S]*?=\s*\{([\s\S]*?)\n\};/)?.[1] ?? '';
+  const supported = new Set();
+  for (const match of aliasesBlock.matchAll(/["']([^"']+)["']\s*:/g)) supported.add(match[1]);
+  for (const match of nodesBlock.matchAll(/^\s*([A-Za-z][A-Za-z0-9_]*)\s*:/gm)) supported.add(match[1]);
+
+  function visit(dir) {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) visit(full);
+      else if (entry.isFile() && /\.tsx$/.test(entry.name)) checkFile(full);
+    }
+  }
+
+  function collectIconChoices(node, out) {
+    if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) {
+      out.add(node.text);
+      return;
+    }
+    if (ts.isConditionalExpression(node)) {
+      collectIconChoices(node.whenTrue, out);
+      collectIconChoices(node.whenFalse, out);
+      return;
+    }
+    if (ts.isParenthesizedExpression(node) || ts.isAsExpression(node) || ts.isTypeAssertionExpression(node)) {
+      collectIconChoices(node.expression, out);
+    }
+  }
+
+  function checkFile(file) {
+    const code = fs.readFileSync(file, 'utf8');
+    const ast = ts.createSourceFile(file, code, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+    const names = new Set();
+    for (const match of code.matchAll(/\bicon:\s*["']([^"']+)["']/g)) names.add(match[1]);
+    function walk(node) {
+      if ((ts.isJsxSelfClosingElement(node) || ts.isJsxOpeningElement(node)) && node.tagName.getText(ast) === 'Icon') {
+        const attr = node.attributes.properties.find(p => ts.isJsxAttribute(p) && p.name.getText(ast) === 'name');
+        if (attr?.initializer) {
+          if (ts.isStringLiteral(attr.initializer)) names.add(attr.initializer.text);
+          else if (ts.isJsxExpression(attr.initializer) && attr.initializer.expression) collectIconChoices(attr.initializer.expression, names);
+        }
+      }
+      ts.forEachChild(node, walk);
+    }
+    walk(ast);
+    for (const name of names) assert.ok(supported.has(name), `Missing web icon mapping for "${name}" referenced by ${path.relative(root, file)}`);
+  }
+
+  visit(path.join(root, 'app'));
+  visit(path.join(root, 'src/components'));
+
+  assert.doesNotMatch(iconSource, /M9 12h6M12 9v6/);
 });
 
 test('web icon set renders pause bookmark close and account glyphs instead of fallback plus', () => {

@@ -28,7 +28,7 @@ export const AppHeader = memo(function AppHeader({ showBack = false }: { showBac
       <View style={styles.topRow}>
         {showBack ? (
           <Pressable
-            onPress={() => router.back()}
+            onPress={() => { if (router.canGoBack()) router.back(); else router.replace("/"); }}
             hitSlop={10}
             style={styles.sideBtn}
             testID="header-back-button"

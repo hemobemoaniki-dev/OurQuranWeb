@@ -88,7 +88,7 @@ export default function RootLayout() {
         <link rel="shortcut icon" href="/favicon-web-v4.svg?v=4" />
         <link rel="manifest" href="/site.webmanifest" />
       </Head>
-      <ErrorBoundary key={pathname}>
+      <ErrorBoundary resetKey={pathname}>
       <QueryClientProvider client={queryClient}>
         <GestureHandlerRootView style={{ flex: 1 }}>
           <SafeAreaProvider>

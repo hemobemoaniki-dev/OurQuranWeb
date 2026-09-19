@@ -214,12 +214,46 @@ export function exitReaderAudio() {
 }
 
 function pauseAyahAudio() {
+  const resumable = !!player && !!activeTarget && !!snapshot.key && !snapshot.isLoading && !snapshot.error;
   requestId += 1;
   wantsPlayback = false;
-  activeTarget = null;
   cancelPendingLoad();
   try { player?.pause(); } catch {}
-  publish({ isPlaying: false, isLoading: false, key: null });
+  if (resumable) {
+    // Preserve the current verse/player so Play resumes from the paused
+    // position instead of replacing the source and restarting the ayah.
+    publish({ isPlaying: false, isLoading: false, error: false });
+  } else {
+    activeTarget = null;
+    publish({ isPlaying: false, isLoading: false, key: null });
+  }
+}
+
+function resumePausedAyah(reciterId: string, surah: number, ayah: number) {
+  const key = `${reciterId}:${surah}:${ayah}`;
+  if (
+    snapshot.key !== key ||
+    snapshot.isLoading ||
+    snapshot.error ||
+    !player ||
+    !activeTarget ||
+    activeTarget.reciterId !== reciterId ||
+    activeTarget.surah !== surah ||
+    activeTarget.ayah !== ayah
+  ) return false;
+
+  requestId += 1;
+  wantsPlayback = true;
+  try {
+    player.play();
+    publish({ isPlaying: true, isLoading: false, error: false, key });
+    return true;
+  } catch {
+    wantsPlayback = false;
+    activeTarget = null;
+    publish({ isPlaying: false, isLoading: false, error: true, key: null });
+    return false;
+  }
 }
 
 function isKeyPlaying(key: string) {
@@ -315,7 +349,7 @@ export function useAyahAudio(opts: { reciterId: string; speed: number }) {
     (surah: number, ayah: number) => {
       const key = `${reciterId}:${surah}:${ayah}`;
       if (isKeyPlaying(key)) pauseAyahAudio();
-      else playExactAyah(reciterId, surah, ayah);
+      else if (!resumePausedAyah(reciterId, surah, ayah)) playExactAyah(reciterId, surah, ayah);
     },
     [reciterId],
   );

@@ -37,6 +37,7 @@ const aliases: Record<string, string> = {
   "heart-outline": "heart",
   "clock-outline": "clock",
   "calendar-check-outline": "calendar",
+  "calendar-check": "calendar",
   "target": "target",
   "trophy-outline": "trophy",
   "account": "account",
@@ -49,6 +50,7 @@ const aliases: Record<string, string> = {
   "cloud-alert": "cloudAlert",
   "lock-outline": "lock",
   "chart-line": "chart",
+  "chart-box-outline": "chartBox",
   "palette-outline": "palette",
   "microphone-outline": "microphone",
   "speedometer": "speed",
@@ -75,7 +77,10 @@ const aliases: Record<string, string> = {
   "restore": "restore",
   "white-balance-sunny": "sun",
   "weather-night": "moon",
+  "cellphone": "phone",
   "counter": "counter",
+  "circle-outline": "circleOutline",
+  "star-four-points": "sparkle",
   "volume-high": "volume",
   "menu": "menu",
   "mosque": "mosque",
@@ -114,6 +119,7 @@ const nodes: Record<string, SvgNode[]> = {
   cloudAlert: [["path",{d:"M6 18h11a4 4 0 0 0 .7-7.9A6 6 0 0 0 6.2 9 4.5 4.5 0 0 0 6 18Z"}],["line",{x1:12,y1:11,x2:12,y2:14}],["circle",{cx:12,cy:16.5,r:.6,fill:"currentColor"}]],
   lock: [["rect",{x:5,y:10,width:14,height:11,rx:2}],["path",{d:"M8 10V7a4 4 0 0 1 8 0v3"}]],
   chart: [["polyline",{points:"4 17 9 12 13 15 20 7"}],["polyline",{points:"16 7 20 7 20 11"}]],
+  chartBox: [["rect",{x:4,y:4,width:16,height:16,rx:3}],["path",{d:"M7.5 16V12M12 16V8M16.5 16v-5"}]],
   palette: [["path",{d:"M12 3a9 9 0 1 0 0 18h1.2a2 2 0 0 0 1.4-3.4l-.4-.4a1.4 1.4 0 0 1 1-2.4H18A3 3 0 0 0 21 12 9 9 0 0 0 12 3Z"}],["circle",{cx:7.5,cy:11,r:1}],["circle",{cx:10,cy:7.5,r:1}],["circle",{cx:14,cy:7.5,r:1}]],
   microphone: [["rect",{x:9,y:3,width:6,height:11,rx:3}],["path",{d:"M6 11a6 6 0 0 0 12 0M12 17v4M9 21h6"}]],
   speed: [["path",{d:"M5 17a8 8 0 1 1 14 0"}],["line",{x1:12,y1:13,x2:16,y2:9}],["circle",{cx:12,cy:13,r:1.2,fill:"currentColor"}]],
@@ -139,6 +145,9 @@ const nodes: Record<string, SvgNode[]> = {
   restore: [["path",{d:"M5 9V5H1M4 6a8 8 0 1 1-1 8"}]],
   sun: [["circle",{cx:12,cy:12,r:4}],["path",{d:"M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5 19 19M19 5l-1.5 1.5M6.5 17.5 5 19"}]],
   moon: [["path",{d:"M18 16.5A7.5 7.5 0 0 1 8 6a8 8 0 1 0 10 10.5Z"}]],
+  phone: [["rect",{x:7,y:2.5,width:10,height:19,rx:2}],["line",{x1:10,y1:5,x2:14,y2:5}],["circle",{cx:12,cy:18.5,r:.7,fill:"currentColor"}]],
+  circleOutline: [["circle",{cx:12,cy:12,r:8}]],
+  sparkle: [["path",{d:"M12 3c.8 4.2 2.8 6.2 7 7-4.2.8-6.2 2.8-7 7-.8-4.2-2.8-6.2-7-7 4.2-.8 6.2-2.8 7-7Z"}]],
   counter: [["rect",{x:4,y:5,width:16,height:14,rx:3}],["line",{x1:8,y1:9,x2:16,y2:9}],["line",{x1:8,y1:13,x2:10,y2:13}],["line",{x1:14,y1:13,x2:16,y2:13}],["line",{x1:8,y1:17,x2:10,y2:17}],["line",{x1:14,y1:17,x2:16,y2:17}]],
   volume: [["path",{d:"M4 10h4l5-4v12l-5-4H4Z"}],["path",{d:"M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"}]],
   menu: [["line",{x1:4,y1:7,x2:20,y2:7}],["line",{x1:4,y1:12,x2:20,y2:12}],["line",{x1:4,y1:17,x2:20,y2:17}]],
@@ -150,7 +159,9 @@ const nodes: Record<string, SvgNode[]> = {
 };
 
 function fallback(): SvgNode[] {
-  return [["circle",{cx:12,cy:12,r:8}],["path",{d:"M9 12h6M12 9v6"}]];
+  // Unknown glyphs should never masquerade as an "add" action. A quiet
+  // neutral ring is safer while regression checks catch the missing mapping.
+  return [["circle",{cx:12,cy:12,r:7}],["circle",{cx:12,cy:12,r:1.2,fill:"currentColor"}]];
 }
 
 export function Icon({ name, size = 22, color }: Props) {

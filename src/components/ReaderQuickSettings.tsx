@@ -66,6 +66,8 @@ export const ReaderQuickSettings = memo(function ReaderQuickSettings({
   const [previewId, setPreviewId] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewError, setPreviewError] = useState(false);
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
   const stopPreview = useCallback(() => {
     previewRequest.current += 1;
@@ -77,8 +79,10 @@ export const ReaderQuickSettings = memo(function ReaderQuickSettings({
     try { player?.pause(); } catch {}
     try { subscription?.remove(); } catch {}
     try { player?.remove(); } catch {}
-    setPreviewId(null);
-    setPreviewLoading(false);
+    if (mountedRef.current) {
+      setPreviewId(null);
+      setPreviewLoading(false);
+    }
   }, []);
 
   const closeSheet = useCallback(() => {

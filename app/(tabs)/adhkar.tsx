@@ -11,7 +11,6 @@ import { useAccount } from "@/src/context/AppState";
 import { todayKey } from "@/src/lib/dates";
 import { adhkarFor, dhikrArabic, dhikrEnglish, TASBEEH_PHRASES, type Dhikr } from "@/src/data/adhkar";
 import { makeStyles, useTheme } from "@/src/theme";
-import { serifFont } from "@/src/typography";
 
 type Mode = "morning" | "evening" | "tasbeeh";
 
