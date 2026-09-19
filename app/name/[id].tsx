@@ -1,5 +1,6 @@
 import { Text } from "@/src/components/AppText";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import Head from "expo-router/head";
 import { Pressable, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -7,6 +8,10 @@ import { Icon } from "@/src/components/Icon";
 import { NAMES_99 } from "@/src/data/names99";
 import { makeStyles, useTheme } from "@/src/theme";
 import { arabicFont, serifFont } from "@/src/typography";
+
+export function generateStaticParams() {
+  return NAMES_99.map((name) => ({ id: String(name.number) }));
+}
 
 export default function NameDetail() {
   const styles = useStyles();
@@ -17,7 +22,12 @@ export default function NameDetail() {
   const name = NAMES_99.find((n) => n.number === parseInt(String(id), 10)) ?? NAMES_99[0];
 
   return (
-    <View style={styles.root}>
+    <>
+      <Head>
+        <title>{`${name.transliteration} — Name ${name.number} of Allah | OurQuran`}</title>
+        <meta name="description" content={`${name.transliteration}: ${name.meaning}. Learn the meaning and explanation of this Name of Allah on OurQuran.`} />
+      </Head>
+      <View style={styles.root}>
       <View style={[styles.header, { paddingTop: insets.top + 6 }]}>
         <Pressable onPress={() => router.back()} hitSlop={10} style={styles.backBtn} testID="name-detail-back">
           <Icon name="arrow-left" size={24} color={colors.onSurface} />
@@ -36,6 +46,7 @@ export default function NameDetail() {
         <Text style={styles.description}>{name.description}</Text>
       </View>
     </View>
+    </>
   );
 }
 

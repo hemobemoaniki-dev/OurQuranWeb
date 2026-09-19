@@ -1,3 +1,4 @@
+import Head from "expo-router/head";
 import { Text } from "@/src/components/AppText";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
@@ -39,7 +40,9 @@ export default function Names() {
   const rest = NAMES_99.filter((n) => n.number !== featured.number);
 
   return (
-    <View style={styles.root}>
+    <>
+      <Head><title>99 Names of Allah — OurQuran</title><meta name="description" content="Explore the 99 Names of Allah with Arabic, transliteration, meanings and explanations." /></Head>
+      <View style={styles.root}>
       <SubHeader title="99 Names" showBack={false} />
       <FlatList
         initialNumToRender={8}
@@ -102,6 +105,7 @@ export default function Names() {
         )}
       />
     </View>
+    </>
   );
 }
 

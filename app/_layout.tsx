@@ -4,6 +4,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Stack, usePathname } from "expo-router";
+import Head from "expo-router/head";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import { AppState, LogBox, View } from "react-native";
@@ -65,7 +66,25 @@ export default function RootLayout() {
   const { colors } = useTheme();
   if (!fontsLoaded && !fontError) return null;
   return (
-    <ErrorBoundary>
+    <>
+      <Head>
+        <title>OurQuran — Read Quran, Build Consistency & Track Progress</title>
+        <meta
+          name="description"
+          content="Read the Quran with recitation, translations, bookmarks, daily goals, streaks, Adhkar, Tasbeeh, the 99 Names of Allah, and synced progress across devices."
+        />
+        <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1" />
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="OurQuran" />
+        <meta property="og:title" content="OurQuran — Read Quran, Build Consistency & Track Progress" />
+        <meta
+          property="og:description"
+          content="A modern Quran reading experience with recitation, translations, daily goals, streaks, Adhkar, Tasbeeh and synced progress."
+        />
+        <meta name="twitter:card" content="summary" />
+        <meta name="theme-color" content="#030303" />
+      </Head>
+      <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <GestureHandlerRootView style={{ flex: 1 }}>
           <SafeAreaProvider>
@@ -87,5 +106,6 @@ export default function RootLayout() {
         </GestureHandlerRootView>
       </QueryClientProvider>
     </ErrorBoundary>
+    </>
   );
 }

@@ -1,3 +1,4 @@
+import Head from "expo-router/head";
 import { Text } from "@/src/components/AppText";
 import { useRouter } from "expo-router";
 import { FlatList, Pressable, View } from "react-native";
@@ -17,7 +18,9 @@ export default function ReadTab() {
   const meta = surahMeta(account.currentSurah);
 
   return (
-    <View style={styles.root}>
+    <>
+      <Head><title>Read Quran Online — OurQuran</title><meta name="description" content="Read all 114 surahs of the Quran with a modern, focused reading experience, recitation controls, bookmarks and synced progress." /></Head>
+      <View style={styles.root}>
       <SubHeader title="Read" showBack={false} />
       <FlatList
         initialNumToRender={8}
@@ -67,6 +70,7 @@ export default function ReadTab() {
         )}
       />
     </View>
+    </>
   );
 }
 

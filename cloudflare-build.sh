@@ -2,6 +2,7 @@
 set -euo pipefail
 
 npm ci --include=dev
+node ./scripts/generate-seo-files.mjs
 npx expo export --platform web
 
 # Keep the existing Cloudflare Pages output directory so the live project can

@@ -28,5 +28,11 @@ jobs:
       - name: TypeScript
         run: npx tsc --noEmit
 
+      - name: Generate production SEO assets
+        env:
+          CF_PAGES_BRANCH: main
+          SITE_URL: https://ourquran.pages.dev
+        run: node ./scripts/generate-seo-files.mjs
+
       - name: Export web app
         run: npx expo export --platform web

@@ -1,5 +1,6 @@
 import { Text, TextInput } from "@/src/components/AppText";
 import { useRouter } from "expo-router";
+import Head from "expo-router/head";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "@/src/lib/firebase";
 import { useState } from "react";
@@ -76,7 +77,9 @@ export default function AuthScreen() {
   };
 
   return (
-    <View style={styles.root}>
+    <>
+      <Head><title>Sign in — OurQuran</title><meta name="robots" content="noindex,nofollow" /></Head>
+      <View style={styles.root}>
       <KeyboardAwareScrollView
         contentContainerStyle={[styles.content, { paddingTop: insets.top + 40, paddingBottom: insets.bottom + 24 }]}
         bottomOffset={24}
@@ -171,6 +174,7 @@ export default function AuthScreen() {
         </Pressable>
       </KeyboardAwareScrollView>
     </View>
+    </>
   );
 }
 

@@ -1,6 +1,7 @@
 import { Text } from "@/src/components/AppText";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import Head from "expo-router/head";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, AccessibilityInfo, Animated, AppState, Easing, FlatList, Modal, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -321,7 +322,9 @@ export default function Reader() {
   const arabicViewportHeight = Math.max(180, Math.min(420, windowHeight * 0.42));
 
   return (
-    <View style={styles.root}>
+    <>
+      <Head><title>Quran Reader — OurQuran</title><meta name="robots" content="noindex,follow" /></Head>
+      <View style={styles.root}>
       <ReaderBackdrop id={t.id} />
       <LinearGradient pointerEvents="none" colors={[`${t.base}F2`, `${t.base}D8`, `${t.base}F5`]} locations={[0, 0.46, 1]} style={StyleSheet.absoluteFill} />
       <ReaderHeader
@@ -507,6 +510,7 @@ export default function Reader() {
         </View>
       </Modal>
     </View>
+    </>
   );
 }
 
