@@ -21,7 +21,7 @@ export default function Home() {
   const { colors, scheme } = useTheme();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { account, hydrated, syncStatus, lastSyncAt } = useAccount();
+  const { account, hydrated, syncStatus, lastSyncAt, updateSettings } = useAccount();
   const { user, initializing } = useAuth();
   const [period, setPeriod] = useState<Period>("today");
   const [crownCelebrationToken, setCrownCelebrationToken] = useState(0);
@@ -75,12 +75,23 @@ export default function Home() {
             <Text style={styles.greetingName} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.72}>{greetingName}</Text>
           </View>
         </Pressable>
-        <StreakBadge
-          streak={streak}
-          crownActive={crownActive}
-          celebrateToken={crownCelebrationToken}
-          onPressProgress={() => router.push("/settings/progress")}
-        />
+        <View style={styles.headerActions}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={scheme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
+            onPress={() => updateSettings({ theme: scheme === "dark" ? "light" : "dark" })}
+            style={({ pressed }) => [styles.themeToggle, pressed && styles.themeTogglePressed]}
+            testID="home-theme-toggle"
+          >
+            <Icon name={scheme === "dark" ? "white-balance-sunny" : "weather-night"} size={20} color={colors.gold} />
+          </Pressable>
+          <StreakBadge
+            streak={streak}
+            crownActive={crownActive}
+            celebrateToken={crownCelebrationToken}
+            onPressProgress={() => router.push("/settings/progress")}
+          />
+        </View>
       </View>
 
       <View style={styles.weekCard} testID="home-week-strip">
@@ -196,7 +207,24 @@ const JourneyMetric = memo(function JourneyMetric({ label, value, icon, tint, in
 
 const useStyles = makeStyles(c => ({
   root: { flex: 1, backgroundColor: c.surface }, content: { width: "100%", maxWidth: 1180, alignSelf: "center", paddingHorizontal: 28, paddingBottom: 56, gap: 18 },
-  welcome: { flexDirection: "row", alignItems: "center", gap: 14, paddingTop: 4, paddingBottom: 2 }, identity: { flex: 1, minWidth: 0, flexDirection: "row", gap: 10, alignItems: "center" }, greeting: { flex: 1, minWidth: 0, justifyContent: "center", gap: 1 }, salamLine: { color: c.muted, fontSize: 12, lineHeight: 16, fontWeight: "600" }, greetingName: { color: c.onSurface, fontSize: 20, lineHeight: 24, fontWeight: "900", letterSpacing: -0.45 },
+  welcome: { flexDirection: "row", alignItems: "center", gap: 14, paddingTop: 4, paddingBottom: 2 },
+  headerActions: { flexDirection: "row", alignItems: "center", gap: 10 },
+  themeToggle: {
+    width: 46,
+    height: 46,
+    borderRadius: 15,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: c.goldBorder,
+    backgroundColor: c.goldSoft,
+    cursor: "pointer",
+    shadowColor: c.gold,
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+  },
+  themeTogglePressed: { opacity: 0.72, transform: [{ scale: 0.97 }] }, identity: { flex: 1, minWidth: 0, flexDirection: "row", gap: 10, alignItems: "center" }, greeting: { flex: 1, minWidth: 0, justifyContent: "center", gap: 1 }, salamLine: { color: c.muted, fontSize: 12, lineHeight: 16, fontWeight: "600" }, greetingName: { color: c.onSurface, fontSize: 20, lineHeight: 24, fontWeight: "900", letterSpacing: -0.45 },
   fill: { position: "absolute", top: 0, right: 0, bottom: 0, left: 0 },
   weekCard: { paddingHorizontal: 20, paddingVertical: 10, backgroundColor: c.surfaceSecondary, borderRadius: 18, borderWidth: 1, borderColor: c.border, gap: 4 }, weekRow: { flexDirection: "row", justifyContent: "space-between" }, day: { flex: 1, alignItems: "center", gap: 5 }, dayRing: { width: 32, height: 42, borderRadius: 7, borderWidth: 0, alignItems: "center", justifyContent: "center" }, dayLetter: { fontSize: 13, fontWeight: "700" }, dayStatus: { position: "absolute", right: 10, bottom: -3, borderRadius: 6, width: 12, height: 12, justifyContent: "center", alignItems: "center" }, dayCrown: { position: "absolute", right: 6, bottom: -7, width: 20, height: 20, borderRadius: 10, borderWidth: 1, borderColor: "#D9A72E", backgroundColor: "#FFD66A", justifyContent: "center", alignItems: "center", shadowColor: "#D9A72E", shadowOpacity: 0.35, shadowRadius: 4, elevation: 4 }, todayDot: { width: 4, height: 4, borderRadius: 2 }, weekHint: { color: c.muted, fontSize: 10, textAlign: "center" },
   sectionHead: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 4 }, sectionTitle: { color: c.onSurface, fontSize: 24, fontWeight: "800", letterSpacing: -0.45 }, eyebrow: { color: c.gold, fontSize: 9, letterSpacing: 1.7, fontWeight: "700" },
