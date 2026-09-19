@@ -13,15 +13,9 @@ export function dashboardDays(ref = new Date()) {
 export function readingDayState(history: History, key: string, today = dateKey(new Date())) {
   if (key > today) return "future";
   if (hasReadingActivity(history[key])) return "read";
-
-  // Do not paint days before this profile/guest ever started reading as missed.
-  // This is especially important after sign-out: a fresh guest should not
-  // inherit a row of red "missed" days simply because it is later in the week.
-  const firstTrackedDay = Object.keys(history)
-    .filter((dayKey) => dayKey <= today && hasReadingActivity(history[dayKey]))
-    .sort()[0];
-
-  if (!firstTrackedDay || key < firstTrackedDay) return key === today ? "pending" : "untracked";
+  // The weekly streak bar is an accountability view: every completed day in
+  // the current week is either read (green) or missed (red). Today stays
+  // neutral until reading activity is recorded.
   return key < today ? "missed" : "pending";
 }
 export function dashboardStats(account: Pick<Account, "history" | "totalHasanaat" | "completedReads" | "totalSeconds">, period: Period, ref = new Date()) {
