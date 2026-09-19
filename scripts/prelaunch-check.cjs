@@ -617,6 +617,17 @@ test('subpage back buttons use actual navigation history with a safe Home fallba
   assert.doesNotMatch(header, /pathname\.startsWith\("\/settings\/"\)/);
 });
 
+test('custom detail and shared-header back buttons preserve actual history', () => {
+  const detail = fs.readFileSync(path.join(root, 'app/name/[id].tsx'), 'utf8');
+  const appHeader = fs.readFileSync(path.join(root, 'src/components/AppHeader.tsx'), 'utf8');
+  for (const source of [detail, appHeader]) {
+    assert.match(source, /router\.canGoBack\(\)/);
+    assert.match(source, /router\.back\(\)/);
+  }
+  assert.match(detail, /router\.replace\("\/names"\)/);
+  assert.match(appHeader, /router\.replace\("\/"\)/);
+});
+
 test('desktop sidebar exposes privacy deletion account actions and a Tasbeeh Adhkar mark', () => {
   const tabs = fs.readFileSync(path.join(root, 'app/(tabs)/_layout.tsx'), 'utf8');
   assert.match(tabs, /ourquran\.web\.app\/privacy/);
