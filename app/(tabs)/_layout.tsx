@@ -3,6 +3,7 @@ import { Tabs } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { memo } from "react";
 import { Pressable, View } from "react-native";
+import { Image } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Icon, type IconName } from "@/src/components/Icon";
@@ -85,7 +86,13 @@ function CustomTabBar({ state, navigation }: any) {
 
       <View style={styles.brand}>
         <View style={[styles.brandMark, { borderColor: colors.goldBorder, backgroundColor: colors.goldSoft }]}>
-          <Icon name="book-open-page-variant-outline" size={22} color={colors.gold} />
+          <Image
+            source={require("../../assets/images/icon.png")}
+            style={styles.brandLogo}
+            contentFit="cover"
+            transition={0}
+            accessibilityLabel="OurQuran"
+          />
         </View>
         <View style={styles.brandCopy}>
           <Text style={[styles.brandName, { color: scheme === "dark" ? "#FFFFFF" : "#15120D" }]}>OurQuran</Text>
@@ -166,6 +173,7 @@ const useStyles = makeStyles((c) => ({
     alignItems: "center",
     justifyContent: "center",
   },
+  brandLogo: { width: 36, height: 36, borderRadius: 10 },
   brandCopy: { flex: 1, minWidth: 0, gap: 2 },
   brandName: { fontSize: 19, lineHeight: 23, fontWeight: "900", letterSpacing: -0.4 },
   brandTag: { color: c.gold, fontSize: 7, lineHeight: 10, fontWeight: "900", letterSpacing: 1.25 },

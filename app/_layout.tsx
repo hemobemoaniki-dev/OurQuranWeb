@@ -57,7 +57,7 @@ export default function RootLayout() {
     // Material icon component uses this exact Android font-family name, so
     // every tab glyph is ready on the very first frame instead of loading
     // lazily after a tab is pressed.
-    MaterialDesignIcons: require("@react-native-vector-icons/material-design-icons/fonts/MaterialDesignIcons.ttf"),
+    MaterialCommunityIcons: require("@react-native-vector-icons/material-design-icons/fonts/MaterialDesignIcons.ttf"),
   });
   useEffect(() => {
     if (fontsLoaded || fontError) void SplashScreen.hideAsync();
