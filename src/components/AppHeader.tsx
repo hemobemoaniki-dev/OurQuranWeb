@@ -15,7 +15,7 @@ import { makeStyles, useTheme } from "@/src/theme";
 // capsule (Hasanaat / Ayat / Session). Settings lives in the bottom dock.
 export const AppHeader = memo(function AppHeader({ showBack = false }: { showBack?: boolean }) {
   const styles = useStyles();
-  const { colors } = useTheme();
+  const { colors, scheme } = useTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { account } = useAccount();
@@ -40,7 +40,7 @@ export const AppHeader = memo(function AppHeader({ showBack = false }: { showBac
         )}
 
         <View style={styles.logoWrap}>
-          <BrandLockup tint={colors.gold} size={46} />
+          <BrandLockup tint={colors.gold} size={46} lightText={scheme === "dark"} />
         </View>
 
         <View style={styles.sideBtn} />
