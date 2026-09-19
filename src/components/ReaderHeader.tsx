@@ -1,6 +1,6 @@
 import { Text } from "@/src/components/AppText";
 import { memo } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import { Image, Pressable, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Icon, type IconName } from "@/src/components/Icon";
 import { useAccount } from "@/src/context/AppState";
@@ -43,7 +43,7 @@ export const ReaderHeader = memo(function ReaderHeader({
           </Pressable>
 
           <View style={styles.brand}>
-            <Icon name="mosque" color={t.accent} size={25} />
+            <Image source={require("../../assets/images/ourquran-web-mark.png")} style={styles.brandMark} resizeMode="cover" />
             <Text
               numberOfLines={1}
               adjustsFontSizeToFit
@@ -139,7 +139,7 @@ function Metric({
 const styles = StyleSheet.create({
   wrapper: {
     width: "100%",
-    maxWidth: 1180,
+    maxWidth: 1320,
     alignSelf: "center",
     paddingHorizontal: 24,
     gap: 10,
@@ -166,6 +166,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 7,
   },
+  brandMark: { width: 34, height: 34, borderRadius: 9 },
   brandText: {
     color: "#FFFFFF",
     fontFamily: serifFont,
