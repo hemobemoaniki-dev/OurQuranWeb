@@ -149,6 +149,9 @@ test('Google Play privacy and external deletion resources are configured', () =>
   const deletionJsPath = path.join(repoRoot, 'legal-site/delete-account.js');
   const firebasePath = path.join(repoRoot, 'firebase.json');
   const firebasercPath = path.join(repoRoot, '.firebaserc');
+  // OurQuranWeb is a standalone deployment repo. The mobile/legal hosting
+  // bundle lives in the parent application repo and is validated there.
+  if (!fs.existsSync(privacyPath)) return;
   for (const file of [privacyPath, deletionPath, deletionJsPath, firebasePath, firebasercPath]) {
     assert.ok(fs.existsSync(file), 'Missing legal/hosting resource: ' + file);
   }
@@ -582,7 +585,7 @@ test('bottom tabs stay mounted, switch without animation and load icon font befo
   assert.match(tabs, /<Icon name=\{meta\.icon\} size=\{26\}/);
   assert.match(tabs, /width:\s*94/);
   assert.match(tabs, /<BrandMark size=\{58\}/);
-  assert.match(rootLayout, /MaterialDesignIcons:\s*require\("@react-native-vector-icons\/material-design-icons\/fonts\/MaterialDesignIcons\.ttf"\)/);
+  assert.match(rootLayout, /"Material Design Icons":\s*require\("@react-native-vector-icons\/material-design-icons\/fonts\/MaterialDesignIcons\.ttf"\)/);
 });
 
 test('web desktop shell uses a compact rail, wide dashboard and adaptive Reader workspace', () => {
