@@ -61,6 +61,7 @@ export default function Reader() {
   const readerFocused = useRef(false);
   const mountedRef = useRef(true);
   const exitingRef = useRef(false);
+  const exitStartedRef = useRef(false);
   const seeded = useRef(false);
   const committing = useRef(false);
   const [verseMotion] = useState(() => new Animated.Value(1));
@@ -113,6 +114,7 @@ export default function Reader() {
     useCallback(() => {
       readerFocused.current = true;
       exitingRef.current = false;
+      exitStartedRef.current = false;
       return () => {
         readerFocused.current = false;
         exitReaderAudio();
@@ -155,8 +157,9 @@ export default function Reader() {
     return () => {
       clearInterval(checkpoint);
       sub.remove();
-      const deltas = stopSession();
-      runAfterPaint(() => persistDeltas(deltas));
+      // Route-exit handlers persist the final deltas before navigation.
+      // Blur cleanup must never schedule provider/state writes after unmount.
+      stopSession();
     };
   }, [startSession, stopSession, drainSession, addReadingSeconds, hydrated]));
 
@@ -278,32 +281,71 @@ export default function Reader() {
     runAfterPaint(() => audio.stop());
   }, [data, surahNum, ayahIndex, numberInSurah, saveReaderPosition, audio, settings.autoplay]);
 
-  const exitReader = useCallback((destination: "/" | "/read", withHaptic = false) => {
-    if (exitingRef.current) return;
+  const finishReaderAndGoHome = useCallback((withHaptic = false) => {
+    if (exitStartedRef.current) return;
+    exitStartedRef.current = true;
     exitingRef.current = true;
 
     if (withHaptic) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
 
-    // All React state changes happen before navigation. Blur/unmount cleanup is
-    // resource-only, which prevents the web ErrorBoundary crash seen on Back.
     setPendingAudio(null);
     setQuickSettingsVisible(false);
     setPickerVisible(false);
 
-    const deltas = stopSession();
-    for (const [day, seconds] of Object.entries(deltas)) {
-      if (seconds > 0) addReadingSeconds(seconds, day);
+    let deltas: Record<string, number> = {};
+    try {
+      deltas = stopSession();
+      if (surahNum != null) saveReaderPosition(surahNum, numberInSurah);
+    } catch {
+      // Navigation must never be blocked by persistence/session bookkeeping.
     }
-    if (surahNum != null) saveReaderPosition(surahNum, numberInSurah);
 
     exitReaderAudio();
-    router.replace(destination);
-    void flush().catch(() => {});
+
+    // Navigate first; account aggregation and storage flushing are allowed to
+    // finish after the Reader has safely left the route.
+    router.replace("/(tabs)");
+
+    void Promise.resolve().then(() => {
+      try {
+        for (const [day, seconds] of Object.entries(deltas)) {
+          if (seconds > 0) addReadingSeconds(seconds, day);
+        }
+      } catch {}
+      return flush().catch(() => {});
+    });
   }, [addReadingSeconds, flush, numberInSurah, router, saveReaderPosition, stopSession, surahNum]);
 
   const imDone = useCallback(() => {
-    exitReader("/", true);
-  }, [exitReader]);
+    finishReaderAndGoHome(true);
+  }, [finishReaderAndGoHome]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handleBrowserBack = () => {
+      if (!readerFocused.current || exitStartedRef.current) return;
+      exitStartedRef.current = true;
+      exitingRef.current = true;
+      exitReaderAudio();
+
+      let deltas: Record<string, number> = {};
+      try {
+        deltas = stopSession();
+        if (surahNum != null) saveReaderPosition(surahNum, numberInSurah);
+      } catch {}
+
+      void Promise.resolve().then(() => {
+        try {
+          for (const [day, seconds] of Object.entries(deltas)) {
+            if (seconds > 0) addReadingSeconds(seconds, day);
+          }
+        } catch {}
+        return flush().catch(() => {});
+      });
+    };
+    window.addEventListener("popstate", handleBrowserBack);
+    return () => window.removeEventListener("popstate", handleBrowserBack);
+  }, [addReadingSeconds, flush, numberInSurah, saveReaderPosition, stopSession, surahNum]);
 
   const openPicker = () => {
     setPickerSurah(surahNum ?? 1);
@@ -346,7 +388,7 @@ export default function Reader() {
         ayah={numberInSurah}
         totalAyahs={meta.ayahs}
         onOpenSettings={() => setQuickSettingsVisible(true)}
-        onBack={imDone}
+        onBack={() => finishReaderAndGoHome(true)}
       />
       <ReaderQuickSettings
         visible={quickSettingsVisible}
@@ -411,7 +453,7 @@ export default function Reader() {
               },
             ]}>
               <View style={styles.card} testID="reader-ayah-card">
-                <LinearGradient pointerEvents="none" colors={[`${t.accent}20`, `${t.base}18`, `${t.end}24`]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.cardSheen} />
+                <LinearGradient pointerEvents="none" colors={[`${t.accent}34`, `${t.accent}12`, `${t.end}28`]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.cardSheen} />
                 {desktopReader ? (
                   <Pressable style={styles.desktopSurahHeader} onPress={openPicker} testID="reader-surah-picker-open">
                     <View style={styles.desktopSurahTitleRow}>
@@ -540,7 +582,7 @@ export default function Reader() {
         </Pressable>
 
         <Pressable style={({ pressed }) => [styles.doneBtn, pressed && styles.pressed]} onPress={imDone} testID="reader-im-done">
-          <LinearGradient pointerEvents="none" colors={[t.accent, t.end]} style={[StyleSheet.absoluteFill, { borderRadius: 30 }]} />
+          <LinearGradient pointerEvents="none" colors={[`${t.accent}F2`, `${t.end}DC`]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[StyleSheet.absoluteFill, { borderRadius: 30 }]} />
           <Text style={styles.doneText}>I&apos;m Done</Text>
         </Pressable>
 
@@ -642,7 +684,11 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderRadius: 24,
     borderWidth: 1,
     borderColor: colors.borderStrong,
-    backgroundColor: "rgba(5,6,10,0.82)",
+    backgroundColor: colors.surfaceSecondary,
+    shadowColor: colors.gold,
+    shadowOpacity: 0.10,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 6 },
     alignSelf: "flex-start",
   },
   toolRailEyebrow: {
@@ -659,7 +705,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     borderRadius: 17,
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: colors.surfaceTertiary,
+    backgroundColor: colors.goldSoft,
     alignItems: "center",
     justifyContent: "center",
     gap: 5,
@@ -733,7 +779,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   card: {
     width: "100%",
     minHeight: 520,
-    backgroundColor: "rgba(5,6,10,0.92)",
+    backgroundColor: "rgba(3,5,8,0.84)",
     borderRadius: 28,
     borderWidth: 1,
     borderColor: colors.borderStrong,

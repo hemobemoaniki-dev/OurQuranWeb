@@ -50,6 +50,7 @@ function AudioRouteGuard() {
 }
 
 export default function RootLayout() {
+  const pathname = usePathname();
   const [fontsLoaded, fontError] = useFonts({
     LatoRegular: require("../assets/fonts/Lato-Regular.ttf"),
     LatoBold: require("../assets/fonts/Lato-Bold.ttf"),
@@ -87,7 +88,7 @@ export default function RootLayout() {
         <link rel="shortcut icon" href="/favicon-web-v4.svg?v=4" />
         <link rel="manifest" href="/site.webmanifest" />
       </Head>
-      <ErrorBoundary>
+      <ErrorBoundary key={pathname}>
       <QueryClientProvider client={queryClient}>
         <GestureHandlerRootView style={{ flex: 1 }}>
           <SafeAreaProvider>

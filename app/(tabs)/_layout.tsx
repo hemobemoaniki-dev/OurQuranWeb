@@ -1,65 +1,69 @@
 import { Text } from "@/src/components/AppText";
 import { BrandLockup } from "@/src/components/BrandLockup";
 import { Icon, type IconName } from "@/src/components/Icon";
+import { TasbeehIcon } from "@/src/components/TasbeehIcon";
 import { useAccount, useAuth } from "@/src/context/AppState";
 import { makeStyles, useTheme } from "@/src/theme";
 import { LinearGradient } from "expo-linear-gradient";
-import { Tabs } from "expo-router";
+import { Tabs, useRouter } from "expo-router";
+import * as WebBrowser from "expo-web-browser";
 import { memo } from "react";
 import { Pressable, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-const TABS: { name: string; label: string; icon: IconName }[] = [
-  { name: "index", label: "Home", icon: "home-variant-outline" },
-  { name: "read", label: "Quran", icon: "book-open-page-variant-outline" },
-  { name: "adhkar", label: "Adhkar", icon: "hands-pray" },
-  { name: "names", label: "Names", icon: "star-crescent" },
-  { name: "preferences", label: "Settings", icon: "tune-variant" },
+const PRIVACY_URL = "https://ourquran.web.app/privacy";
+const DELETE_ACCOUNT_URL = "https://ourquran.web.app/delete-account";
+
+const TABS: { name: string; label: string; icon: IconName; href: "/" | "/read" | "/adhkar" | "/names" | "/preferences" }[] = [
+  { name: "index", label: "Home", icon: "home-variant-outline", href: "/" },
+  { name: "read", label: "Quran", icon: "book-open-page-variant-outline", href: "/read" },
+  { name: "adhkar", label: "Adhkar", icon: "counter", href: "/adhkar" },
+  { name: "names", label: "Names", icon: "star-crescent", href: "/names" },
+  { name: "preferences", label: "Settings", icon: "tune-variant", href: "/preferences" },
 ];
 
 const TabItem = memo(function TabItem({
   route,
   meta,
   focused,
-  navigation,
 }: {
   route: { key: string; name: string };
   meta: typeof TABS[number];
   focused: boolean;
-  navigation: any;
 }) {
   const styles = useStyles();
+  const router = useRouter();
   const { colors, scheme } = useTheme();
   const tint = focused ? colors.gold : scheme === "dark" ? "#F7F4EE" : "#2C271F";
 
   return (
     <Pressable
-      style={({ pressed }) => [
+      style={({ pressed, hovered }: any) => [
         styles.item,
-        focused && styles.itemFocused,
+        (focused || hovered) && styles.itemFocused,
         pressed && styles.itemPressed,
       ]}
       onPress={() => {
-        const event = navigation.emit({ type: "tabPress", target: route.key, canPreventDefault: true });
-        if (!focused && !event.defaultPrevented) navigation.navigate(route.name);
+        if (!focused) router.push(meta.href);
       }}
-      onLongPress={() => navigation.emit({ type: "tabLongPress", target: route.key })}
       accessibilityRole="tab"
       accessibilityLabel={meta.label}
       accessibilityState={{ selected: focused }}
       testID={`tab-${meta.name}`}
     >
-      {focused ? (
-        <LinearGradient
-          pointerEvents="none"
-          colors={[colors.goldSoft, "transparent"]}
-          start={{ x: 0.08, y: 0 }}
-          end={{ x: 0.95, y: 1 }}
-          style={styles.itemGlow}
-        />
-      ) : null}
+      <LinearGradient
+        pointerEvents="none"
+        colors={focused
+          ? [colors.goldSoft, "rgba(212,175,55,0.035)", "transparent"]
+          : ["rgba(212,175,55,0.06)", "transparent", "transparent"]}
+        start={{ x: 0.08, y: 0 }}
+        end={{ x: 0.95, y: 1 }}
+        style={styles.itemGlow}
+      />
       <View style={[styles.iconSlot, focused && styles.iconSlotFocused]}>
-        <Icon name={meta.icon} size={29} color={tint} />
+        {meta.name === "adhkar"
+          ? <TasbeehIcon color={tint} size={31} />
+          : <Icon name={meta.icon} size={29} color={tint} />}
       </View>
       <Text style={[styles.label, { color: tint }]} numberOfLines={1}>
         {meta.label}
@@ -69,8 +73,36 @@ const TabItem = memo(function TabItem({
   );
 });
 
-function CustomTabBar({ state, navigation }: any) {
+function LegalLink({
+  label,
+  icon,
+  onPress,
+}: {
+  label: string;
+  icon: IconName;
+  onPress: () => void;
+}) {
   const styles = useStyles();
+  const { colors } = useTheme();
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      style={({ pressed, hovered }: any) => [
+        styles.legalButton,
+        hovered && styles.legalButtonHover,
+        pressed && styles.itemPressed,
+      ]}
+    >
+      <Icon name={icon} size={17} color={colors.gold} />
+      <Text style={styles.legalText} numberOfLines={1}>{label}</Text>
+    </Pressable>
+  );
+}
+
+function CustomTabBar({ state }: any) {
+  const styles = useStyles();
+  const router = useRouter();
   const { scheme, colors } = useTheme();
   const insets = useSafeAreaInsets();
   const { hydrated, syncStatus } = useAccount();
@@ -95,7 +127,7 @@ function CustomTabBar({ state, navigation }: any) {
         styles.base,
         {
           paddingTop: Math.max(insets.top, 16),
-          paddingBottom: Math.max(insets.bottom, 16),
+          paddingBottom: Math.max(insets.bottom, 14),
           borderRightColor: scheme === "dark" ? "rgba(255,255,255,0.09)" : "rgba(0,0,0,0.08)",
         },
       ]}
@@ -130,21 +162,21 @@ function CustomTabBar({ state, navigation }: any) {
               route={route}
               meta={meta}
               focused={state.index === index}
-              navigation={navigation}
             />
           ) : null;
         })}
       </View>
 
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={user ? "Open settings" : "Guest account settings"}
-        onPress={() => navigation.navigate("preferences")}
-        style={({ pressed }) => [styles.accountButton, pressed && styles.itemPressed]}
-      >
-        <Icon name={user ? "account-circle-outline" : "account-outline"} size={28} color={colors.onSurface} />
-        <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
-      </Pressable>
+      <View style={styles.footerLinks}>
+        <LegalLink label="Privacy" icon="shield-check" onPress={() => void WebBrowser.openBrowserAsync(PRIVACY_URL)} />
+        <LegalLink label="Delete" icon="account-remove-outline" onPress={() => void WebBrowser.openBrowserAsync(DELETE_ACCOUNT_URL)} />
+        <LegalLink
+          label={user ? "Account" : "Sign in"}
+          icon={user ? "account-circle-outline" : "account-outline"}
+          onPress={() => router.push(user ? "/settings/account" : "/auth")}
+        />
+        <View style={[styles.statusBar, { backgroundColor: statusColor }]} />
+      </View>
     </View>
   );
 }
@@ -216,14 +248,15 @@ const useStyles = makeStyles((c) => ({
     borderRadius: 20,
     overflow: "hidden",
     cursor: "pointer",
+    borderWidth: 1,
+    borderColor: "transparent",
   },
   itemFocused: {
-    borderWidth: 1,
     borderColor: c.goldBorder,
     backgroundColor: c.goldSoft,
     shadowColor: c.gold,
-    shadowOpacity: 0.16,
-    shadowRadius: 13,
+    shadowOpacity: 0.18,
+    shadowRadius: 15,
     shadowOffset: { width: 0, height: 0 },
   },
   itemGlow: {
@@ -261,26 +294,44 @@ const useStyles = makeStyles((c) => ({
     shadowRadius: 5,
     shadowOffset: { width: 0, height: 0 },
   },
-  accountButton: {
-    width: 68,
-    height: 58,
-    borderRadius: 18,
-    alignSelf: "center",
+  footerLinks: {
+    gap: 7,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: c.divider,
+  },
+  legalButton: {
+    minHeight: 35,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: c.goldBorder,
+    backgroundColor: c.goldSoft,
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 1,
-    borderColor: c.border,
-    backgroundColor: c.surfaceSecondary,
+    gap: 6,
+    paddingHorizontal: 7,
     cursor: "pointer",
+    overflow: "hidden",
   },
-  statusDot: {
-    position: "absolute",
-    right: 9,
-    bottom: 9,
-    width: 9,
-    height: 9,
-    borderRadius: 5,
-    borderWidth: 2,
-    borderColor: c.surface,
+  legalButtonHover: {
+    backgroundColor: "rgba(212,175,55,0.23)",
+    shadowColor: c.gold,
+    shadowOpacity: 0.16,
+    shadowRadius: 9,
+    shadowOffset: { width: 0, height: 0 },
+  },
+  legalText: {
+    color: c.onSurface,
+    fontSize: 10.5,
+    lineHeight: 13,
+    fontWeight: "900",
+  },
+  statusBar: {
+    width: 34,
+    height: 3,
+    borderRadius: 3,
+    alignSelf: "center",
+    marginTop: 2,
   },
 }));

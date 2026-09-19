@@ -14,9 +14,9 @@ const GOLD_DEEP = "#B8962E";
 const dark = {
   surface: "#030303", // deep desktop canvas
   onSurface: "#FFFFFF", // cream text on canvas
-  surfaceSecondary: "rgba(255,255,255,0.045)", // translucent desktop cards
+  surfaceSecondary: "rgba(236,202,105,0.055)", // premium warm glass cards
   onSurfaceSecondary: "#FFFFFF",
-  surfaceTertiary: "rgba(255,255,255,0.075)", // inputs, chips, elevated
+  surfaceTertiary: "rgba(236,202,105,0.085)", // elevated warm glass controls
   onSurfaceTertiary: "#FFFFFF",
   surfaceInverse: "#FDFBF7",
   onSurfaceInverse: "#080808",
@@ -47,7 +47,7 @@ const dark = {
   // OurQuran extras
   gold: GOLD, // gold text/icon on dark
   goldBorder: "rgba(236,202,105,0.44)", // intentional gold hairline for elevation
-  goldSoft: "rgba(236,202,105,0.12)", // faint gold fill
+  goldSoft: "rgba(236,202,105,0.16)", // translucent premium gold backflow
   overlay: "rgba(0,0,0,0.62)", // image scrim base
   streakDim: "#141414",
 };
@@ -55,9 +55,9 @@ const dark = {
 const light: typeof dark = {
   surface: "#FDFBF7",
   onSurface: "#1A1814",
-  surfaceSecondary: "#FFFFFF",
+  surfaceSecondary: "rgba(255,253,247,0.96)",
   onSurfaceSecondary: "#1A1814",
-  surfaceTertiary: "#F5F2EB",
+  surfaceTertiary: "rgba(212,175,55,0.085)",
   onSurfaceTertiary: "#1A1814",
   surfaceInverse: "#121212",
   onSurfaceInverse: "#FFF7E6",
@@ -81,13 +81,13 @@ const light: typeof dark = {
   info: "#457B9D",
   onInfo: "#FFFFFF",
 
-  border: "#E8E2D2",
-  borderStrong: "#D8CDB0",
-  divider: "#E8E2D2",
+  border: "rgba(128,96,22,0.20)",
+  borderStrong: "rgba(128,96,22,0.38)",
+  divider: "rgba(128,96,22,0.16)",
 
   gold: "#806016",
   goldBorder: GOLD,
-  goldSoft: "rgba(212,175,55,0.16)",
+  goldSoft: "rgba(212,175,55,0.20)",
   overlay: "rgba(0,0,0,0.55)",
   streakDim: "#EDE7D8",
 };
