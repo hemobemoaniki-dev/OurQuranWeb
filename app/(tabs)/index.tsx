@@ -276,10 +276,12 @@ export default function Home() {
             <View style={styles.weekRow}>
               {days.map((day) => {
                 const state = readingDayState(account.history, day.key, today);
+                const readTint = scheme === "dark" ? "#58D6A8" : "#15825F";
+                const missedTint = scheme === "dark" ? "#FF6E88" : "#B42348";
                 const tint = state === "read"
-                  ? palette[3]
+                  ? readTint
                   : state === "missed"
-                    ? (scheme === "dark" ? "#FF8297" : "#B8324D")
+                    ? missedTint
                     : day.key === today
                       ? colors.gold
                       : colors.borderStrong;
@@ -292,9 +294,9 @@ export default function Home() {
                         {
                           borderColor: tint,
                           backgroundColor: state === "read"
-                            ? `${palette[3]}22`
+                            ? `${readTint}26`
                             : state === "missed"
-                              ? "#FF82971A"
+                              ? `${missedTint}20`
                               : colors.surfaceTertiary,
                         },
                       ]}
@@ -304,7 +306,7 @@ export default function Home() {
                       ) : state === "read" ? (
                         <Icon name="check" size={18} color={tint} />
                       ) : state === "missed" ? (
-                        <Icon name="minus" size={18} color={tint} />
+                        <Icon name="close" size={20} color={tint} />
                       ) : (
                         <View style={[styles.dayDot, { backgroundColor: day.key === today ? colors.gold : colors.muted }]} />
                       )}
@@ -438,9 +440,9 @@ const useStyles = makeStyles((c) => ({
     gap: 20,
   },
   topCopy: { flex: 1, minWidth: 0 },
-  salamLine: { color: c.gold, fontSize: 11, lineHeight: 15, fontWeight: "800", letterSpacing: 0.8 },
-  greetingName: { color: c.onSurface, fontSize: 27, lineHeight: 32, fontWeight: "900", letterSpacing: -0.7 },
-  topSub: { color: c.muted, fontSize: 12, lineHeight: 17, marginTop: 3 },
+  salamLine: { color: c.gold, fontSize: 14, lineHeight: 18, fontWeight: "900", letterSpacing: 0.9 },
+  greetingName: { color: c.onSurface, fontSize: 33, lineHeight: 39, fontWeight: "900", letterSpacing: -0.9 },
+  topSub: { color: c.muted, fontSize: 14, lineHeight: 20, fontWeight: "600", marginTop: 4 },
   topActions: { flexDirection: "row", alignItems: "center", gap: 10 },
   iconAction: {
     width: 44,
@@ -467,8 +469,8 @@ const useStyles = makeStyles((c) => ({
     cursor: "pointer",
   },
   profileCopy: { minWidth: 86 },
-  profileName: { color: c.onSurface, fontSize: 12.5, lineHeight: 16, fontWeight: "800" },
-  profileMeta: { color: c.muted, fontSize: 9.5, lineHeight: 13 },
+  profileName: { color: c.onSurface, fontSize: 14.5, lineHeight: 19, fontWeight: "900" },
+  profileMeta: { color: c.muted, fontSize: 11, lineHeight: 15, fontWeight: "700" },
 
   primaryRow: { flexDirection: "row", gap: 18, alignItems: "stretch" },
   stackRow: { flexDirection: "column" },
@@ -489,14 +491,14 @@ const useStyles = makeStyles((c) => ({
     opacity: 0.20,
     transform: [{ rotate: "-4deg" }],
   },
-  heroContent: { flex: 1, justifyContent: "center", paddingHorizontal: 30, paddingVertical: 26, maxWidth: 760 },
-  eyebrow: { color: c.gold, fontSize: 9.5, lineHeight: 13, fontWeight: "900", letterSpacing: 1.75 },
-  heroTitle: { color: c.onSurface, fontSize: 39, lineHeight: 46, fontWeight: "900", letterSpacing: -1.15, marginTop: 7 },
-  heroMeta: { color: c.muted, fontSize: 13, lineHeight: 18, marginTop: 3 },
+  heroContent: { flex: 1, justifyContent: "center", paddingHorizontal: 34, paddingVertical: 30, maxWidth: 820 },
+  eyebrow: { color: c.gold, fontSize: 11.5, lineHeight: 15, fontWeight: "900", letterSpacing: 1.85 },
+  heroTitle: { color: c.onSurface, fontSize: 46, lineHeight: 54, fontWeight: "900", letterSpacing: -1.25, marginTop: 8 },
+  heroMeta: { color: c.muted, fontSize: 15.5, lineHeight: 21, fontWeight: "700", marginTop: 4 },
   heroProgressTrack: { width: "68%", maxWidth: 520, height: 5, borderRadius: 4, backgroundColor: c.surfaceTertiary, overflow: "hidden", marginTop: 22 },
   heroProgressFill: { height: 5, borderRadius: 4, backgroundColor: c.gold },
   heroFoot: { marginTop: 12, flexDirection: "row", alignItems: "center", gap: 18 },
-  heroProgressText: { color: c.muted, fontSize: 11.5, lineHeight: 16 },
+  heroProgressText: { color: c.muted, fontSize: 13.5, lineHeight: 18, fontWeight: "700" },
   readButton: {
     minWidth: 126,
     height: 42,
@@ -512,7 +514,7 @@ const useStyles = makeStyles((c) => ({
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 3 },
   },
-  readButtonText: { color: c.onBrandPrimary, fontSize: 12.5, fontWeight: "900" },
+  readButtonText: { color: c.onBrandPrimary, fontSize: 14.5, lineHeight: 18, fontWeight: "900" },
 
   goalCard: {
     flex: 0.82,
@@ -528,7 +530,7 @@ const useStyles = makeStyles((c) => ({
     cursor: "pointer",
   },
   goalTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
-  goalTitle: { color: c.onSurface, fontSize: 18, lineHeight: 23, fontWeight: "800", marginTop: 4 },
+  goalTitle: { color: c.onSurface, fontSize: 21, lineHeight: 26, fontWeight: "900", marginTop: 5 },
   goalCenter: { flex: 1, flexDirection: "row", alignItems: "center", gap: 20 },
   goalRing: {
     width: 92,
@@ -540,12 +542,12 @@ const useStyles = makeStyles((c) => ({
     alignItems: "center",
     justifyContent: "center",
   },
-  goalPercent: { color: c.onSurface, fontSize: 23, lineHeight: 28, fontWeight: "900", letterSpacing: -0.6 },
-  goalRingLabel: { color: c.muted, fontSize: 8.5, lineHeight: 12, fontWeight: "700" },
+  goalPercent: { color: c.onSurface, fontSize: 27, lineHeight: 32, fontWeight: "900", letterSpacing: -0.7 },
+  goalRingLabel: { color: c.muted, fontSize: 10, lineHeight: 13, fontWeight: "800" },
   goalNumbers: { flex: 1, minWidth: 0 },
-  goalValue: { color: c.onSurface, fontSize: 31, lineHeight: 36, fontWeight: "900" },
-  goalTotal: { color: c.muted, fontSize: 12, lineHeight: 17, fontWeight: "700" },
-  goalHelper: { color: c.muted, fontSize: 10.5, lineHeight: 15, marginTop: 6 },
+  goalValue: { color: c.onSurface, fontSize: 36, lineHeight: 41, fontWeight: "900" },
+  goalTotal: { color: c.muted, fontSize: 14, lineHeight: 19, fontWeight: "800" },
+  goalHelper: { color: c.muted, fontSize: 12.5, lineHeight: 17, fontWeight: "600", marginTop: 7 },
   track: { height: 5, borderRadius: 4, backgroundColor: c.surfaceTertiary, overflow: "hidden" },
   trackFill: { height: 5, borderRadius: 4, backgroundColor: c.gold },
 
@@ -556,8 +558,8 @@ const useStyles = makeStyles((c) => ({
     justifyContent: "space-between",
     gap: 18,
   },
-  sectionTitle: { color: c.onSurface, fontSize: 22, lineHeight: 27, fontWeight: "900", letterSpacing: -0.5 },
-  sectionSub: { color: c.muted, fontSize: 10.5, lineHeight: 15, marginTop: 2 },
+  sectionTitle: { color: c.onSurface, fontSize: 29, lineHeight: 34, fontWeight: "900", letterSpacing: -0.65 },
+  sectionSub: { color: c.muted, fontSize: 13, lineHeight: 18, fontWeight: "600", marginTop: 3 },
   periods: {
     flexDirection: "row",
     alignItems: "center",
@@ -570,7 +572,7 @@ const useStyles = makeStyles((c) => ({
   },
   period: { minWidth: 76, height: 34, paddingHorizontal: 12, borderRadius: 11, alignItems: "center", justifyContent: "center", cursor: "pointer" },
   periodActive: { backgroundColor: c.goldSoft, borderWidth: 1, borderColor: c.goldBorder },
-  periodText: { color: c.muted, fontSize: 10.5, lineHeight: 14, fontWeight: "800" },
+  periodText: { color: c.muted, fontSize: 12.5, lineHeight: 16, fontWeight: "900" },
   periodTextActive: { color: c.gold },
 
   metricsRow: { flexDirection: "row", flexWrap: "wrap", gap: 14 },
@@ -586,8 +588,8 @@ const useStyles = makeStyles((c) => ({
     overflow: "hidden",
   },
   metricIcon: { width: 38, height: 38, borderRadius: 13, borderWidth: 1, alignItems: "center", justifyContent: "center" },
-  statValue: { fontSize: 27, lineHeight: 32, fontWeight: "900", letterSpacing: -0.65, marginTop: 10 },
-  statLabel: { color: c.muted, fontSize: 10.5, lineHeight: 15, fontWeight: "700", marginTop: 1 },
+  statValue: { fontSize: 33, lineHeight: 39, fontWeight: "900", letterSpacing: -0.8, marginTop: 11 },
+  statLabel: { color: c.muted, fontSize: 13, lineHeight: 17, fontWeight: "800", marginTop: 2 },
 
   lowerRow: { flexDirection: "row", gap: 18, alignItems: "stretch" },
   weekPanel: {
@@ -610,17 +612,17 @@ const useStyles = makeStyles((c) => ({
     backgroundColor: c.surfaceSecondary,
   },
   panelHead: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 14 },
-  panelTitle: { color: c.onSurface, fontSize: 16, lineHeight: 21, fontWeight: "900" },
-  panelSub: { color: c.muted, fontSize: 10, lineHeight: 14, marginTop: 2 },
+  panelTitle: { color: c.onSurface, fontSize: 20, lineHeight: 25, fontWeight: "900" },
+  panelSub: { color: c.muted, fontSize: 12.5, lineHeight: 17, fontWeight: "600", marginTop: 3 },
   streakPill: { flexDirection: "row", alignItems: "center", gap: 5, minHeight: 34, paddingHorizontal: 11, borderRadius: 12, backgroundColor: c.goldSoft, borderWidth: 1, borderColor: c.goldBorder },
-  streakValue: { color: c.onSurface, fontSize: 15, fontWeight: "900" },
-  streakLabel: { color: c.muted, fontSize: 9.5, fontWeight: "700" },
+  streakValue: { color: c.onSurface, fontSize: 18, lineHeight: 22, fontWeight: "900" },
+  streakLabel: { color: c.muted, fontSize: 11, lineHeight: 14, fontWeight: "800" },
   weekRow: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10, marginTop: 20 },
   day: { flex: 1, alignItems: "center", gap: 7, minWidth: 58 },
-  dayLetter: { color: c.muted, fontSize: 10, fontWeight: "900" },
-  dayNode: { width: 49, height: 49, borderRadius: 17, borderWidth: 1, alignItems: "center", justifyContent: "center" },
+  dayLetter: { color: c.onSurface, fontSize: 12.5, lineHeight: 16, fontWeight: "900" },
+  dayNode: { width: 56, height: 56, borderRadius: 18, borderWidth: 2, alignItems: "center", justifyContent: "center" },
   dayDot: { width: 6, height: 6, borderRadius: 3 },
-  dayState: { fontSize: 8.5, lineHeight: 11, fontWeight: "800" },
+  dayState: { fontSize: 10.5, lineHeight: 14, fontWeight: "900" },
 
   quickGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginTop: 18 },
   quickAction: {
@@ -640,8 +642,8 @@ const useStyles = makeStyles((c) => ({
   },
   quickIcon: { width: 37, height: 37, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: c.goldSoft, borderWidth: 1, borderColor: c.goldBorder },
   quickCopy: { flex: 1, minWidth: 0 },
-  quickLabel: { color: c.onSurface, fontSize: 11.5, lineHeight: 15, fontWeight: "900" },
-  quickHint: { color: c.muted, fontSize: 8.5, lineHeight: 12, marginTop: 1 },
+  quickLabel: { color: c.onSurface, fontSize: 14, lineHeight: 18, fontWeight: "900" },
+  quickHint: { color: c.muted, fontSize: 10.5, lineHeight: 14, fontWeight: "600", marginTop: 2 },
 
   syncBanner: {
     minHeight: 58,
@@ -658,8 +660,8 @@ const useStyles = makeStyles((c) => ({
   },
   syncDot: { width: 9, height: 9, borderRadius: 5 },
   syncCopy: { flex: 1, minWidth: 0 },
-  syncTitle: { color: c.onSurface, fontSize: 12.5, lineHeight: 16, fontWeight: "900" },
-  syncNote: { color: c.muted, fontSize: 9.5, lineHeight: 14, marginTop: 1 },
+  syncTitle: { color: c.onSurface, fontSize: 14.5, lineHeight: 19, fontWeight: "900" },
+  syncNote: { color: c.muted, fontSize: 11.5, lineHeight: 16, fontWeight: "600", marginTop: 2 },
   syncAction: { flexDirection: "row", alignItems: "center", gap: 6, minHeight: 32, paddingHorizontal: 10, borderRadius: 11, backgroundColor: c.goldSoft },
-  syncActionText: { color: c.gold, fontSize: 10.5, lineHeight: 14, fontWeight: "900" },
+  syncActionText: { color: c.gold, fontSize: 12.5, lineHeight: 16, fontWeight: "900" },
 }));
