@@ -61,6 +61,7 @@ export default function Reader() {
   const readerFocused = useRef(false);
   const mountedRef = useRef(true);
   const exitingRef = useRef(false);
+  const exitStartedRef = useRef(false);
   const seeded = useRef(false);
   const committing = useRef(false);
   const [verseMotion] = useState(() => new Animated.Value(1));
@@ -113,6 +114,7 @@ export default function Reader() {
     useCallback(() => {
       readerFocused.current = true;
       exitingRef.current = false;
+      exitStartedRef.current = false;
       return () => {
         readerFocused.current = false;
         exitReaderAudio();
@@ -155,8 +157,9 @@ export default function Reader() {
     return () => {
       clearInterval(checkpoint);
       sub.remove();
-      const deltas = stopSession();
-      runAfterPaint(() => persistDeltas(deltas));
+      // Route-exit handlers persist the final deltas before navigation.
+      // Blur cleanup must never schedule provider/state writes after unmount.
+      stopSession();
     };
   }, [startSession, stopSession, drainSession, addReadingSeconds, hydrated]));
 
@@ -278,32 +281,71 @@ export default function Reader() {
     runAfterPaint(() => audio.stop());
   }, [data, surahNum, ayahIndex, numberInSurah, saveReaderPosition, audio, settings.autoplay]);
 
-  const exitReader = useCallback((destination: "/" | "/read", withHaptic = false) => {
-    if (exitingRef.current) return;
+  const finishReaderAndGoHome = useCallback((withHaptic = false) => {
+    if (exitStartedRef.current) return;
+    exitStartedRef.current = true;
     exitingRef.current = true;
 
     if (withHaptic) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
 
-    // All React state changes happen before navigation. Blur/unmount cleanup is
-    // resource-only, which prevents the web ErrorBoundary crash seen on Back.
     setPendingAudio(null);
     setQuickSettingsVisible(false);
     setPickerVisible(false);
 
-    const deltas = stopSession();
-    for (const [day, seconds] of Object.entries(deltas)) {
-      if (seconds > 0) addReadingSeconds(seconds, day);
+    let deltas: Record<string, number> = {};
+    try {
+      deltas = stopSession();
+      if (surahNum != null) saveReaderPosition(surahNum, numberInSurah);
+    } catch {
+      // Navigation must never be blocked by persistence/session bookkeeping.
     }
-    if (surahNum != null) saveReaderPosition(surahNum, numberInSurah);
 
     exitReaderAudio();
-    router.replace(destination);
-    void flush().catch(() => {});
+
+    // Navigate first; account aggregation and storage flushing are allowed to
+    // finish after the Reader has safely left the route.
+    router.replace("/(tabs)");
+
+    void Promise.resolve().then(() => {
+      try {
+        for (const [day, seconds] of Object.entries(deltas)) {
+          if (seconds > 0) addReadingSeconds(seconds, day);
+        }
+      } catch {}
+      return flush().catch(() => {});
+    });
   }, [addReadingSeconds, flush, numberInSurah, router, saveReaderPosition, stopSession, surahNum]);
 
   const imDone = useCallback(() => {
-    exitReader("/", true);
-  }, [exitReader]);
+    finishReaderAndGoHome(true);
+  }, [finishReaderAndGoHome]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handleBrowserBack = () => {
+      if (!readerFocused.current || exitStartedRef.current) return;
+      exitStartedRef.current = true;
+      exitingRef.current = true;
+      exitReaderAudio();
+
+      let deltas: Record<string, number> = {};
+      try {
+        deltas = stopSession();
+        if (surahNum != null) saveReaderPosition(surahNum, numberInSurah);
+      } catch {}
+
+      void Promise.resolve().then(() => {
+        try {
+          for (const [day, seconds] of Object.entries(deltas)) {
+            if (seconds > 0) addReadingSeconds(seconds, day);
+          }
+        } catch {}
+        return flush().catch(() => {});
+      });
+    };
+    window.addEventListener("popstate", handleBrowserBack);
+    return () => window.removeEventListener("popstate", handleBrowserBack);
+  }, [addReadingSeconds, flush, numberInSurah, saveReaderPosition, stopSession, surahNum]);
 
   const openPicker = () => {
     setPickerSurah(surahNum ?? 1);
@@ -346,7 +388,7 @@ export default function Reader() {
         ayah={numberInSurah}
         totalAyahs={meta.ayahs}
         onOpenSettings={() => setQuickSettingsVisible(true)}
-        onBack={imDone}
+        onBack={() => finishReaderAndGoHome(true)}
       />
       <ReaderQuickSettings
         visible={quickSettingsVisible}
