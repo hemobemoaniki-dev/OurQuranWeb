@@ -1,14 +1,13 @@
 import { Text } from "@/src/components/AppText";
-import { Tabs } from "expo-router";
-import { LinearGradient } from "expo-linear-gradient";
-import { memo } from "react";
-import { Pressable, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-
-import { BrandMark } from "@/src/components/BrandMark";
+import { BrandLockup } from "@/src/components/BrandLockup";
 import { Icon, type IconName } from "@/src/components/Icon";
 import { useAccount, useAuth } from "@/src/context/AppState";
 import { makeStyles, useTheme } from "@/src/theme";
+import { LinearGradient } from "expo-linear-gradient";
+import { Tabs } from "expo-router";
+import { memo } from "react";
+import { Pressable, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const TABS: { name: string; label: string; icon: IconName }[] = [
   { name: "index", label: "Home", icon: "home-variant-outline" },
@@ -31,7 +30,7 @@ const TabItem = memo(function TabItem({
 }) {
   const styles = useStyles();
   const { colors, scheme } = useTheme();
-  const tint = focused ? colors.gold : scheme === "dark" ? "#E8E5DF" : "#3A352D";
+  const tint = focused ? colors.gold : scheme === "dark" ? "#F7F4EE" : "#2C271F";
 
   return (
     <Pressable
@@ -54,13 +53,13 @@ const TabItem = memo(function TabItem({
         <LinearGradient
           pointerEvents="none"
           colors={[colors.goldSoft, "transparent"]}
-          start={{ x: 0.15, y: 0 }}
-          end={{ x: 0.9, y: 1 }}
+          start={{ x: 0.08, y: 0 }}
+          end={{ x: 0.95, y: 1 }}
           style={styles.itemGlow}
         />
       ) : null}
       <View style={[styles.iconSlot, focused && styles.iconSlotFocused]}>
-        <Icon name={meta.icon} size={26} color={tint} />
+        <Icon name={meta.icon} size={29} color={tint} />
       </View>
       <Text style={[styles.label, { color: tint }]} numberOfLines={1}>
         {meta.label}
@@ -95,7 +94,7 @@ function CustomTabBar({ state, navigation }: any) {
       style={[
         styles.base,
         {
-          paddingTop: Math.max(insets.top, 18),
+          paddingTop: Math.max(insets.top, 16),
           paddingBottom: Math.max(insets.bottom, 16),
           borderRightColor: scheme === "dark" ? "rgba(255,255,255,0.09)" : "rgba(0,0,0,0.08)",
         },
@@ -114,7 +113,12 @@ function CustomTabBar({ state, navigation }: any) {
       />
 
       <View style={styles.brand}>
-        <BrandMark size={58} tint={colors.gold} glow={colors.gold} intensity="strong" />
+        <BrandLockup
+          tint={colors.gold}
+          size={68}
+          orientation="vertical"
+          lightText={scheme === "dark"}
+        />
       </View>
 
       <View style={styles.row}>
@@ -138,7 +142,7 @@ function CustomTabBar({ state, navigation }: any) {
         onPress={() => navigation.navigate("preferences")}
         style={({ pressed }) => [styles.accountButton, pressed && styles.itemPressed]}
       >
-        <Icon name={user ? "account-circle-outline" : "account-outline"} size={25} color={colors.onSurface} />
+        <Icon name={user ? "account-circle-outline" : "account-outline"} size={28} color={colors.onSurface} />
         <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
       </Pressable>
     </View>
@@ -156,7 +160,7 @@ export default function TabsLayout() {
         animation: "none",
         tabBarHideOnKeyboard: true,
         tabBarPosition: "left",
-        tabBarStyle: { width: 94, borderTopWidth: 0 },
+        tabBarStyle: { width: 128, borderTopWidth: 0 },
       }}
       tabBar={(props) => <CustomTabBar {...props} />}
     >
@@ -171,10 +175,10 @@ export default function TabsLayout() {
 
 const useStyles = makeStyles((c) => ({
   base: {
-    width: 94,
-    minWidth: 94,
+    width: 128,
+    minWidth: 128,
     height: "100%",
-    paddingHorizontal: 8,
+    paddingHorizontal: 10,
     backgroundColor: c.surface,
     borderRightWidth: 1,
     shadowColor: "#000000",
@@ -191,25 +195,25 @@ const useStyles = makeStyles((c) => ({
     left: 0,
   },
   brand: {
-    height: 76,
+    minHeight: 116,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 16,
+    marginBottom: 12,
   },
   row: {
     flex: 1,
-    gap: 10,
+    gap: 9,
     alignItems: "center",
   },
   item: {
     position: "relative",
-    width: 76,
-    minHeight: 72,
+    width: 106,
+    minHeight: 78,
     alignItems: "center",
     justifyContent: "center",
     gap: 5,
     paddingVertical: 8,
-    borderRadius: 18,
+    borderRadius: 20,
     overflow: "hidden",
     cursor: "pointer",
   },
@@ -218,8 +222,8 @@ const useStyles = makeStyles((c) => ({
     borderColor: c.goldBorder,
     backgroundColor: c.goldSoft,
     shadowColor: c.gold,
-    shadowOpacity: 0.13,
-    shadowRadius: 12,
+    shadowOpacity: 0.16,
+    shadowRadius: 13,
     shadowOffset: { width: 0, height: 0 },
   },
   itemGlow: {
@@ -231,9 +235,9 @@ const useStyles = makeStyles((c) => ({
   },
   itemPressed: { opacity: 0.68, transform: [{ scale: 0.97 }] },
   iconSlot: {
-    width: 38,
-    height: 38,
-    borderRadius: 13,
+    width: 44,
+    height: 44,
+    borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -241,26 +245,26 @@ const useStyles = makeStyles((c) => ({
     backgroundColor: c.goldSoft,
   },
   label: {
-    fontSize: 10.5,
-    lineHeight: 13,
-    fontWeight: "800",
-    letterSpacing: 0.1,
+    fontSize: 12.5,
+    lineHeight: 16,
+    fontWeight: "900",
+    letterSpacing: 0.15,
     textAlign: "center",
   },
   activeDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
+    width: 5,
+    height: 5,
+    borderRadius: 3,
     backgroundColor: c.gold,
     shadowColor: c.gold,
-    shadowOpacity: 0.65,
+    shadowOpacity: 0.7,
     shadowRadius: 5,
     shadowOffset: { width: 0, height: 0 },
   },
   accountButton: {
-    width: 58,
-    height: 52,
-    borderRadius: 17,
+    width: 68,
+    height: 58,
+    borderRadius: 18,
     alignSelf: "center",
     alignItems: "center",
     justifyContent: "center",
@@ -271,11 +275,11 @@ const useStyles = makeStyles((c) => ({
   },
   statusDot: {
     position: "absolute",
-    right: 8,
-    bottom: 8,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    right: 9,
+    bottom: 9,
+    width: 9,
+    height: 9,
+    borderRadius: 5,
     borderWidth: 2,
     borderColor: c.surface,
   },
