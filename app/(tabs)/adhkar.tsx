@@ -262,7 +262,10 @@ const useStyles = makeStyles((colors) => ({
   segmentWrap: {
     flexDirection: "row",
     gap: 8,
-    paddingHorizontal: 16,
+    width: "100%",
+    maxWidth: 980,
+    alignSelf: "center",
+    paddingHorizontal: 28,
     paddingBottom: 12,
   },
   segment: {
@@ -280,7 +283,7 @@ const useStyles = makeStyles((colors) => ({
   segmentActive: { backgroundColor: colors.brandPrimary, borderColor: colors.brandPrimary },
   segmentText: { fontSize: 13, fontWeight: "700" },
 
-  listContent: { paddingHorizontal: 16, paddingBottom: 128, gap: 14 },
+  listContent: { width: "100%", maxWidth: 980, alignSelf: "center", paddingHorizontal: 28, paddingBottom: 56, gap: 14 },
   progressHeader: {
     backgroundColor: colors.surfaceSecondary,
     borderRadius: 18,
@@ -333,7 +336,7 @@ const useStyles = makeStyles((colors) => ({
   authText: { color: colors.success, fontSize: 11, fontWeight: "600" },
 
   // Tasbeeh
-  tasbeehWrap: { flex: 1, alignItems: "center", paddingHorizontal: 24, paddingTop: 8 },
+  tasbeehWrap: { flex: 1, width: "100%", maxWidth: 760, alignSelf: "center", alignItems: "center", paddingHorizontal: 28, paddingTop: 16 },
   phraseSelector: {
     flexDirection: "row",
     alignItems: "center",
