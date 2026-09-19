@@ -9,5 +9,7 @@ const images = {
   'sakura-mist': require('../../assets/reader/sakura-mist.jpg'),
 };
 export const ReaderBackdrop = memo(function ReaderBackdrop({ id }: { id: ReaderThemeId }) {
-  return <Image accessible={false} source={images[id]} resizeMode="cover" fadeDuration={0} style={StyleSheet.absoluteFill} />;
+  return <Image accessible={false} source={images[id]} resizeMode="cover" fadeDuration={0} blurRadius={2} style={[StyleSheet.absoluteFill, styles.image]} />;
 });
+
+const styles = StyleSheet.create({ image: { opacity: 0.34 } });

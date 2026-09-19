@@ -1,6 +1,7 @@
 import { Text, TextInput } from "@/src/components/AppText";
 import { useEffect, useState } from "react";
-import { FlatList, Modal, Pressable, View } from "react-native";
+import { FlatList, Modal, Pressable, StyleSheet, View } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 
 import { SubHeader } from "@/src/components/SubHeader";
@@ -158,9 +159,25 @@ function Tasbeeh() {
       </Pressable>
       <Text style={styles.phraseMeaning}>{selected.meaning}</Text>
 
-      <Pressable style={styles.counterBtn} onPress={tap} testID="tasbeeh-counter" accessibilityRole="button" accessibilityLabel="Tasbeeh counter">
-        <Text selectable={false} style={styles.counterNum} testID="tasbeeh-count">{count}</Text>
-        <Text selectable={false} style={styles.counterHint}>Tap to count</Text>
+      <Pressable
+        style={({ pressed }) => [styles.counterBtn, pressed && styles.counterPressed]}
+        onPress={tap}
+        testID="tasbeeh-counter"
+        accessibilityRole="button"
+        accessibilityLabel="Tasbeeh counter"
+      >
+        <LinearGradient
+          pointerEvents="none"
+          colors={["rgba(236,202,105,0.17)", "rgba(255,255,255,0.035)", "rgba(255,255,255,0.012)"]}
+          locations={[0, 0.55, 1]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
+        <View pointerEvents="none" style={styles.counterInner}>
+          <Text selectable={false} style={styles.counterNum} testID="tasbeeh-count">{count}</Text>
+          <Text selectable={false} style={styles.counterHint}>Tap to count</Text>
+        </View>
       </Pressable>
 
       <View style={styles.targetRow}>
@@ -353,46 +370,73 @@ const useStyles = makeStyles((colors) => ({
   phraseText: { color: colors.onSurface, fontSize: 18, fontWeight: "700" },
   phraseMeaning: { color: colors.muted, fontSize: 14, marginTop: 8, marginBottom: 18 },
   counterBtn: {
-    width: 240,
-    height: 240,
-    borderRadius: 999,
-    backgroundColor: colors.brandPrimary,
+    width: 272,
+    height: 272,
+    borderRadius: 136,
+    backgroundColor: colors.surfaceSecondary,
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 3,
-    borderColor: colors.brandSecondary,
+    borderWidth: 1.5,
+    borderColor: colors.goldBorder,
+    overflow: "hidden",
     cursor: "pointer",
     userSelect: "none",
+    shadowColor: colors.gold,
+    shadowOpacity: 0.18,
+    shadowRadius: 24,
+    shadowOffset: { width: 0, height: 10 },
   },
-  counterNum: { color: colors.onBrandPrimary, fontSize: 68, fontWeight: "800", fontFamily: serifFont, textAlign: "center", lineHeight: 76, includeFontPadding: false },
-  counterHint: { color: colors.onBrandPrimary, fontSize: 14, opacity: 0.85, textAlign: "center" },
-  targetRow: { flexDirection: "row", gap: 8, marginTop: 22 },
+  counterPressed: { opacity: 0.82, transform: [{ scale: 0.985 }] },
+  counterInner: {
+    width: 212,
+    height: 212,
+    borderRadius: 106,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: colors.goldBorder,
+    backgroundColor: "rgba(0,0,0,0.28)",
+  },
+  counterNum: { color: colors.gold, fontSize: 72, fontWeight: "900", textAlign: "center", lineHeight: 78, includeFontPadding: false, fontVariant: ["tabular-nums"] },
+  counterHint: { color: colors.onSurface, fontSize: 13, opacity: 0.82, textAlign: "center", fontWeight: "700", letterSpacing: 0.2 },
+  targetRow: { width: "100%", maxWidth: 560, flexDirection: "row", gap: 10, marginTop: 24, alignSelf: "center" },
   targetChip: {
     flex: 1,
+    minWidth: 96,
+    minHeight: 48,
+    paddingHorizontal: 14,
     paddingVertical: 12,
-    borderRadius: 12,
+    borderRadius: 15,
     borderWidth: 1,
     borderColor: colors.border,
     alignItems: "center",
+    justifyContent: "center",
     backgroundColor: colors.surfaceSecondary,
+    cursor: "pointer",
+    userSelect: "none",
   },
-  targetChipActive: { backgroundColor: colors.brandPrimary, borderColor: colors.brandPrimary },
-  targetText: { color: colors.onSurface, fontWeight: "700", fontSize: 14 },
-  tasbeehProgress: { width: "100%", marginTop: 18, gap: 6 },
+  targetChipActive: { backgroundColor: colors.brandPrimary, borderColor: colors.brandPrimary, shadowColor: colors.gold, shadowOpacity: 0.16, shadowRadius: 10 },
+  targetText: { color: colors.onSurface, fontWeight: "800", fontSize: 14, textAlign: "center" },
+  tasbeehProgress: { width: "100%", maxWidth: 560, marginTop: 22, gap: 8 },
   tasbeehProgressLabels: { flexDirection: "row", justifyContent: "space-between" },
   tasbeehProgLabel: { color: colors.muted, fontSize: 13 },
   tasbeehTrack: { height: 8, borderRadius: 999, backgroundColor: colors.surfaceTertiary, overflow: "hidden" },
   tasbeehFill: { height: 8, borderRadius: 999, backgroundColor: colors.brandPrimary },
   resetBtn: {
+    minWidth: 220,
+    minHeight: 50,
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
     gap: 8,
-    marginTop: 20,
+    marginTop: 22,
     paddingHorizontal: 28,
     paddingVertical: 14,
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: colors.goldBorder,
+    backgroundColor: colors.surfaceSecondary,
+    cursor: "pointer",
   },
   resetText: { color: colors.gold, fontWeight: "700", fontSize: 15 },
 

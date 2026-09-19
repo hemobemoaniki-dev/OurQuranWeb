@@ -1,5 +1,5 @@
 import { Text } from "@/src/components/AppText";
-import { useRouter } from "expo-router";
+import { usePathname, useRouter } from "expo-router";
 import { Pressable, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -11,10 +11,16 @@ export function SubHeader({ title, showBack = true }: { title: string; showBack?
   const styles = useStyles();
   const { colors } = useTheme();
   const router = useRouter();
+  const pathname = usePathname();
   const insets = useSafeAreaInsets();
+  const goBack = () => {
+    if (pathname.startsWith("/settings/")) router.replace("/(tabs)/preferences");
+    else if (pathname.startsWith("/name/")) router.replace("/(tabs)/names");
+    else router.replace("/(tabs)");
+  };
   return (
     <View style={[styles.header, { paddingTop: insets.top + 6 }]}>
-      {showBack ? <Pressable onPress={() => router.back()} hitSlop={10} style={styles.side} testID="subheader-back">
+      {showBack ? <Pressable onPress={goBack} hitSlop={10} style={styles.side} testID="subheader-back">
         <Icon name="arrow-left" size={24} color={colors.onSurface} />
       </Pressable> : <View style={styles.side} />}
       <Text style={styles.title}>{title}</Text>
