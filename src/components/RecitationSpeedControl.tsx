@@ -131,7 +131,7 @@ export const RecitationSpeedControl = memo(function RecitationSpeedControl({
           // are performed while the thumb is moving.
           runOnJS(commitIndex)(index);
         }),
-    [commitIndex, liveIndex, thumbX, trackWidth, updateDisplayIndex],
+    [commitIndex, liveIndex, thumbX, trackWidth],
   );
 
   const fillStyle = useAnimatedStyle(() => ({
