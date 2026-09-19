@@ -193,14 +193,20 @@ test('account deletion removes Firebase account data, username reservation and l
   assert.match(accountScreen, /Delete forever/);
 });
 
-test('sign-out explicitly seeds a clean guest identity and clears guest session clocks', () => {
+test('guest progress is session-only while preferences may stay local', () => {
   const state = fs.readFileSync(path.join(root, 'src/context/AppState.tsx'), 'utf8');
+  const session = fs.readFileSync(path.join(root, 'src/context/SessionContext.tsx'), 'utf8');
   const start = state.indexOf('const signOut = useCallback');
   const end = state.indexOf('// ---------------------------------------------------------------------------\n  // Account API', start);
   assert.ok(start >= 0 && end > start);
   const signOutSource = state.slice(start, end);
-  assert.match(signOutSource, /accountWriter\.current\(GUEST_KEY, defaultAccount\(\)\)/);
+  assert.match(state, /GUEST_PREFS_KEY/);
+  assert.match(state, /guestCarryRef/);
+  assert.match(signOutSource, /storage\.removeItem\(GUEST_KEY\)/);
   assert.match(signOutSource, /storage\.removeItem\("session_clock_v2_guest"\)/);
+  assert.doesNotMatch(signOutSource, /accountWriter\.current\(GUEST_KEY/);
+  assert.match(session, /const persistent = owner !== "guest"/);
+  assert.match(session, /if \(!persistent\) return;/);
   assert.match(signOutSource, /fbSignOut\(auth\)/);
 });
 test('three-device account merge preserves exact rewards, goal, profile fields and bookmark tombstones', () => {
@@ -567,7 +573,7 @@ test('bottom tabs stay mounted, switch without animation and load icon font befo
   assert.match(tabs, /lazy:\s*false/);
   assert.match(tabs, /animation:\s*"none"/);
   assert.doesNotMatch(tabs, /Animated\./);
-  assert.match(tabs, /<Icon name=\{meta\.icon\} size=\{32\}/);
+  assert.match(tabs, /<Icon name=\{meta\.icon\} size=\{24\}/);
   assert.match(tabs, /scheme === "dark" \? "#FFFFFF" : "#111111"/);
   assert.match(rootLayout, /MaterialDesignIcons:\s*require\("@react-native-vector-icons\/material-design-icons\/fonts\/MaterialDesignIcons\.ttf"\)/);
 });
