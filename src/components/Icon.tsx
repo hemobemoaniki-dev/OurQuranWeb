@@ -1,8 +1,8 @@
-import MaterialCommunityIcons from "@react-native-vector-icons/material-design-icons";
+import { MaterialDesignIcons } from "@react-native-vector-icons/material-design-icons/static";
 
 import { useTheme } from "@/src/theme";
 
-type IconName = React.ComponentProps<typeof MaterialCommunityIcons>["name"];
+type IconName = React.ComponentProps<typeof MaterialDesignIcons>["name"];
 
 const TAB_ICON_NAMES = [
   "home-variant-outline",
@@ -17,7 +17,7 @@ let iconFontPromise: Promise<void> | null = null;
 export function preloadIconFont() {
   iconFontPromise ??= Promise.all(
     TAB_ICON_NAMES.map((name) =>
-      (MaterialCommunityIcons as any).getImageSource(name, { size: 30, color: "#FFFFFF" }),
+      (MaterialDesignIcons as any).getImageSource(name, { size: 30, color: "#FFFFFF" }),
     ),
   ).then(() => undefined).catch(() => undefined);
   return iconFontPromise;
@@ -25,7 +25,7 @@ export function preloadIconFont() {
 
 export function getTabIconSource(name: IconName, size: number, color: string) {
   try {
-    return (MaterialCommunityIcons as any).getImageSourceSync(name, { size, color });
+    return (MaterialDesignIcons as any).getImageSourceSync(name, { size, color });
   } catch {
     return null;
   }
@@ -41,7 +41,7 @@ export function Icon({
   color?: string;
 }) {
   const { colors } = useTheme();
-  return <MaterialCommunityIcons name={name} size={size} color={color ?? colors.onSurface} />;
+  return <MaterialDesignIcons name={name} size={size} color={color ?? colors.onSurface} />;
 }
 
 export type { IconName };
