@@ -1,0 +1,16 @@
+{
+  "name": "OurQuran",
+  "short_name": "OurQuran",
+  "description": "Read the Quran, build consistency and track your journey.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#050505",
+  "theme_color": "#050505",
+  "icons": [
+    {
+      "src": "/favicon-web-v3.png",
+      "sizes": "64x64",
+      "type": "image/png"
+    }
+  ]
+}
