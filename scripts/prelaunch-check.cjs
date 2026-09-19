@@ -609,6 +609,15 @@ test("Reader exit always reaches Home and browser back cleanup avoids stale rout
   assert.doesNotMatch(reader.slice(sessionStart, sessionEnd), /runAfterPaint\(\(\) => persistDeltas/);
 });
 
+test('route error recovery never remounts the global provider tree during normal navigation', () => {
+  const layout = fs.readFileSync(path.join(root, 'app/_layout.tsx'), 'utf8');
+  const boundary = fs.readFileSync(path.join(root, 'src/components/error-boundary.tsx'), 'utf8');
+  assert.match(layout, /<ErrorBoundary resetKey=\{pathname\}>/);
+  assert.doesNotMatch(layout, /<ErrorBoundary key=\{pathname\}>/);
+  assert.match(boundary, /componentDidUpdate\(prevProps: ErrorBoundaryProps\)/);
+  assert.match(boundary, /prevProps\.resetKey !== this\.props\.resetKey/);
+});
+
 test('subpage back buttons use actual navigation history with a safe Home fallback', () => {
   const header = fs.readFileSync(path.join(root, 'src/components/SubHeader.tsx'), 'utf8');
   assert.match(header, /router\.canGoBack\(\)/);
