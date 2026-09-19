@@ -31,6 +31,7 @@ import {
   StyleSheet,
   Switch,
   View,
+  useWindowDimensions,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -47,6 +48,8 @@ export const ReaderQuickSettings = memo(function ReaderQuickSettings({
   theme: ReaderTheme;
 }) {
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const desktop = width >= 1180;
   const { account, updateSettings } = useReaderAccount();
   const settings = account.settings;
   const [draftReciter, setDraftReciter] = useState(settings.reciter);
@@ -239,7 +242,7 @@ export const ReaderQuickSettings = memo(function ReaderQuickSettings({
       testID="reader-quick-settings"
     >
       <GestureHandlerRootView style={styles.modalRoot}>
-      <View style={styles.backdrop}>
+      <View style={[styles.backdrop, desktop && styles.backdropDesktop]}>
         <Pressable
           style={StyleSheet.absoluteFill}
           onPress={closeSheet}
@@ -250,6 +253,7 @@ export const ReaderQuickSettings = memo(function ReaderQuickSettings({
         <Animated.View
           style={[
             styles.sheet,
+            desktop && styles.sheetDesktop,
             {
               backgroundColor: theme.base,
               borderColor: theme.border,
@@ -267,7 +271,7 @@ export const ReaderQuickSettings = memo(function ReaderQuickSettings({
           />
           <GestureDetector gesture={sheetDrag}>
             <View style={styles.dragZone} testID="reader-quick-settings-drag-zone">
-              <View style={[styles.grab, { backgroundColor: theme.border + "99" }]} />
+              <View style={[styles.grab, desktop && styles.grabDesktop, { backgroundColor: theme.border + "99" }]} />
               <View style={styles.header}>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.eyebrow}>READER CONTROLS</Text>
@@ -470,6 +474,12 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
     backgroundColor: "rgba(0,0,0,0.56)",
   },
+  backdropDesktop: {
+    alignItems: "flex-end",
+    justifyContent: "center",
+    paddingVertical: 18,
+    paddingRight: 18,
+  },
   sheet: {
     height: "84%",
     minHeight: 420,
@@ -479,6 +489,13 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     paddingTop: 10,
     paddingHorizontal: 18,
+  },
+  sheetDesktop: {
+    width: 430,
+    height: "96%",
+    maxHeight: 860,
+    borderRadius: 28,
+    paddingHorizontal: 20,
   },
   dragZone: {
     marginHorizontal: -8,
@@ -495,6 +512,7 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     marginBottom: 14,
   },
+  grabDesktop: { opacity: 0 },
   header: {
     flexDirection: "row",
     alignItems: "flex-start",
