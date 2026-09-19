@@ -14,9 +14,9 @@ export function SubHeader({ title, showBack = true }: { title: string; showBack?
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
   const goBack = () => {
-    if (pathname.startsWith("/settings/")) router.replace("/(tabs)/preferences");
-    else if (pathname.startsWith("/name/")) router.replace("/(tabs)/names");
-    else router.replace("/(tabs)");
+    if (pathname.startsWith("/settings/")) router.replace("/preferences");
+    else if (pathname.startsWith("/name/")) router.replace("/names");
+    else router.replace("/");
   };
   return (
     <View style={[styles.header, { paddingTop: insets.top + 6 }]}>

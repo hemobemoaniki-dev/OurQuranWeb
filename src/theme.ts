@@ -3,8 +3,8 @@
 // Build sheets with makeStyles((colors) => ...) and read useTheme().colors
 // for non-style color props. Never write raw color literals in components.
 
-import { useMemo } from "react";
-import { Appearance, StyleSheet, useColorScheme } from "react-native";
+import { useMemo, useSyncExternalStore } from "react";
+import { Appearance, Platform, StyleSheet, useColorScheme } from "react-native";
 
 export type ColorScheme = "light" | "dark";
 
@@ -98,17 +98,50 @@ export const defaultScheme = "light" satisfies ColorScheme;
 
 export const themes: { light: ThemeColors; dark?: ThemeColors } = { light, dark };
 
+let webScheme: ColorScheme | null = defaultScheme;
+const webThemeListeners = new Set<() => void>();
+
+function subscribeWebTheme(listener: () => void) {
+  if (Platform.OS !== "web") return () => {};
+  webThemeListeners.add(listener);
+  return () => webThemeListeners.delete(listener);
+}
+
+function getWebThemeSnapshot() {
+  return webScheme;
+}
+
 export function setColorScheme(scheme: ColorScheme | null) {
+  if (Platform.OS === "web") {
+    webScheme = scheme;
+    if (typeof document !== "undefined") {
+      document.documentElement.dataset.theme = scheme ?? "system";
+      document.documentElement.style.colorScheme = scheme ?? "light dark";
+    }
+    webThemeListeners.forEach((listener) => listener());
+    return;
+  }
   Appearance.setColorScheme?.(scheme ?? "unspecified");
 }
 
-// Light default: pin light until a saved preference is applied by ThemeContext.
-setColorScheme?.(defaultScheme);
+// Light default until the saved account preference is applied.
+if (Platform.OS !== "web") Appearance.setColorScheme?.(defaultScheme);
 
 export function useTheme(): { scheme: ColorScheme; colors: ThemeColors } {
   const system = useColorScheme();
+  const selected = useSyncExternalStore(
+    subscribeWebTheme,
+    getWebThemeSnapshot,
+    getWebThemeSnapshot,
+  );
+
+  const resolvedSystem: ColorScheme =
+    system === "dark" || system === "light" ? system : defaultScheme;
   const scheme: ColorScheme =
-    (system === "dark" || system === "light") && themes[system] ? system : defaultScheme;
+    Platform.OS === "web"
+      ? selected ?? resolvedSystem
+      : resolvedSystem;
+
   return { scheme, colors: themes[scheme] ?? themes.dark ?? themes.light };
 }
 

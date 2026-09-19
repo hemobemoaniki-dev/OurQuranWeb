@@ -29,7 +29,7 @@ export default function NameDetail() {
       </Head>
       <View style={styles.root}>
       <View style={[styles.header, { paddingTop: insets.top + 6 }]}>
-        <Pressable onPress={() => router.back()} hitSlop={10} style={styles.backBtn} testID="name-detail-back">
+        <Pressable onPress={() => router.replace("/names")} hitSlop={10} style={styles.backBtn} testID="name-detail-back">
           <Icon name="arrow-left" size={24} color={colors.onSurface} />
         </Pressable>
         <Text style={styles.headerTitle}>{name.number} of 99</Text>

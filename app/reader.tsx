@@ -3,7 +3,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import Head from "expo-router/head";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, AccessibilityInfo, Animated, AppState, Easing, FlatList, Modal, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from "react-native";
+import { ActivityIndicator, AccessibilityInfo, Animated, AppState, Easing, FlatList, Modal, Platform, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 
@@ -106,7 +106,9 @@ export default function Reader() {
         setPendingAudio(null);
         setQuickSettingsVisible(false);
         runAfterPaint(() => {
-          if (!readerFocused.current) disposeAudio();
+          if (readerFocused.current) return;
+          if (Platform.OS === "web") audio.stop();
+          else disposeAudio();
         });
       };
     }, [disposeAudio]),
@@ -284,7 +286,7 @@ export default function Reader() {
     // Give React one paint to commit the local streak/crown state, then reveal
     // the already-mounted Home screen. Native cleanup remains off the tap path.
     requestAnimationFrame(() => {
-      router.replace("/(tabs)");
+      router.replace("/");
       runAfterPaint(() => {
         audio.stop();
         flush().catch(() => {});
@@ -333,7 +335,7 @@ export default function Reader() {
         onBack={() => {
           setPendingAudio(null);
           audio.stop();
-          router.replace('/(tabs)/read');
+          router.replace('/read');
         }}
       />
       <ReaderQuickSettings
