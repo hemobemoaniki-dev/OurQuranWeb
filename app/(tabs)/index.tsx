@@ -300,7 +300,7 @@ export default function Home() {
                       ]}
                     >
                       {state === "read" && day.key === crownDayKey ? (
-                        <Icon name="crown" size={19} color={colors.gold} />
+                        <View testID={"week-crown-" + day.key}><Icon name="crown" size={19} color={colors.gold} /></View>
                       ) : state === "read" ? (
                         <Icon name="check" size={18} color={tint} />
                       ) : state === "missed" ? (
@@ -528,7 +528,7 @@ const useStyles = makeStyles((c) => ({
     cursor: "pointer",
   },
   goalTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
-  goalTitle: { color: c.onSurface, fontSize: 18, lineHeight: 23, fontWeight: "850", marginTop: 4 },
+  goalTitle: { color: c.onSurface, fontSize: 18, lineHeight: 23, fontWeight: "800", marginTop: 4 },
   goalCenter: { flex: 1, flexDirection: "row", alignItems: "center", gap: 20 },
   goalRing: {
     width: 92,
