@@ -184,7 +184,7 @@ function Row({
 const useStyles = makeStyles((colors) => ({
   root: { flex: 1, backgroundColor: colors.surface },
   signOutButton: { flexDirection: "row", alignItems: "center", gap: 14, padding: 18, borderRadius: 16, borderWidth: 1, borderColor: colors.goldBorder, backgroundColor: colors.surfaceSecondary },
-  content: { paddingHorizontal: 16, paddingBottom: 32, gap: 18 },
+  content: { width: "100%", maxWidth: 920, alignSelf: "center", paddingHorizontal: 28, paddingBottom: 48, gap: 18 },
   accountCard: {
     flexDirection: "row",
     alignItems: "center",
