@@ -107,7 +107,7 @@ export default function Names() {
 
 const useStyles = makeStyles((colors) => ({
   root: { flex: 1, backgroundColor: colors.surface },
-  content: { paddingHorizontal: 16, paddingBottom: 128, gap: 12 },
+  content: { width: "100%", maxWidth: 980, alignSelf: "center", paddingHorizontal: 28, paddingBottom: 56, gap: 12 },
   headerWrap: { gap: 4, paddingBottom: 8 },
   eyebrow: { color: colors.gold, fontSize: 11, letterSpacing: 2, fontWeight: "700", marginTop: 4 },
   title: { color: colors.onSurface, fontSize: 30, fontFamily: serifFont },
@@ -117,7 +117,7 @@ const useStyles = makeStyles((colors) => ({
     overflow: "hidden",
     borderWidth: 1,
     borderColor: colors.goldBorder,
-    minHeight: 170,
+    minHeight: 220,
   },
   heroBg: { ...({ position: "absolute" } as const), top: 0, left: 0, right: 0, bottom: 0 },
   heroScrim: { ...({ position: "absolute" } as const), top: 0, left: 0, right: 0, bottom: 0 },
