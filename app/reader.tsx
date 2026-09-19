@@ -30,7 +30,8 @@ export default function Reader() {
 
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { height: windowHeight } = useWindowDimensions();
+  const { height: windowHeight, width: windowWidth } = useWindowDimensions();
+  const compactReader = windowWidth < 980;
   const arabicScrollRef = useRef<ScrollView>(null);
   const params = useLocalSearchParams<{ surah?: string; ayah?: string }>();
   const {
@@ -44,7 +45,7 @@ export default function Reader() {
     flush,
   } = useReaderAccount();
   const t = readerTheme(account.settings.readerTheme);
-  const colors = useMemo<ThemeColors>(() => ({ ...themes.dark!, surface: t.base, surfaceSecondary: t.glass, surfaceTertiary: '#FFFFFF16', onSurface: '#FFFFFF', muted: '#DDD9E2', gold: t.accent, goldSoft: `${t.accent}22`, goldBorder: t.border, border: t.border, borderStrong: `${t.border}A6`, brandPrimary: t.accent }), [t]);
+  const colors = useMemo<ThemeColors>(() => ({ ...themes.dark!, surface: t.base, surfaceSecondary: 'rgba(5,6,10,0.86)', surfaceTertiary: 'rgba(255,255,255,0.09)', onSurface: '#FFFFFF', muted: '#E5E2E8', gold: t.accent, goldSoft: `${t.accent}1F`, goldBorder: `${t.accent}66`, border: 'rgba(255,255,255,0.14)', borderStrong: `${t.accent}66`, brandPrimary: t.accent }), [t]);
   const styles = useMemo(() => createStyles(colors), [colors]);
   const translationScrollRef = useRef<ScrollView>(null);
   const session = useSessionControls();
@@ -282,8 +283,7 @@ export default function Reader() {
     // Give React one paint to commit the local streak/crown state, then reveal
     // the already-mounted Home screen. Native cleanup remains off the tap path.
     requestAnimationFrame(() => {
-      if (router.canGoBack()) router.back();
-      else router.replace("/(tabs)");
+      router.replace("/(tabs)");
       runAfterPaint(() => {
         audio.dispose();
         flush().catch(() => {});
@@ -317,20 +317,19 @@ export default function Reader() {
     });
   };
 
-  const arabicSize = 24;
-  const arabicViewportHeight = Math.max(120, Math.min(320, windowHeight * 0.34));
+  const arabicSize = compactReader ? 27 : 34;
+  const arabicViewportHeight = Math.max(180, Math.min(420, windowHeight * 0.42));
 
   return (
     <View style={styles.root}>
       <ReaderBackdrop id={t.id} />
-      <LinearGradient pointerEvents="none" colors={[`${t.base}80`, `${t.base}18`, `${t.base}38`]} locations={[0, 0.38, 1]} style={StyleSheet.absoluteFill} />
+      <LinearGradient pointerEvents="none" colors={[`${t.base}F2`, `${t.base}D8`, `${t.base}F5`]} locations={[0, 0.46, 1]} style={StyleSheet.absoluteFill} />
       <ReaderHeader
         theme={t}
         onOpenSettings={() => setQuickSettingsVisible(true)}
         onBack={() => {
           setPendingAudio(null);
-          if (router.canGoBack()) router.back();
-          else router.replace('/(tabs)');
+          router.replace('/(tabs)/read');
           runAfterPaint(() => disposeAudio());
         }}
       />
@@ -363,11 +362,14 @@ export default function Reader() {
             <ActivityIndicator size="large" color={colors.gold} />
           </View>
         ) : (
-          <Animated.View style={{
-            gap: 12,
-            opacity: verseMotion.interpolate({ inputRange: [0, 1], outputRange: [0.35, 1] }),
-            transform: [{ translateY: verseMotion.interpolate({ inputRange: [0, 1], outputRange: [8, 0] }) }],
-          }}>
+          <Animated.View style={[
+            styles.readingGrid,
+            compactReader && styles.readingGridCompact,
+            {
+              opacity: verseMotion.interpolate({ inputRange: [0, 1], outputRange: [0.35, 1] }),
+              transform: [{ translateY: verseMotion.interpolate({ inputRange: [0, 1], outputRange: [8, 0] }) }],
+            },
+          ]}>
           <View style={styles.card} testID="reader-ayah-card">
             <LinearGradient pointerEvents="none" colors={[`${t.accent}20`, `${t.base}18`, `${t.end}24`]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.cardSheen} />
             {/* Surah header */}
@@ -511,22 +513,26 @@ export default function Reader() {
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.surface },
   backdrop: { position: "absolute", top: 0, right: 0, bottom: 0, left: 0 },
-  progressWrap: { width: "100%", maxWidth: 1080, alignSelf: "center", paddingHorizontal: 24, paddingTop: 12, paddingBottom: 6, gap: 10 },
+  progressWrap: { width: "100%", maxWidth: 1180, alignSelf: "center", paddingHorizontal: 28, paddingTop: 14, paddingBottom: 8, gap: 10 },
   progressTrack: { height: 3, borderRadius: 999, backgroundColor: colors.surfaceTertiary, overflow: "hidden" },
   progressFill: { height: 3, borderRadius: 999, backgroundColor: colors.brandPrimary },
   progressMeta: { flexDirection: "row", justifyContent: "space-between" },
   progressText: { color: colors.muted, fontSize: 12, fontWeight: "600" },
 
   readingViewport: { flex: 1, minHeight: 0 },
-  scroll: { width: "100%", maxWidth: 1080, alignSelf: "center", paddingHorizontal: 24, paddingTop: 16, paddingBottom: 24, gap: 14 },
+  scroll: { width: "100%", maxWidth: 1180, alignSelf: "center", paddingHorizontal: 28, paddingTop: 18, paddingBottom: 26 },
+  readingGrid: { width: "100%", flexDirection: "row", alignItems: "stretch", gap: 16 },
+  readingGridCompact: { flexDirection: "column" },
   loader: { paddingVertical: 60, alignItems: "center", gap: 16 },
   errorText: { color: colors.muted, fontSize: 15 },
   retryBtn: { backgroundColor: colors.brandPrimary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12 },
   retryText: { color: colors.onBrandPrimary, fontWeight: "700" },
 
   card: {
-    backgroundColor: colors.surfaceSecondary,
-    borderRadius: 28,
+    flex: 1.28,
+    minHeight: 390,
+    backgroundColor: "rgba(5,6,10,0.92)",
+    borderRadius: 24,
     borderWidth: 1,
     borderColor: colors.borderStrong,
     paddingHorizontal: 28,
@@ -539,8 +545,8 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   pressed: { opacity: 0.7, transform: [{ scale: 0.97 }] },
   cardTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   surahTitleBtn: { flex: 1, flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 4, paddingHorizontal: 8 },
-  surahTitle: { flexShrink: 1, textAlign: "center", color: colors.onSurface, fontSize: 22, fontFamily: serifFont, fontWeight: "600" },
-  ayahCount: { color: colors.muted, fontSize: 13, textAlign: "center", marginTop: 2 },
+  surahTitle: { flexShrink: 1, textAlign: "center", color: colors.onSurface, fontSize: 26, fontFamily: serifFont, fontWeight: "800", letterSpacing: -0.45 },
+  ayahCount: { color: colors.muted, fontSize: 12, fontWeight: "700", textAlign: "center", marginTop: 4, letterSpacing: 0.35 },
   audioError: { color: colors.warning, fontSize: 12, textAlign: "center", marginTop: 6 },
 
   bismillah: { color: colors.gold, textAlign: "center", marginTop: 18, writingDirection: "rtl" },
@@ -550,18 +556,18 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     writingDirection: "rtl",
     fontFamily: arabicFont,
     includeFontPadding: true,
-    paddingHorizontal: 6,
-    marginTop: 8,
-    marginBottom: 8,
+    paddingHorizontal: 18,
+    marginTop: 14,
+    marginBottom: 14,
   },
-  translation: { padding: 24, gap: 12, borderRadius: 28, borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: colors.surfaceSecondary },
-  translationLabel: { color: colors.gold, fontSize: 10, letterSpacing: 2, fontWeight: "700" },
-  english: { color: colors.onSurface, fontSize: 15, lineHeight: 24, fontWeight: "400" },
+  translation: { flex: 0.72, minHeight: 390, padding: 26, gap: 16, borderRadius: 24, borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: colors.surfaceSecondary },
+  translationLabel: { color: colors.gold, fontSize: 10, letterSpacing: 2.1, fontWeight: "900" },
+  english: { color: colors.onSurface, fontSize: 17, lineHeight: 29, fontWeight: "500" },
 
 
   actions: {
     width: "100%",
-    maxWidth: 980,
+    maxWidth: 1040,
     alignSelf: "center",
     flexDirection: "row",
     alignItems: "center",
@@ -570,7 +576,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     paddingTop: 10,
     marginHorizontal: 0,
     marginBottom: 12,
-    borderRadius: 26,
+    borderRadius: 22,
     overflow: "hidden",
     borderWidth: 1,
     borderColor: colors.borderStrong,
@@ -586,15 +592,16 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     alignItems: "center",
     gap: 2,
     paddingVertical: 10,
-    borderRadius: 30,
+    borderRadius: 18,
     borderWidth: 1,
     borderColor: colors.borderStrong,
+    backgroundColor: colors.goldSoft,
   },
   sideActionLabel: { color: colors.gold, fontSize: 12, fontWeight: "600" },
   doneBtn: {
     flex: 1.35,
     backgroundColor: colors.brandPrimary,
-    borderRadius: 30,
+    borderRadius: 18,
     minHeight: 62,
     justifyContent: "center",
     paddingVertical: 12,
@@ -608,7 +615,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     alignItems: "center",
     gap: 2,
     paddingVertical: 8,
-    borderRadius: 30,
+    borderRadius: 18,
     backgroundColor: colors.goldSoft,
     borderWidth: 1,
     borderColor: colors.borderStrong,
