@@ -730,6 +730,7 @@ test('every statically referenced web icon has a real SVG mapping', () => {
     const code = fs.readFileSync(file, 'utf8');
     const ast = ts.createSourceFile(file, code, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
     const names = new Set();
+    for (const match of code.matchAll(/\bicon:\s*["']([^"']+)["']/g)) names.add(match[1]);
     function walk(node) {
       if ((ts.isJsxSelfClosingElement(node) || ts.isJsxOpeningElement(node)) && node.tagName.getText(ast) === 'Icon') {
         const attr = node.attributes.properties.find(p => ts.isJsxAttribute(p) && p.name.getText(ast) === 'name');
@@ -747,10 +748,6 @@ test('every statically referenced web icon has a real SVG mapping', () => {
   visit(path.join(root, 'app'));
   visit(path.join(root, 'src/components'));
 
-  // Dynamic icon configuration objects also feed <Icon name={...}>.
-  for (const dynamic of ['cellphone', 'calendar-check']) {
-    assert.ok(supported.has(dynamic), `Missing dynamic web icon mapping for "${dynamic}"`);
-  }
   assert.doesNotMatch(iconSource, /M9 12h6M12 9v6/);
 });
 
