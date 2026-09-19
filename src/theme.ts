@@ -1,0 +1,122 @@
+// OurQuran design tokens — dual theme (Light default, Dark available).
+// Black / Gold / Cream identity. Keys mirror design_guidelines.json.
+// Build sheets with makeStyles((colors) => ...) and read useTheme().colors
+// for non-style color props. Never write raw color literals in components.
+
+import { useMemo } from "react";
+import { Appearance, StyleSheet, useColorScheme } from "react-native";
+
+export type ColorScheme = "light" | "dark";
+
+const GOLD = "#D4AF37";
+const GOLD_DEEP = "#B8962E";
+
+const dark = {
+  surface: "#000000", // pitch-black app canvas
+  onSurface: "#FFFFFF", // cream text on canvas
+  surfaceSecondary: "#080808", // cards, rows
+  onSurfaceSecondary: "#FFFFFF",
+  surfaceTertiary: "#141414", // inputs, chips, elevated
+  onSurfaceTertiary: "#FFFFFF",
+  surfaceInverse: "#FDFBF7",
+  onSurfaceInverse: "#080808",
+  muted: "#CACACA", // secondary/caption text
+
+  brand: GOLD,
+  onBrand: "#121212",
+  brandPrimary: GOLD,
+  onBrandPrimary: "#121212",
+  brandSecondary: GOLD_DEEP,
+  onBrandSecondary: "#121212",
+  brandTertiary: "#141414",
+  onBrandTertiary: "#FFFFFF",
+
+  success: "#2D6A4F",
+  onSuccess: "#FFFFFF",
+  warning: "#F4A261",
+  onWarning: "#121212",
+  error: "#9B2226",
+  onError: "#FFFFFF",
+  info: "#457B9D",
+  onInfo: "#FFFFFF",
+
+  border: "#292929", // neutral hairline
+  borderStrong: "#383838",
+  divider: "#141414",
+
+  // OurQuran extras
+  gold: GOLD, // gold text/icon on dark
+  goldBorder: "rgba(236,202,105,0.38)", // intentional gold hairline for elevation
+  goldSoft: "rgba(236,202,105,0.10)", // faint gold fill
+  overlay: "rgba(0,0,0,0.62)", // image scrim base
+  streakDim: "#141414",
+};
+
+const light: typeof dark = {
+  surface: "#FDFBF7",
+  onSurface: "#1A1814",
+  surfaceSecondary: "#FFFFFF",
+  onSurfaceSecondary: "#1A1814",
+  surfaceTertiary: "#F5F2EB",
+  onSurfaceTertiary: "#1A1814",
+  surfaceInverse: "#121212",
+  onSurfaceInverse: "#FFF7E6",
+  muted: "#57534D",
+
+  brand: GOLD,
+  onBrand: "#121212",
+  brandPrimary: GOLD,
+  onBrandPrimary: "#121212",
+  brandSecondary: GOLD_DEEP,
+  onBrandSecondary: "#FFFFFF",
+  brandTertiary: "#F5F2EB",
+  onBrandTertiary: "#1A1814",
+
+  success: "#2D6A4F",
+  onSuccess: "#FFFFFF",
+  warning: "#B4671E",
+  onWarning: "#FFFFFF",
+  error: "#9B2226",
+  onError: "#FFFFFF",
+  info: "#457B9D",
+  onInfo: "#FFFFFF",
+
+  border: "#E8E2D2",
+  borderStrong: "#D8CDB0",
+  divider: "#E8E2D2",
+
+  gold: "#806016",
+  goldBorder: GOLD,
+  goldSoft: "rgba(212,175,55,0.16)",
+  overlay: "rgba(0,0,0,0.55)",
+  streakDim: "#EDE7D8",
+};
+
+export type ThemeColors = typeof dark;
+
+export const defaultScheme = "light" satisfies ColorScheme;
+
+export const themes: { light: ThemeColors; dark?: ThemeColors } = { light, dark };
+
+export function setColorScheme(scheme: ColorScheme | null) {
+  Appearance.setColorScheme?.(scheme ?? "unspecified");
+}
+
+// Light default: pin light until a saved preference is applied by ThemeContext.
+setColorScheme?.(defaultScheme);
+
+export function useTheme(): { scheme: ColorScheme; colors: ThemeColors } {
+  const system = useColorScheme();
+  const scheme: ColorScheme =
+    (system === "dark" || system === "light") && themes[system] ? system : defaultScheme;
+  return { scheme, colors: themes[scheme] ?? themes.dark ?? themes.light };
+}
+
+export function makeStyles<T extends StyleSheet.NamedStyles<T> | StyleSheet.NamedStyles<any>>(
+  factory: (colors: ThemeColors) => T & StyleSheet.NamedStyles<any>,
+): () => T {
+  return function useStyles(): T {
+    const { colors } = useTheme();
+    return useMemo(() => StyleSheet.create(factory(colors)), [colors]);
+  };
+}
