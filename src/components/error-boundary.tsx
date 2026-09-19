@@ -4,6 +4,7 @@ import { Text } from "@/src/components/AppText";
 // it shows up in the Metro output. Do not mount additional boundaries.
 
 import { reloadAppAsync } from "expo";
+import { useRouter } from "expo-router";
 import { Component, type ErrorInfo, type PropsWithChildren, useState } from "react";
 import { Platform, Pressable, ScrollView, View } from "react-native";
 
@@ -36,6 +37,7 @@ export class ErrorBoundary extends Component<PropsWithChildren, ErrorBoundarySta
 
 function ErrorFallback({ error, resetError }: { error: Error; resetError: () => void }) {
   const styles = useStyles();
+  const router = useRouter();
   const [showDetails, setShowDetails] = useState(false);
 
   const handleReload = async () => {
@@ -53,14 +55,27 @@ function ErrorFallback({ error, resetError }: { error: Error; resetError: () => 
         <Text style={styles.title}>Something went wrong</Text>
         <Text style={styles.message}>Please reload the app to continue.</Text>
         {__DEV__ ? <Text style={styles.devMessage}>{error.message}</Text> : null}
-        <Pressable
-          onPress={handleReload}
-          testID="error-fallback-reload"
-          accessibilityRole="button"
-          style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
-        >
-          <Text style={styles.buttonText}>Reload app</Text>
-        </Pressable>
+        <View style={styles.actions}>
+          <Pressable
+            onPress={() => {
+              resetError();
+              router.replace("/");
+            }}
+            testID="error-fallback-home"
+            accessibilityRole="button"
+            style={({ pressed }) => [styles.secondaryButton, pressed && styles.buttonPressed]}
+          >
+            <Text style={styles.secondaryButtonText}>Return to dashboard</Text>
+          </Pressable>
+          <Pressable
+            onPress={handleReload}
+            testID="error-fallback-reload"
+            accessibilityRole="button"
+            style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
+          >
+            <Text style={styles.buttonText}>Reload app</Text>
+          </Pressable>
+        </View>
         {__DEV__ ? (
           <Pressable onPress={() => setShowDetails((v) => !v)} accessibilityRole="button" hitSlop={8}>
             <Text style={styles.detailsToggle}>{showDetails ? "Hide details" : "Show details"}</Text>
@@ -105,13 +120,34 @@ const useStyles = makeStyles((colors) => ({
     fontSize: 13,
     textAlign: "center",
   },
-  button: {
+  actions: {
     marginTop: 8,
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    gap: 10,
+  },
+  button: {
     backgroundColor: colors.brandPrimary,
     borderRadius: 12,
-    paddingHorizontal: 24,
-    paddingVertical: 14,
+    paddingHorizontal: 20,
+    paddingVertical: 13,
+    minWidth: 160,
+  },
+  secondaryButton: {
+    borderRadius: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 13,
     minWidth: 180,
+    borderWidth: 1,
+    borderColor: colors.goldBorder,
+    backgroundColor: colors.goldSoft,
+  },
+  secondaryButtonText: {
+    color: colors.onSurface,
+    fontSize: 15,
+    fontWeight: "700",
+    textAlign: "center",
   },
   buttonPressed: {
     opacity: 0.85,
