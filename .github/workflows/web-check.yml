@@ -29,6 +29,12 @@ jobs:
       - name: TypeScript
         run: npx tsc --noEmit
 
+      - name: Lint
+        run: npm run lint
+
+      - name: Expo Doctor
+        run: npx expo-doctor
+
       - name: Regression checks
         run: node ./scripts/prelaunch-check.cjs
 
