@@ -1,9 +1,10 @@
 import { Text } from "@/src/components/AppText";
 import { memo } from "react";
 import { useRouter } from "expo-router";
-import { Image, Pressable, View } from "react-native";
+import { Pressable, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { BrandMark } from "@/src/components/BrandMark";
 import { Icon } from "@/src/components/Icon";
 import { useAccount } from "@/src/context/AppState";
 import { useSession } from "@/src/context/SessionContext";
@@ -39,7 +40,7 @@ export const AppHeader = memo(function AppHeader({ showBack = false }: { showBac
         )}
 
         <View style={styles.logoWrap}>
-          <Image source={require("../../assets/images/ourquran-web-mark.png")} style={styles.logoMark} resizeMode="cover" />
+          <BrandMark size={34} tint={colors.gold} glow={colors.gold} intensity="medium" />
           <Text style={styles.logoText}>OurQuran</Text>
         </View>
 
@@ -101,7 +102,6 @@ const useStyles = makeStyles((colors) => ({
     alignItems: "center",
     gap: 8,
   },
-  logoMark: { width: 28, height: 28, borderRadius: 8 },
   logoText: {
     color: colors.onSurface,
     fontSize: 20,
