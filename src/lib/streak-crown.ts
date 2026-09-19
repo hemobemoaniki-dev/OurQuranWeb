@@ -49,7 +49,7 @@ export function queueCrownCelebrationIfEarned(
   // transition cannot outrun AsyncStorage.
   const normalizedScope = scope || "guest";
   pendingCrownMemory = { scope: normalizedScope, day };
-  void storage.setItem(pendingKey(normalizedScope), day);
+  if (normalizedScope !== "guest") void storage.setItem(pendingKey(normalizedScope), day);
   return true;
 }
 
@@ -64,6 +64,11 @@ export async function consumePendingCrownCelebration(streak: number, today: stri
     pendingCrownMemory = null;
     void storage.removeItem(key);
     return memoryDay === today && crownActiveForStreak(streak);
+  }
+
+  if (normalizedScope === "guest") {
+    void storage.removeItem(key);
+    return false;
   }
 
   const pending = await storage.getItem(key, "");
