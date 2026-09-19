@@ -3,7 +3,7 @@ name: Web desktop check
 on:
   push:
     branches:
-      - web/desktop-redesign
+      - "web/**"
   workflow_dispatch:
 
 permissions:
