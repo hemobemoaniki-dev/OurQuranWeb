@@ -122,6 +122,7 @@ const aliases: Record<string, string> = {
   "tshirt-crew-outline": "shirt",
   "book-education-outline": "education",
   "account-heart-outline": "accountHeart",
+  "image-multiple-outline": "images",
 };
 
 const nodes: Record<string, SvgNode[]> = {
@@ -214,6 +215,7 @@ const nodes: Record<string, SvgNode[]> = {
   shirt: [["path",{d:"m8 4-5 3 3 4 2-1v10h8V10l2 1 3-4-5-3c-.6 1.4-1.9 2-4 2S8.6 5.4 8 4Z"}]],
   education: [["path",{d:"M4 6c2.8-.7 5.3-.2 8 1.4v11c-2.7-1.6-5.2-2.1-8-1.4Z"}],["path",{d:"M20 6c-2.8-.7-5.3-.2-8 1.4v11c2.7-1.6 5.2-2.1 8-1.4Z"}],["path",{d:"M9 4h6"}]],
   accountHeart: [["circle",{cx:9,cy:8,r:3}],["path",{d:"M3 20a6 6 0 0 1 10.5-4"}],["path",{d:"M16.5 13.2c1.1-1.4 3.5-.7 3.5 1.2 0 1.7-3.5 4-3.5 4s-3.5-2.3-3.5-4c0-1.9 2.4-2.6 3.5-1.2Z"}]],
+  images: [["rect",{x:5,y:5,width:15,height:14,rx:2}],["path",{d:"m7 16 3.5-4 2.5 3 2-2 3 3"}],["circle",{cx:15.5,cy:9,r:1.2}],["path",{d:"M3 8v10a3 3 0 0 0 3 3h11"}]],
 };
 
 function fallback(): SvgNode[] {
