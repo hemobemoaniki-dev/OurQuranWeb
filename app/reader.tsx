@@ -3,7 +3,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import Head from "expo-router/head";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, AccessibilityInfo, Animated, AppState, Easing, FlatList, Modal, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from "react-native";
+import { ActivityIndicator, AccessibilityInfo, Animated, AppState, Easing, FlatList, Modal, Platform, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 
@@ -11,6 +11,7 @@ import { ReaderHeader } from "@/src/components/ReaderHeader";
 import { DesktopReaderExperience } from "@/src/components/DesktopReaderExperience";
 import { ReaderQuickSettings } from "@/src/components/ReaderQuickSettings";
 import { ReaderBackdrop } from "@/src/components/ReaderBackdrop";
+import { WebPageBackdrop } from "@/src/components/WebPageBackdrop";
 import { ReaderTextActions } from "@/src/components/ReaderTextActions";
 import { readerTheme } from "@/src/lib/reader-themes";
 import { Icon } from "@/src/components/Icon";
@@ -417,8 +418,15 @@ export default function Reader() {
     <>
       <Head><title>Quran Reader — OurQuran</title><meta name="robots" content="noindex,follow" /></Head>
       <View style={styles.root}>
-      <ReaderBackdrop id={t.id} />
-      <LinearGradient pointerEvents="none" colors={[`${t.base}F2`, `${t.base}D8`, `${t.base}F5`]} locations={[0, 0.46, 1]} style={StyleSheet.absoluteFill} />
+      {Platform.OS === "web" ? <WebPageBackdrop intensity="strong" /> : <ReaderBackdrop id={t.id} />}
+      <LinearGradient
+        pointerEvents="none"
+        colors={Platform.OS === "web"
+          ? [`${t.base}B0`, `${t.base}80`, `${t.base}B8`]
+          : [`${t.base}F2`, `${t.base}D8`, `${t.base}F5`]}
+        locations={[0, 0.46, 1]}
+        style={StyleSheet.absoluteFill}
+      />
       {desktopReader ? (
         <DesktopReaderExperience
           theme={t}
