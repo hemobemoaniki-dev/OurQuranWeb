@@ -27,6 +27,7 @@ const aliases: Record<string, string> = {
   "crown": "crown",
   "check": "check",
   "check-circle": "checkCircle",
+  "check-circle-outline": "checkCircle",
   "progress-check": "checkCircle",
   "minus": "minus",
   "arrow-right": "arrowRight",
@@ -107,6 +108,20 @@ const aliases: Record<string, string> = {
   "format-size": "formatSize",
   "account-voice": "microphone",
   "login": "login",
+  "bullhorn-outline": "bullhorn",
+  "water-outline": "water",
+  "weather-sunset-up": "sunrise",
+  "book-open-variant": "book",
+  "medical-bag": "medicalBag",
+  "hand-coin-outline": "handCoin",
+  "airplane": "airplane",
+  "home-outline": "home",
+  "food-apple-outline": "apple",
+  "weather-rainy": "rain",
+  "door": "door",
+  "tshirt-crew-outline": "shirt",
+  "book-education-outline": "education",
+  "account-heart-outline": "accountHeart",
 };
 
 const nodes: Record<string, SvgNode[]> = {
@@ -187,6 +202,18 @@ const nodes: Record<string, SvgNode[]> = {
   plus: [["line",{x1:5,y1:12,x2:19,y2:12}],["line",{x1:12,y1:5,x2:12,y2:19}]],
   formatSize: [["path",{d:"M4 6h10M9 6v13M6 19h6M14 11h7M17.5 11v8M15 19h5"}]],
   login: [["path",{d:"M14 5h5v14h-5M10 8l4 4-4 4M3 12h11"}]],
+  bullhorn: [["path",{d:"M4 10v4h4l8 4V6l-8 4Z"}],["path",{d:"M8 14l1.5 5h3L11 14M19 9c1.4 1.5 1.4 4.5 0 6"}]],
+  water: [["path",{d:"M12 3s-5 5.4-5 10a5 5 0 0 0 10 0c0-4.6-5-10-5-10Z"}],["path",{d:"M9.5 14.5c.6 1.3 1.5 2 2.8 2.1"}]],
+  sunrise: [["path",{d:"M4 18h16M6 14a6 6 0 0 1 12 0M12 3v4M4.8 7.8l2.3 2.3M19.2 7.8l-2.3 2.3M12 21v-3"}]],
+  medicalBag: [["rect",{x:4,y:8,width:16,height:12,rx:3}],["path",{d:"M9 8V5h6v3M12 11v6M9 14h6"}]],
+  handCoin: [["path",{d:"M3 15h4l3 3h5.5l4-3.2a1.7 1.7 0 0 0-2.1-2.6L14 14h-4"}],["circle",{cx:14.5,cy:7,r:3.5}],["path",{d:"M14.5 5.4v3.2M13.2 6.1h2.1M13.2 7.9h2.1"}]],
+  airplane: [["path",{d:"m3 14 8-2 4-8 2 1-3 7 6 2v2l-7-1-3 5-2-1 2-5-7 2Z"}]],
+  apple: [["path",{d:"M12 8c-1.7-2-5.6-1.7-6.7 1.2-1.6 4.4 2.2 10 5 10 1 0 1.2-.5 1.7-.5s.8.5 1.8.5c2.8 0 6.5-5.6 4.9-10C17.6 6.3 13.7 6 12 8Z"}],["path",{d:"M12 7c0-2 1.3-3.5 3.5-4"}]],
+  rain: [["path",{d:"M6 15h11a4 4 0 0 0 .7-7.9A6 6 0 0 0 6.2 6 4.5 4.5 0 0 0 6 15Z"}],["path",{d:"M8 18l-1 2M13 18l-1 2M18 18l-1 2"}]],
+  door: [["path",{d:"M6 21V4h12v17M9 21V7l6-1v15M12.5 13h.1"}]],
+  shirt: [["path",{d:"m8 4-5 3 3 4 2-1v10h8V10l2 1 3-4-5-3c-.6 1.4-1.9 2-4 2S8.6 5.4 8 4Z"}]],
+  education: [["path",{d:"M4 6c2.8-.7 5.3-.2 8 1.4v11c-2.7-1.6-5.2-2.1-8-1.4Z"}],["path",{d:"M20 6c-2.8-.7-5.3-.2-8 1.4v11c2.7-1.6 5.2-2.1 8-1.4Z"}],["path",{d:"M9 4h6"}]],
+  accountHeart: [["circle",{cx:9,cy:8,r:3}],["path",{d:"M3 20a6 6 0 0 1 10.5-4"}],["path",{d:"M16.5 13.2c1.1-1.4 3.5-.7 3.5 1.2 0 1.7-3.5 4-3.5 4s-3.5-2.3-3.5-4c0-1.9 2.4-2.6 3.5-1.2Z"}]],
 };
 
 function fallback(): SvgNode[] {
