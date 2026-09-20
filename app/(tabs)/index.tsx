@@ -30,6 +30,8 @@ const PERIODS: { key: Period; label: string }[] = [
   { key: "all", label: "All time" },
 ];
 
+const WEEK_DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
 export default function Home() {
   const styles = useStyles();
   const { colors, scheme } = useTheme();
@@ -282,45 +284,73 @@ export default function Home() {
               </View>
             </View>
             <View style={styles.weekRow}>
-              {days.map((day) => {
+              {days.map((day, index) => {
                 const state = readingDayState(account.history, day.key, today);
-                const readTint = scheme === "dark" ? "#58D6A8" : "#15825F";
-                const missedTint = scheme === "dark" ? "#FF6E88" : "#B42348";
+                const readTint = scheme === "dark" ? "#9AF75A" : "#25884A";
+                const missedTint = scheme === "dark" ? "#FF5F73" : "#C92A45";
+                const pendingTint = day.key === today ? colors.gold : (scheme === "dark" ? "#676B72" : "#8C8F95");
                 const tint = state === "read"
                   ? readTint
                   : state === "missed"
                     ? missedTint
-                    : day.key === today
-                      ? colors.gold
-                      : colors.borderStrong;
+                    : pendingTint;
+
+                const connectorTintFor = (targetIndex: number) => {
+                  if (targetIndex < 0 || targetIndex >= days.length) return "transparent";
+                  const target = days[targetIndex];
+                  const targetState = readingDayState(account.history, target.key, today);
+                  if (targetState === "read") return readTint;
+                  if (targetState === "missed") return missedTint;
+                  if (target.key === today) return colors.gold;
+                  return scheme === "dark" ? "rgba(103,107,114,0.48)" : "rgba(140,143,149,0.42)";
+                };
+
+                const leftTint = index > 0 ? connectorTintFor(index - 1) : "transparent";
+                const rightTint = index < days.length - 1 ? connectorTintFor(index) : "transparent";
+                const isToday = day.key === today;
+                const isCrown = state === "read" && day.key === crownDayKey;
+
                 return (
                   <View key={day.key} style={styles.day}>
-                    <Text style={styles.dayLetter}>{day.label}</Text>
-                    <View
-                      style={[
-                        styles.dayNode,
-                        {
-                          borderColor: tint,
-                          backgroundColor: state === "read"
-                            ? `${readTint}26`
-                            : state === "missed"
-                              ? `${missedTint}20`
-                              : colors.surfaceTertiary,
-                        },
-                      ]}
-                    >
-                      {state === "read" && day.key === crownDayKey ? (
-                        <View testID={"week-crown-" + day.key}><Icon name="crown" size={19} color={colors.gold} /></View>
-                      ) : state === "read" ? (
-                        <Icon name="check" size={18} color={tint} />
-                      ) : state === "missed" ? (
-                        <Icon name="close" size={20} color={tint} />
-                      ) : (
-                        <View style={[styles.dayDot, { backgroundColor: day.key === today ? colors.gold : colors.muted }]} />
-                      )}
+                    <View style={styles.dayNodeRow}>
+                      <View style={[styles.dayConnector, index === 0 && styles.dayConnectorHidden, { backgroundColor: leftTint }]} />
+                      <View
+                        style={[
+                          styles.dayNode,
+                          {
+                            borderColor: tint,
+                            backgroundColor: state === "read"
+                              ? `${readTint}28`
+                              : state === "missed"
+                                ? `${missedTint}24`
+                                : isToday
+                                  ? colors.goldSoft
+                                  : colors.surfaceTertiary,
+                            shadowColor: tint,
+                            shadowOpacity: state === "future" ? 0 : 0.34,
+                          },
+                          isToday && styles.dayNodeToday,
+                        ]}
+                        testID={`week-day-${day.key}-${state}`}
+                      >
+                        {isCrown ? (
+                          <View testID={"week-crown-" + day.key}><Icon name="crown" size={21} color={colors.gold} /></View>
+                        ) : state === "read" ? (
+                          <Icon name="check" size={22} color={tint} />
+                        ) : state === "missed" ? (
+                          <Icon name="close" size={23} color={tint} />
+                        ) : isToday ? (
+                          <View style={[styles.dayDot, { backgroundColor: colors.gold }]} />
+                        ) : (
+                          <View style={[styles.dayDot, { backgroundColor: scheme === "dark" ? "#73777E" : "#8C8F95" }]} />
+                        )}
+                      </View>
+                      <View style={[styles.dayConnector, index === days.length - 1 && styles.dayConnectorHidden, { backgroundColor: rightTint }]} />
                     </View>
+
+                    <Text style={[styles.dayLetter, isToday && { color: colors.gold }]}>{WEEK_DAY_NAMES[index]}</Text>
                     <Text style={[styles.dayState, { color: tint }]}>
-                      {state === "read" ? "Read" : state === "missed" ? "Missed" : day.key === today ? "Today" : "—"}
+                      {state === "read" ? (isCrown ? "Streak" : "Read") : state === "missed" ? "Missed" : isToday ? "Today" : "Upcoming"}
                     </Text>
                   </View>
                 );
@@ -701,12 +731,26 @@ const useStyles = makeStyles((c) => ({
   streakPill: { flexDirection: "row", alignItems: "center", gap: 5, minHeight: 34, paddingHorizontal: 11, borderRadius: 12, backgroundColor: c.goldSoft, borderWidth: 1, borderColor: c.goldBorder },
   streakValue: { color: c.onSurface, fontSize: 18, lineHeight: 22, fontWeight: "900" },
   streakLabel: { color: c.muted, fontSize: 11, lineHeight: 14, fontWeight: "800" },
-  weekRow: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10, marginTop: 20 },
-  day: { flex: 1, alignItems: "center", gap: 7, minWidth: 58 },
-  dayLetter: { color: c.onSurface, fontSize: 14, lineHeight: 18, fontWeight: "800" },
-  dayNode: { width: 56, height: 56, borderRadius: 18, borderWidth: 2, alignItems: "center", justifyContent: "center" },
-  dayDot: { width: 6, height: 6, borderRadius: 3 },
-  dayState: { fontSize: 12, lineHeight: 16, fontWeight: "800" },
+  weekRow: { flex: 1, flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", marginTop: 20 },
+  day: { flex: 1, alignItems: "center", minWidth: 66 },
+  dayNodeRow: { width: "100%", minHeight: 58, flexDirection: "row", alignItems: "center", justifyContent: "center" },
+  dayConnector: { flex: 1, height: 3, minWidth: 10, opacity: 0.92 },
+  dayConnectorHidden: { opacity: 0 },
+  dayNode: {
+    width: 54,
+    height: 54,
+    flexShrink: 0,
+    borderRadius: 27,
+    borderWidth: 2,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 0 },
+  },
+  dayNodeToday: { borderWidth: 2.5 },
+  dayDot: { width: 8, height: 8, borderRadius: 4 },
+  dayLetter: { color: c.onSurface, fontSize: 14, lineHeight: 18, fontWeight: "900", marginTop: 9 },
+  dayState: { fontSize: 11.5, lineHeight: 15, fontWeight: "900", marginTop: 2 },
 
   quickGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginTop: 18 },
   quickCarouselViewport: { flex: 1, width: "100%", overflow: "hidden", marginTop: 14 },
