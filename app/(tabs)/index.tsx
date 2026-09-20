@@ -20,7 +20,7 @@ import { makeStyles, useTheme } from "@/src/theme";
 import { serifFont } from "@/src/typography";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import { memo, useCallback, useEffect, useMemo, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Platform, Pressable, ScrollView, View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -328,20 +328,7 @@ export default function Home() {
             </View>
           </View>
 
-          <View style={styles.quickPanel}>
-            <View style={styles.panelHead}>
-              <View>
-                <Text style={styles.panelTitle}>Quick access</Text>
-                <Text style={styles.panelSub}>Jump straight into what matters.</Text>
-              </View>
-            </View>
-            <View style={styles.quickGrid}>
-              <QuickAction icon="bookmark-multiple-outline" label="Bookmarks" hint="Saved ayahs" onPress={() => router.push("/settings/bookmarks")} />
-              <QuickAction icon="target" label="Daily Goal" hint="Adjust your target" onPress={() => router.push("/settings/goal")} />
-              <QuickAction icon="microphone-outline" label="Reciter" hint="Voice & playback" onPress={() => router.push("/settings/reciter")} />
-              <QuickAction icon="chart-line" label="Progress" hint="Streaks & metrics" onPress={() => router.push("/settings/progress")} />
-            </View>
-          </View>
+          <QuickAccessCarousel />
         </View>
 
         <Pressable
@@ -403,6 +390,85 @@ const JourneyMetric = memo(function JourneyMetric({
     </View>
   );
 });
+
+const QUICK_ACCESS_ITEMS: { icon: IconName; label: string; hint: string; href: string }[] = [
+  { icon: "bookmark-multiple-outline", label: "Bookmarks", hint: "Ayahs & Names", href: "/settings/bookmarks" },
+  { icon: "target", label: "Daily Goal", hint: "Adjust your target", href: "/settings/goal" },
+  { icon: "microphone-outline", label: "Reciter", hint: "Choose your voice", href: "/settings/reciter" },
+  { icon: "chart-line", label: "Progress", hint: "Streaks & metrics", href: "/settings/progress" },
+  { icon: "palette-outline", label: "Reader Theme", hint: "Reader atmosphere", href: "/settings/reader-theme" },
+  { icon: "format-size", label: "Text Size", hint: "Reading comfort", href: "/settings/reader" },
+  { icon: "speedometer", label: "Playback", hint: "Recitation speed", href: "/settings/speed" },
+  { icon: "play-circle-outline", label: "Autoplay", hint: "Audio behavior", href: "/settings/autoplay" },
+  { icon: "image-multiple-outline", label: "Background", hint: "Website scenery", href: "/settings/background" },
+  { icon: "bell-outline", label: "Reminders", hint: "Reading notifications", href: "/settings/notifications" },
+  { icon: "account-outline", label: "Profile", hint: "Identity & account", href: "/settings/profile" },
+  { icon: "cloud-sync-outline", label: "Sync", hint: "Cloud status", href: "/settings/sync" },
+];
+
+function QuickAccessCarousel() {
+  const styles = useStyles();
+  const router = useRouter();
+  const ref = useRef<ScrollView>(null);
+  const [page, setPage] = useState(0);
+  const [pageWidth, setPageWidth] = useState(0);
+  const totalPages = Math.ceil(QUICK_ACCESS_ITEMS.length / 4);
+
+  const goTo = useCallback((nextPage: number, animated = true) => {
+    const normalized = (nextPage + totalPages) % totalPages;
+    setPage(normalized);
+    if (pageWidth > 0) ref.current?.scrollTo({ x: normalized * pageWidth, animated });
+  }, [pageWidth, totalPages]);
+
+  useEffect(() => {
+    if (!pageWidth) return;
+    const timer = setInterval(() => goTo(page + 1), 5600);
+    return () => clearInterval(timer);
+  }, [goTo, page, pageWidth]);
+
+  const pages = Array.from({ length: totalPages }, (_, pageIndex) => QUICK_ACCESS_ITEMS.slice(pageIndex * 4, pageIndex * 4 + 4));
+
+  return (
+    <View style={styles.quickPanel}>
+      <View style={styles.panelHead}>
+        <View>
+          <Text style={styles.panelTitle}>Quick access</Text>
+          <Text style={styles.panelSub}>12 shortcuts · auto previews four at a time.</Text>
+        </View>
+        <View style={styles.quickPager}>
+          <Pressable accessibilityLabel="Previous shortcuts" onPress={() => goTo(page - 1)} style={styles.quickPagerButton}><Icon name="chevron-left" size={19} color="#ECCA69" /></Pressable>
+          <View style={styles.quickDots}>{pages.map((_, index) => <View key={index} style={[styles.quickDot, index === page && styles.quickDotActive]} />)}</View>
+          <Pressable accessibilityLabel="Next shortcuts" onPress={() => goTo(page + 1)} style={styles.quickPagerButton}><Icon name="chevron-right" size={19} color="#ECCA69" /></Pressable>
+        </View>
+      </View>
+      <View
+        style={styles.quickCarouselViewport}
+        onLayout={(event) => setPageWidth(Math.round(event.nativeEvent.layout.width))}
+      >
+        <ScrollView
+          ref={ref}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          scrollEventThrottle={16}
+          onMomentumScrollEnd={(event) => {
+            if (!pageWidth) return;
+            setPage(Math.max(0, Math.min(totalPages - 1, Math.round(event.nativeEvent.contentOffset.x / pageWidth))));
+          }}
+          contentContainerStyle={styles.quickCarouselTrack}
+        >
+          {pages.map((items, pageIndex) => (
+            <View key={pageIndex} style={[styles.quickPage, pageWidth ? { width: pageWidth } : null]}>
+              {items.map((item) => (
+                <QuickAction key={item.label} icon={item.icon} label={item.label} hint={item.hint} onPress={() => router.push(item.href as any)} />
+              ))}
+            </View>
+          ))}
+        </ScrollView>
+      </View>
+    </View>
+  );
+}
 
 function QuickAction({
   icon,
@@ -643,6 +709,14 @@ const useStyles = makeStyles((c) => ({
   dayState: { fontSize: 12, lineHeight: 16, fontWeight: "800" },
 
   quickGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginTop: 18 },
+  quickCarouselViewport: { flex: 1, width: "100%", overflow: "hidden", marginTop: 14 },
+  quickCarouselTrack: { alignItems: "stretch" },
+  quickPage: { flexDirection: "row", flexWrap: "wrap", gap: 10, alignContent: "flex-start" },
+  quickPager: { flexDirection: "row", alignItems: "center", gap: 8 },
+  quickPagerButton: { width: 30, height: 30, borderRadius: 10, borderWidth: 1, borderColor: c.goldBorder, backgroundColor: c.goldSoft, alignItems: "center", justifyContent: "center", cursor: "pointer" },
+  quickDots: { flexDirection: "row", alignItems: "center", gap: 5 },
+  quickDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: c.borderStrong },
+  quickDotActive: { width: 16, backgroundColor: c.gold },
   quickAction: {
     width: "48%",
     flexGrow: 1,
