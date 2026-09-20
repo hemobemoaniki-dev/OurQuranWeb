@@ -226,15 +226,25 @@ export default function Home() {
             <LinearGradient
               pointerEvents="none"
               colors={scheme === "dark"
-                ? ["rgba(212,175,55,0.24)", "rgba(255,255,255,0.035)", "rgba(0,0,0,0.12)"]
-                : ["rgba(212,175,55,0.20)", "rgba(255,255,255,0.88)", "rgba(255,252,244,0.98)"]}
-              locations={[0, 0.58, 1]}
+                ? ["rgba(12,11,9,0.18)", "rgba(212,175,55,0.18)", "rgba(8,9,10,0.28)"]
+                : ["rgba(255,249,230,0.34)", "rgba(212,175,55,0.13)", "rgba(255,252,244,0.44)"]}
+              locations={[0, 0.52, 1]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.fill}
             />
+            <LinearGradient
+              pointerEvents="none"
+              colors={["rgba(255,255,255,0.13)", "rgba(255,255,255,0.025)", "transparent"]}
+              locations={[0, 0.35, 1]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 0.9, y: 1 }}
+              style={styles.heroGloss}
+            />
+            <View pointerEvents="none" style={styles.heroTopEdge} />
             <View style={styles.heroMark}>
-              <BrandMark size={205} tint={colors.gold} glow={colors.gold} intensity="strong" />
+              <View pointerEvents="none" style={styles.heroMarkAura} />
+              <BrandMark size={248} tint={colors.gold} glow={colors.gold} intensity="strong" tone="gold" />
             </View>
             <View style={styles.heroContent}>
               <Text style={styles.eyebrow}>CONTINUE READING</Text>
@@ -278,11 +288,13 @@ export default function Home() {
           >
             <LinearGradient
               pointerEvents="none"
-              colors={[colors.goldSoft, "transparent"]}
+              colors={[colors.goldSoft, "rgba(255,255,255,0.025)", "transparent"]}
+              locations={[0, 0.42, 1]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.fill}
             />
+            <View pointerEvents="none" style={styles.goalTopEdge} />
             <View style={styles.goalTop}>
               <View>
                 <Text style={styles.eyebrow}>DAILY GOAL</Text>
@@ -906,27 +918,62 @@ const useStyles = makeStyles((c) => ({
   hero: {
     flex: 1.7,
     minHeight: 250,
-    borderRadius: 24,
+    borderRadius: 26,
     borderWidth: 1,
     borderColor: c.goldBorder,
-    backgroundColor: c.surfaceSecondary,
+    backgroundColor: "rgba(12,12,11,0.72)",
     overflow: "hidden",
     cursor: "pointer",
+    shadowColor: "#000000",
+    shadowOpacity: 0.24,
+    shadowRadius: 22,
+    shadowOffset: { width: 0, height: 10 },
+  },
+  heroGloss: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+  },
+  heroTopEdge: {
+    position: "absolute",
+    left: 22,
+    right: 22,
+    top: 0,
+    height: 1,
+    borderRadius: 999,
+    backgroundColor: "rgba(255,239,173,0.46)",
+    shadowColor: "#ECCA69",
+    shadowOpacity: 0.7,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 0 },
   },
   heroMark: {
     position: "absolute",
-    right: -10,
-    top: 18,
-    width: 300,
-    height: 215,
+    right: -64,
+    top: -18,
+    width: 390,
+    height: 300,
     alignItems: "center",
     justifyContent: "center",
-    opacity: 0.46,
-    transform: [{ scale: 1.22 }],
+    opacity: 0.9,
+    transform: [{ rotate: "10deg" }, { scale: 1.03 }],
   },
-  heroContent: { flex: 1, justifyContent: "center", paddingHorizontal: 34, paddingVertical: 30, maxWidth: 690, zIndex: 1 },
+  heroMarkAura: {
+    position: "absolute",
+    width: 285,
+    height: 180,
+    borderRadius: 120,
+    backgroundColor: "rgba(233,187,61,0.10)",
+    shadowColor: "#F6C94C",
+    shadowOpacity: 0.56,
+    shadowRadius: 44,
+    shadowOffset: { width: 0, height: 0 },
+  },
+  heroContent: { flex: 1, justifyContent: "center", paddingHorizontal: 36, paddingVertical: 30, maxWidth: 660, zIndex: 2 },
   eyebrow: { color: c.gold, fontSize: 13, lineHeight: 17, fontWeight: "900", letterSpacing: 1.45 },
-  heroTitle: { color: c.onSurface, fontFamily: serifFont, fontSize: 52, lineHeight: 59, fontWeight: "700", letterSpacing: -1.1, marginTop: 9 },
+  heroTitle: { color: c.onSurface, fontFamily: serifFont, fontSize: 52, lineHeight: 59, fontWeight: "700", letterSpacing: -1.1, marginTop: 9, textShadowColor: "rgba(0,0,0,0.42)", textShadowRadius: 10, textShadowOffset: { width: 0, height: 2 } },
   heroMeta: { color: c.muted, fontSize: 17, lineHeight: 23, fontWeight: "600", marginTop: 4 },
   heroProgressTrack: {
     width: "72%",
@@ -982,19 +1029,21 @@ const useStyles = makeStyles((c) => ({
   },
   heroFoot: { marginTop: 14, flexDirection: "row", alignItems: "center", gap: 18 },
   readButton: {
-    minWidth: 126,
-    height: 42,
-    borderRadius: 14,
+    minWidth: 132,
+    height: 44,
+    borderRadius: 15,
     paddingHorizontal: 15,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
     backgroundColor: c.brandPrimary,
+    borderWidth: 1,
+    borderColor: "rgba(255,241,185,0.42)",
     shadowColor: c.gold,
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.28,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 4 },
   },
   readButtonText: { color: c.onBrandPrimary, fontSize: 15.5, lineHeight: 20, fontWeight: "900" },
 
@@ -1004,13 +1053,26 @@ const useStyles = makeStyles((c) => ({
     minHeight: 250,
     paddingHorizontal: 26,
     paddingVertical: 24,
-    borderRadius: 24,
+    borderRadius: 26,
     borderWidth: 1,
     borderColor: c.goldBorder,
-    backgroundColor: c.surfaceSecondary,
+    backgroundColor: "rgba(12,12,11,0.66)",
     overflow: "hidden",
     gap: 16,
     cursor: "pointer",
+    shadowColor: "#000000",
+    shadowOpacity: 0.22,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 9 },
+  },
+  goalTopEdge: {
+    position: "absolute",
+    left: 18,
+    right: 18,
+    top: 0,
+    height: 1,
+    borderRadius: 999,
+    backgroundColor: "rgba(255,239,173,0.34)",
   },
   goalTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
   goalTitle: { color: c.onSurface, fontFamily: serifFont, fontSize: 25, lineHeight: 30, fontWeight: "700", marginTop: 4 },
