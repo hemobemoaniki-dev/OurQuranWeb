@@ -450,21 +450,69 @@ function QuickAccessCarousel() {
   const styles = useStyles();
   const router = useRouter();
   const ref = useRef<ScrollView>(null);
+  const offsetRef = useRef(0);
+  const motionRef = useRef<number | null>(null);
   const [page, setPage] = useState(0);
   const [pageWidth, setPageWidth] = useState(0);
   const totalPages = Math.ceil(QUICK_ACCESS_ITEMS.length / 4);
 
+  const cancelMotion = useCallback(() => {
+    if (motionRef.current != null && typeof cancelAnimationFrame === "function") {
+      cancelAnimationFrame(motionRef.current);
+      motionRef.current = null;
+    }
+  }, []);
+
   const goTo = useCallback((nextPage: number, animated = true) => {
     const normalized = (nextPage + totalPages) % totalPages;
     setPage(normalized);
-    if (pageWidth > 0) ref.current?.scrollTo({ x: normalized * pageWidth, animated });
-  }, [pageWidth, totalPages]);
+    if (pageWidth <= 0) return;
+
+    const target = normalized * pageWidth;
+
+    // React Native Web's animated ScrollView jump can resolve immediately in
+    // some browsers. Drive the offset ourselves so autoplay and arrow presses
+    // always get a visible premium slide instead of a hard content swap.
+    if (animated && Platform.OS === "web" && typeof requestAnimationFrame === "function") {
+      cancelMotion();
+      const from = offsetRef.current;
+      const distance = target - from;
+      const duration = 520;
+      const startedAt = Date.now();
+
+      const frame = () => {
+        const elapsed = Date.now() - startedAt;
+        const raw = Math.min(1, elapsed / duration);
+        const eased = raw < 0.5
+          ? 4 * raw * raw * raw
+          : 1 - Math.pow(-2 * raw + 2, 3) / 2;
+        const x = from + distance * eased;
+        offsetRef.current = x;
+        ref.current?.scrollTo({ x, animated: false });
+
+        if (raw < 1) {
+          motionRef.current = requestAnimationFrame(frame);
+        } else {
+          offsetRef.current = target;
+          motionRef.current = null;
+        }
+      };
+
+      motionRef.current = requestAnimationFrame(frame);
+      return;
+    }
+
+    offsetRef.current = target;
+    ref.current?.scrollTo({ x: target, animated });
+  }, [cancelMotion, pageWidth, totalPages]);
 
   useEffect(() => {
     if (!pageWidth) return;
     const timer = setInterval(() => goTo(page + 1), 5600);
     return () => clearInterval(timer);
   }, [goTo, page, pageWidth]);
+
+  useEffect(() => cancelMotion, [cancelMotion]);
 
   const pages = Array.from({ length: totalPages }, (_, pageIndex) => QUICK_ACCESS_ITEMS.slice(pageIndex * 4, pageIndex * 4 + 4));
 
@@ -491,9 +539,15 @@ function QuickAccessCarousel() {
           pagingEnabled
           showsHorizontalScrollIndicator={false}
           scrollEventThrottle={16}
+          onScroll={(event) => {
+            offsetRef.current = event.nativeEvent.contentOffset.x;
+          }}
+          onScrollBeginDrag={cancelMotion}
           onMomentumScrollEnd={(event) => {
             if (!pageWidth) return;
-            setPage(Math.max(0, Math.min(totalPages - 1, Math.round(event.nativeEvent.contentOffset.x / pageWidth))));
+            const settled = Math.max(0, Math.min(totalPages - 1, Math.round(event.nativeEvent.contentOffset.x / pageWidth)));
+            offsetRef.current = settled * pageWidth;
+            setPage(settled);
           }}
           contentContainerStyle={styles.quickCarouselTrack}
         >
