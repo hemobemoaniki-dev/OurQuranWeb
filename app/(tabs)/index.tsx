@@ -55,7 +55,15 @@ export default function Home() {
   const today = dateKey(new Date());
   const localDay = useMemo(() => new Date(`${today}T12:00:00`), [today]);
   const days = useMemo(() => dashboardDays(localDay), [localDay]);
-  const stats = useMemo(() => dashboardStats(account, period, localDay), [account, period, localDay]);
+  const periodStats = useMemo(() => ({
+    today: dashboardStats(account, "today", localDay),
+    week: dashboardStats(account, "week", localDay),
+    all: dashboardStats(account, "all", localDay),
+  }), [account, localDay]);
+  const metricsRef = useRef<ScrollView>(null);
+  const metricsOffsetRef = useRef(0);
+  const metricsMotionRef = useRef<number | null>(null);
+  const [metricsWidth, setMetricsWidth] = useState(0);
   const streak = useMemo(() => computeStreak(account.history, localDay), [account.history, localDay]);
   const crownActive = crownActiveForStreak(streak);
   const crownDayKey = useMemo(() => {
@@ -81,6 +89,66 @@ export default function Home() {
   const goalReached = todayAyat >= goal;
   const meta = surahMeta(account.currentSurah);
   const readingPct = Math.max(0, Math.min(1, account.currentAyah / Math.max(1, meta.ayahs)));
+
+  const cancelMetricsMotion = useCallback(() => {
+    if (metricsMotionRef.current != null && typeof cancelAnimationFrame === "function") {
+      cancelAnimationFrame(metricsMotionRef.current);
+      metricsMotionRef.current = null;
+    }
+  }, []);
+
+  const slideMetricsTo = useCallback((nextPeriod: Period, animated = true) => {
+    const targetIndex = PERIODS.findIndex((item) => item.key === nextPeriod);
+    if (targetIndex < 0) return;
+    setPeriod(nextPeriod);
+    if (metricsWidth <= 0) return;
+
+    const target = targetIndex * metricsWidth;
+
+    if (animated && Platform.OS === "web" && typeof requestAnimationFrame === "function") {
+      cancelMetricsMotion();
+      const from = metricsOffsetRef.current;
+      const distance = target - from;
+      const duration = 680;
+      const startedAt = performance.now();
+
+      const frame = (now: number) => {
+        const raw = Math.min(1, (now - startedAt) / duration);
+        // Quintic ease-in-out: very soft launch and settle without feeling sluggish.
+        const eased = raw < 0.5
+          ? 16 * Math.pow(raw, 5)
+          : 1 - Math.pow(-2 * raw + 2, 5) / 2;
+        const x = from + distance * eased;
+        metricsOffsetRef.current = x;
+        metricsRef.current?.scrollTo({ x, animated: false });
+
+        if (raw < 1) {
+          metricsMotionRef.current = requestAnimationFrame(frame);
+        } else {
+          metricsOffsetRef.current = target;
+          metricsMotionRef.current = null;
+        }
+      };
+
+      metricsMotionRef.current = requestAnimationFrame(frame);
+      return;
+    }
+
+    metricsOffsetRef.current = target;
+    metricsRef.current?.scrollTo({ x: target, animated });
+  }, [cancelMetricsMotion, metricsWidth]);
+
+  useEffect(() => {
+    if (!metricsWidth) return;
+    const timer = setInterval(() => {
+      const currentIndex = PERIODS.findIndex((item) => item.key === period);
+      const next = PERIODS[(currentIndex + 1) % PERIODS.length].key;
+      slideMetricsTo(next, true);
+    }, 6200);
+    return () => clearInterval(timer);
+  }, [metricsWidth, period, slideMetricsTo]);
+
+  useEffect(() => () => cancelMetricsMotion(), [cancelMetricsMotion]);
 
   const checking = initializing || (!!user && !hydrated);
   const saved = !!user && hydrated && syncStatus === "synced" && !!lastSyncAt;
@@ -259,7 +327,7 @@ export default function Home() {
                 key={item.key}
                 accessibilityRole="tab"
                 accessibilityState={{ selected: period === item.key }}
-                onPress={() => setPeriod(item.key)}
+                onPress={() => slideMetricsTo(item.key, true)}
                 style={({ pressed }) => [
                   styles.period,
                   period === item.key && styles.periodActive,
@@ -273,11 +341,50 @@ export default function Home() {
           </View>
         </View>
 
-        <View style={styles.metricsRow} testID="hasanaat-tracker">
-          <JourneyMetric label="Hasanaat" value={formatK(stats.hasanaat)} icon="heart" tint={palette[0]} />
-          <JourneyMetric label="Ayahs read" value={formatK(stats.ayat)} icon="book-open-page-variant" tint={palette[1]} />
-          <JourneyMetric label="Reading time" value={readingDuration(stats.seconds)} icon="clock-outline" tint={palette[2]} />
-          <JourneyMetric label="Reading days" value={String(stats.days)} icon="calendar-check-outline" tint={palette[3]} />
+        <View
+          style={styles.metricsCarouselViewport}
+          onLayout={(event) => {
+            const width = Math.round(event.nativeEvent.layout.width);
+            setMetricsWidth(width);
+            const index = PERIODS.findIndex((item) => item.key === period);
+            if (width > 0 && index >= 0) {
+              const target = index * width;
+              metricsOffsetRef.current = target;
+              requestAnimationFrame(() => metricsRef.current?.scrollTo({ x: target, animated: false }));
+            }
+          }}
+          testID="hasanaat-tracker"
+        >
+          <ScrollView
+            ref={metricsRef}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            scrollEventThrottle={16}
+            onScroll={(event) => {
+              metricsOffsetRef.current = event.nativeEvent.contentOffset.x;
+            }}
+            onScrollBeginDrag={cancelMetricsMotion}
+            onMomentumScrollEnd={(event) => {
+              if (!metricsWidth) return;
+              const index = Math.max(0, Math.min(PERIODS.length - 1, Math.round(event.nativeEvent.contentOffset.x / metricsWidth)));
+              metricsOffsetRef.current = index * metricsWidth;
+              setPeriod(PERIODS[index].key);
+            }}
+            contentContainerStyle={styles.metricsCarouselTrack}
+          >
+            {PERIODS.map((item) => {
+              const pageStats = periodStats[item.key];
+              return (
+                <View key={item.key} style={[styles.metricsPage, metricsWidth ? { width: metricsWidth } : null]}>
+                  <JourneyMetric label="Hasanaat" value={formatK(pageStats.hasanaat)} icon="heart" tint={palette[0]} />
+                  <JourneyMetric label="Ayahs read" value={formatK(pageStats.ayat)} icon="book-open-page-variant" tint={palette[1]} />
+                  <JourneyMetric label="Reading time" value={readingDuration(pageStats.seconds)} icon="clock-outline" tint={palette[2]} />
+                  <JourneyMetric label="Reading days" value={String(pageStats.days)} icon="calendar-check-outline" tint={palette[3]} />
+                </View>
+              );
+            })}
+          </ScrollView>
         </View>
 
         <View style={[styles.lowerRow, compact && styles.stackRow]}>
@@ -811,6 +918,9 @@ const useStyles = makeStyles((c) => ({
   periodTextActive: { color: c.gold },
 
   metricsRow: { flexDirection: "row", flexWrap: "wrap", gap: 14 },
+  metricsCarouselViewport: { width: "100%", overflow: "hidden" },
+  metricsCarouselTrack: { alignItems: "stretch" },
+  metricsPage: { flexDirection: "row", flexWrap: "nowrap", gap: 14 },
   statCard: {
     flex: 1,
     flexBasis: 0,
