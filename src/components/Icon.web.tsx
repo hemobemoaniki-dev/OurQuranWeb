@@ -54,6 +54,7 @@ const aliases: Record<string, string> = {
   "lock-outline": "lock",
   "chart-line": "chart",
   "chart-box-outline": "chartBox",
+  "chart-bar": "chartBox",
   "palette-outline": "palette",
   "microphone-outline": "microphone",
   "speedometer": "speed",
