@@ -46,7 +46,7 @@ function storeNumbers(key: string, value: Set<number>) {
 
 export default function Names() {
   const styles = useStyles();
-  const { colors, scheme } = useTheme();
+  const { colors } = useTheme();
   const { width } = useWindowDimensions();
   const desktop = Platform.OS === "web" && width >= 1080;
   const [day, setDay] = useState(() => localDayNumber());
