@@ -6,6 +6,8 @@ import { ReaderBackdrop } from "@/src/components/ReaderBackdrop";
 import { StreakBadge } from "@/src/components/StreakBadge";
 import { WebPageBackdrop } from "@/src/components/WebPageBackdrop";
 import { useAccount, useAuth } from "@/src/context/AppState";
+import { ADHKAR } from "@/src/data/adhkar";
+import { NAMES_99 } from "@/src/data/names99";
 import { surahMeta } from "@/src/data/surahs";
 import { computeStreak, dateKey, formatK } from "@/src/lib/dates";
 import {
@@ -90,6 +92,29 @@ export default function Home() {
   const goalReached = todayAyat >= goal;
   const meta = surahMeta(account.currentSurah);
   const readingPct = Math.max(0, Math.min(1, account.currentAyah / Math.max(1, meta.ayahs)));
+
+  const latestBookmark = useMemo(() => {
+    const items = [...account.appState.bookmarks];
+    items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return items[0] ?? null;
+  }, [account.appState.bookmarks]);
+
+  const latestBookmarkLabel = latestBookmark
+    ? `${surahMeta(latestBookmark.surah).name} · Ayah ${latestBookmark.ayah}`
+    : "No saved ayah yet";
+
+  const morningAdhkarRemaining = useMemo(() => {
+    const counts = account.adhkarProgress.date === today ? account.adhkarProgress.counts : {};
+    return ADHKAR.filter((item) => item.times.includes("morning")).reduce((remaining, item) => {
+      const done = counts[`morning:${item.id}`] ?? 0;
+      return remaining + (done < item.count ? 1 : 0);
+    }, 0);
+  }, [account.adhkarProgress, today]);
+
+  const featuredName = useMemo(() => {
+    const seed = localDay.getDate() + localDay.getMonth() * 31 + localDay.getFullYear();
+    return NAMES_99[seed % NAMES_99.length];
+  }, [localDay]);
 
   const cancelMetricsMotion = useCallback(() => {
     if (metricsMotionRef.current != null && typeof cancelAnimationFrame === "function") {
@@ -324,6 +349,65 @@ export default function Home() {
             </View>
           </Pressable>
         </View>
+
+        {desktopWeb ? (
+          <View style={styles.todayPanel}>
+            <LinearGradient
+              pointerEvents="none"
+              colors={["rgba(236,202,105,0.095)", "rgba(255,255,255,0.018)", "rgba(3,5,6,0.24)"]}
+              locations={[0, 0.42, 1]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.fill}
+            />
+            <View pointerEvents="none" style={styles.todayInnerEdge} />
+            <View style={styles.todayHead}>
+              <View style={styles.todayTitleWrap}>
+                <View style={styles.todayTitleIcon}><Icon name="calendar-star" size={20} color={colors.gold} /></View>
+                <View>
+                  <Text style={styles.todayTitle}>Today</Text>
+                  <Text style={styles.todaySub}>Everything you need for a focused day.</Text>
+                </View>
+              </View>
+              <Pressable
+                onPress={() => router.push("/quran")}
+                style={({ pressed, hovered }: any) => [styles.todayViewAll, hovered && styles.todayViewAllHover, pressed && styles.pressed]}
+              >
+                <Text style={styles.todayViewAllText}>View all</Text>
+                <Icon name="arrow-right" size={16} color={colors.gold} />
+              </Pressable>
+            </View>
+
+            <View style={styles.todayGrid}>
+              <TodayShortcut
+                icon="play"
+                label="Continue listening"
+                hint={`${meta.name} · Ayah ${account.currentAyah}`}
+                onPress={() => router.push("/reader")}
+              />
+              <TodayShortcut
+                icon="bookmark-outline"
+                label="Latest bookmark"
+                hint={latestBookmarkLabel}
+                onPress={() => latestBookmark
+                  ? router.push({ pathname: "/reader", params: { surah: latestBookmark.surah, ayah: latestBookmark.ayah } })
+                  : router.push("/settings/bookmarks")}
+              />
+              <TodayShortcut
+                icon="white-balance-sunny"
+                label="Today’s adhkar"
+                hint={morningAdhkarRemaining > 0 ? `Morning · ${morningAdhkarRemaining} left` : "Morning complete"}
+                onPress={() => router.push("/adhkar")}
+              />
+              <TodayShortcut
+                icon="star-four-points-outline"
+                label="Names of Allah"
+                hint={featuredName?.transliteration ?? "Explore the 99 Names"}
+                onPress={() => router.push("/names")}
+              />
+            </View>
+          </View>
+        ) : null}
 
         <View style={styles.journeyHead}>
           <View>
@@ -815,6 +899,49 @@ function QuickAccessCarousel() {
   );
 }
 
+function TodayShortcut({
+  icon,
+  label,
+  hint,
+  onPress,
+}: {
+  icon: IconName;
+  label: string;
+  hint: string;
+  onPress: () => void;
+}) {
+  const styles = useStyles();
+  const { colors } = useTheme();
+
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed, hovered }: any) => [
+        styles.todayShortcut,
+        hovered && styles.todayShortcutHover,
+        pressed && styles.cardPressed,
+      ]}
+    >
+      <LinearGradient
+        pointerEvents="none"
+        colors={["rgba(236,202,105,0.16)", "rgba(255,255,255,0.02)", "transparent"]}
+        locations={[0, 0.42, 1]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.fill}
+      />
+      <View style={styles.todayShortcutIcon}>
+        <Icon name={icon} size={21} color={colors.gold} />
+      </View>
+      <View style={styles.todayShortcutCopy}>
+        <Text style={styles.todayShortcutLabel}>{label}</Text>
+        <Text numberOfLines={1} style={styles.todayShortcutHint}>{hint}</Text>
+      </View>
+      <Icon name="arrow-right" size={16} color={colors.muted} />
+    </Pressable>
+  );
+}
+
 function QuickAction({
   icon,
   label,
@@ -861,9 +988,9 @@ const useStyles = makeStyles((c) => ({
   root: { flex: 1, backgroundColor: c.surface, position: "relative" },
   content: {
     width: "100%",
-    maxWidth: 1580,
+    maxWidth: 1740,
     alignSelf: "center",
-    paddingHorizontal: 36,
+    paddingHorizontal: 28,
     paddingBottom: 38,
     gap: 20,
     zIndex: 1,
@@ -1098,6 +1225,105 @@ const useStyles = makeStyles((c) => ({
   goalRemainingText: { color: c.gold, fontSize: 11.5, lineHeight: 15, fontWeight: "900" },
   track: { height: 5, borderRadius: 4, backgroundColor: c.surfaceTertiary, overflow: "hidden" },
   trackFill: { height: 5, borderRadius: 4, backgroundColor: c.gold },
+
+  todayPanel: {
+    minHeight: 142,
+    padding: 18,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: "rgba(236,202,105,0.28)",
+    backgroundColor: "rgba(7,9,10,0.62)",
+    shadowColor: "#000000",
+    shadowOpacity: 0.24,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 8 },
+    overflow: "hidden",
+  },
+  todayInnerEdge: {
+    position: "absolute",
+    top: 1,
+    left: 18,
+    right: 18,
+    height: 1,
+    borderRadius: 999,
+    backgroundColor: "rgba(255,255,255,0.22)",
+    opacity: 0.7,
+  },
+  todayHead: {
+    minHeight: 38,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 14,
+    marginBottom: 12,
+  },
+  todayTitleWrap: { flexDirection: "row", alignItems: "center", gap: 11 },
+  todayTitleIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 11,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: c.goldSoft,
+    borderWidth: 1,
+    borderColor: c.goldBorder,
+  },
+  todayTitle: { color: c.onSurface, fontFamily: serifFont, fontSize: 22, lineHeight: 27, fontWeight: "800" },
+  todaySub: { color: c.muted, fontSize: 11.5, lineHeight: 15, fontWeight: "600", marginTop: 1 },
+  todayViewAll: {
+    minHeight: 34,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 11,
+    borderRadius: 11,
+    borderWidth: 1,
+    borderColor: "transparent",
+    cursor: "pointer",
+  },
+  todayViewAllHover: { backgroundColor: c.goldSoft, borderColor: c.goldBorder },
+  todayViewAllText: { color: c.onSurface, fontSize: 12.5, lineHeight: 16, fontWeight: "800" },
+  todayGrid: { flexDirection: "row", alignItems: "stretch", gap: 12 },
+  todayShortcut: {
+    flex: 1,
+    minWidth: 0,
+    minHeight: 66,
+    paddingHorizontal: 13,
+    borderRadius: 17,
+    borderWidth: 1,
+    borderColor: "rgba(236,202,105,0.24)",
+    backgroundColor: "rgba(14,16,17,0.70)",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 11,
+    overflow: "hidden",
+    shadowColor: "#000000",
+    shadowOpacity: 0.16,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    cursor: "pointer",
+  },
+  todayShortcutHover: {
+    transform: [{ translateY: -2 }],
+    borderColor: "rgba(236,202,105,0.50)",
+    backgroundColor: "rgba(24,23,19,0.78)",
+    shadowColor: c.gold,
+    shadowOpacity: 0.12,
+    shadowRadius: 14,
+  },
+  todayShortcutIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 13,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(212,175,55,0.12)",
+    borderWidth: 1,
+    borderColor: c.goldBorder,
+  },
+  todayShortcutCopy: { flex: 1, minWidth: 0 },
+  todayShortcutLabel: { color: c.onSurface, fontSize: 14.5, lineHeight: 18, fontWeight: "900" },
+  todayShortcutHint: { color: c.muted, fontSize: 11.5, lineHeight: 15, fontWeight: "600", marginTop: 2 },
 
   journeyHead: {
     marginTop: 2,
