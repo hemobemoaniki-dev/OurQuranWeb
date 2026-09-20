@@ -3,7 +3,7 @@ import { Icon } from "@/src/components/Icon";
 import { useAccount, useReaderAccount } from "@/src/context/AppState";
 import { useSession } from "@/src/context/SessionContext";
 import { RECITERS, reciterById } from "@/src/data/reciters";
-import type { ReaderTheme } from "@/src/lib/reader-themes";
+import { READER_THEMES, type ReaderTheme } from "@/src/lib/reader-themes";
 import { formatClock } from "@/src/lib/dates";
 import { arabicFont, serifFont } from "@/src/typography";
 import { LinearGradient } from "expo-linear-gradient";
@@ -13,7 +13,14 @@ import { useState } from "react";
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2] as const;
 
-type MenuKey = "reciter" | "speed" | "autoplay" | null;
+type MenuKey = "reciter" | "speed" | "autoplay" | "theme" | "textSize" | null;
+
+const TEXT_SIZES = [
+  { id: "small", label: "Small", arabic: 40, arabicLine: 68, english: 22, englishLine: 33 },
+  { id: "standard", label: "Standard", arabic: 46, arabicLine: 78, english: 25, englishLine: 37 },
+  { id: "large", label: "Large", arabic: 54, arabicLine: 88, english: 28, englishLine: 41 },
+  { id: "xlarge", label: "Extra large", arabic: 62, arabicLine: 98, english: 31, englishLine: 45 },
+] as const;
 
 type Props = {
   theme: ReaderTheme;
@@ -81,6 +88,8 @@ export function DesktopReaderExperience({
   const [menu, setMenu] = useState<MenuKey>(null);
   const settings = readerAccount.settings;
   const reciter = reciterById(settings.reciter);
+  const activeReaderTheme = READER_THEMES.find((item) => item.id === settings.readerTheme) ?? READER_THEMES[0];
+  const activeTextSize = TEXT_SIZES.find((item) => item.id === settings.readingSize) ?? TEXT_SIZES[1];
 
   const toggleMenu = (key: Exclude<MenuKey, null>) => setMenu((current) => current === key ? null : key);
   const navigate = (href: string) => {
@@ -108,16 +117,6 @@ export function DesktopReaderExperience({
         </View>
 
         <View style={styles.navRight}>
-          <Pressable
-            onPress={onOpenPicker}
-            style={({ pressed }) => [styles.searchButton, pressed && styles.pressed]}
-            accessibilityRole="button"
-            accessibilityLabel="Find a surah or ayah"
-            testID="reader-desktop-search"
-          >
-            <Icon name="magnify" size={28} color="#FFFFFF" />
-          </Pressable>
-          <View style={styles.navRightDivider} />
         <Pressable
           onPress={() => navigate("/preferences")}
           style={({ pressed }) => [styles.profilePill, pressed && styles.pressed]}
@@ -236,7 +235,7 @@ export function DesktopReaderExperience({
             ) : (
               <>
                 <ScrollView style={styles.arabicViewport} contentContainerStyle={styles.arabicContent} nestedScrollEnabled>
-                  <Text selectable maxFontSizeMultiplier={1} style={styles.arabic}>{arabic}</Text>
+                  <Text selectable maxFontSizeMultiplier={1} style={[styles.arabic, { fontSize: activeTextSize.arabic, lineHeight: activeTextSize.arabicLine }]}>{arabic}</Text>
                 </ScrollView>
 
                 <View style={styles.translationSeparator}>
@@ -249,7 +248,7 @@ export function DesktopReaderExperience({
 
                 <Text style={[styles.translationLabel, { color: theme.accent }]}>TRANSLATION</Text>
                 <ScrollView style={styles.translationViewport} nestedScrollEnabled>
-                  <Text selectable maxFontSizeMultiplier={1.12} style={styles.english}>{english}</Text>
+                  <Text selectable maxFontSizeMultiplier={1.12} style={[styles.english, { fontSize: activeTextSize.english, lineHeight: activeTextSize.englishLine }]}>{english}</Text>
                 </ScrollView>
 
                 <View style={styles.textActions}>
@@ -389,6 +388,63 @@ export function DesktopReaderExperience({
               </View>
             ) : null}
 
+            <ControlRow
+              icon="palette-outline"
+              title="Reader theme"
+              value={activeReaderTheme.name}
+              open={menu === "theme"}
+              accent={theme.accent}
+              onPress={() => toggleMenu("theme")}
+              testID="reader-desktop-theme-control"
+            />
+            {menu === "theme" ? (
+              <View style={[styles.dropdown, { borderColor: theme.border + "99" }]} testID="reader-desktop-theme-menu">
+                {READER_THEMES.map((item) => {
+                  const selected = item.id === settings.readerTheme;
+                  return (
+                    <Pressable
+                      key={item.id}
+                      onPress={() => { updateSettings({ readerTheme: item.id }); setMenu(null); }}
+                      style={({ pressed }) => [styles.dropdownRow, pressed && styles.pressed]}
+                    >
+                      <View style={styles.themeOptionCopy}>
+                        <View style={[styles.themeSwatch, { backgroundColor: item.accent, borderColor: item.border }]} />
+                        <Text style={[styles.dropdownText, selected && { color: theme.accent }]}>{item.name}</Text>
+                      </View>
+                      {selected ? <Icon name="check" size={18} color={theme.accent} /> : null}
+                    </Pressable>
+                  );
+                })}
+              </View>
+            ) : null}
+
+            <ControlRow
+              icon="format-size"
+              title="Text size"
+              value={activeTextSize.label}
+              open={menu === "textSize"}
+              accent={theme.accent}
+              onPress={() => toggleMenu("textSize")}
+              testID="reader-desktop-text-size-control"
+            />
+            {menu === "textSize" ? (
+              <View style={[styles.dropdown, { borderColor: theme.border + "99" }]} testID="reader-desktop-text-size-menu">
+                {TEXT_SIZES.map((item) => {
+                  const selected = item.id === settings.readingSize;
+                  return (
+                    <Pressable
+                      key={item.id}
+                      onPress={() => { updateSettings({ readingSize: item.id }); setMenu(null); }}
+                      style={({ pressed }) => [styles.dropdownRow, pressed && styles.pressed]}
+                    >
+                      <Text style={[styles.dropdownText, selected && { color: theme.accent }]}>{item.label}</Text>
+                      {selected ? <Icon name="check" size={18} color={theme.accent} /> : null}
+                    </Pressable>
+                  );
+                })}
+              </View>
+            ) : null}
+
             <View style={styles.sessionFooter}>
               <View style={styles.footerMetric}>
                 <Icon name="clock-outline" size={22} color={theme.accent} />
@@ -411,7 +467,7 @@ export function DesktopReaderExperience({
           </Pressable>
 
           <Pressable onPress={onDone} style={({ pressed }) => [styles.doneAction, pressed && styles.pressed]} testID="reader-desktop-im-done">
-            <LinearGradient pointerEvents="none" colors={[theme.accent, theme.end]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={StyleSheet.absoluteFill} />
+            <LinearGradient pointerEvents="none" colors={["#FFE784", "#E7B53B"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={StyleSheet.absoluteFill} />
             <View style={styles.doneIcon}>
               <Icon name="check" size={23} color="#0C0A07" />
             </View>
@@ -634,6 +690,8 @@ const styles = StyleSheet.create({
   dropdown: { borderRadius: 15, borderWidth: 1, backgroundColor: "rgba(5,5,4,0.88)", overflow: "hidden", padding: 6, gap: 2 },
   dropdownRow: { minHeight: 44, borderRadius: 10, paddingHorizontal: 11, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
   dropdownText: { color: "#FFFFFF", flex: 1, fontSize: 12.5, lineHeight: 17, fontWeight: "700" },
+  themeOptionCopy: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", gap: 9 },
+  themeSwatch: { width: 18, height: 18, borderRadius: 9, borderWidth: 1 },
   speedGrid: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
   speedOption: { width: "31.5%", minHeight: 40, borderRadius: 11, borderWidth: 1, alignItems: "center", justifyContent: "center" },
   speedText: { color: "#FFFFFF", fontSize: 13, fontWeight: "800" },
@@ -658,7 +716,7 @@ const styles = StyleSheet.create({
   },
   previousAction: { flex: 1, minHeight: 70, borderRadius: 18, borderWidth: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 14, backgroundColor: "rgba(255,255,255,0.035)" },
   previousText: { color: "#FFFFFF", fontFamily: serifFont, fontSize: 17, fontWeight: "600" },
-  doneAction: { flex: 1.25, minHeight: 70, borderRadius: 19, overflow: "hidden", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 13 },
+  doneAction: { flex: 1.25, minHeight: 70, borderRadius: 19, borderWidth: 1, borderColor: "rgba(255,235,155,0.9)", overflow: "hidden", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 13, shadowColor: "#ECCA69", shadowOpacity: 0.22, shadowRadius: 16, shadowOffset: { width: 0, height: 5 } },
   doneIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: "rgba(12,10,7,0.88)", alignItems: "center", justifyContent: "center" },
   doneText: { color: "#0C0A07", fontFamily: serifFont, fontSize: 25, fontWeight: "900" },
   nextAction: { flex: 1, minHeight: 70, borderRadius: 18, borderWidth: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 18, backgroundColor: "rgba(255,255,255,0.035)" },

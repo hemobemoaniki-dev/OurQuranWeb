@@ -11,6 +11,7 @@ export type Dhikr = {
   englishEvening?: string;
   source: string;
   authenticity: string;
+  categories?: string[];
 };
 
 export const ADHKAR: Dhikr[] = [
@@ -188,6 +189,62 @@ export const ADHKAR: Dhikr[] = [
     arabic: "آمَنَ الرَّسُولُ بِمَا أُنْزِلَ إِلَيْهِ مِنْ رَبِّهِ وَالْمُؤْمِنُونَ ۚ كُلٌّ آمَنَ بِاللَّهِ وَمَلَائِكَتِهِ وَكُتُبِهِ وَرُسُلِهِ لَا نُفَرِّقُ بَيْنَ أَحَدٍ مِنْ رُسُلِهِ ۚ وَقَالُوا سَمِعْنَا وَأَطَعْنَا ۖ غُفْرَانَكَ رَبَّنَا وَإِلَيْكَ الْمَصِيرُ ۝ لَا يُكَلِّفُ اللَّهُ نَفْسًا إِلَّا وُسْعَهَا ۚ لَهَا مَا كَسَبَتْ وَعَلَيْهَا مَا اكْتَسَبَتْ ۗ رَبَّنَا لَا تُؤَاخِذْنَا إِنْ نَسِينَا أَوْ أَخْطَأْنَا ۚ رَبَّنَا وَلَا تَحْمِلْ عَلَيْنَا إِصْرًا كَمَا حَمَلْتَهُ عَلَى الَّذِينَ مِنْ قَبْلِنَا ۚ رَبَّنَا وَلَا تُحَمِّلْنَا مَا لَا طَاقَةَ لَنَا بِهِ ۖ وَاعْفُ عَنَّا وَاغْفِرْ لَنَا وَارْحَمْنَا ۚ أَنْتَ مَوْلَانَا فَانْصُرْنَا عَلَى الْقَوْمِ الْكَافِرِينَ",
     english: "The Messenger believes in what was sent down to him from his Lord, and so do the believers. Each believes in Allah, His angels, His books, and His messengers, making no distinction between His messengers. They say: We hear and obey. We seek Your forgiveness, our Lord, and to You is the return. Allah does not burden a soul beyond its capacity. Each soul receives the good it earns and bears the evil it commits. Our Lord, do not take us to task if we forget or make a mistake. Do not place on us a burden like the one placed on those before us. Do not burden us with what we cannot bear. Pardon us, forgive us, and have mercy on us. You are our Protector, so grant us help against those who reject faith.",
     source: "Hisn 101 • Bukhari / Muslim", authenticity: "Sahih",
+  },
+  {
+    id: "leaving-home", title: "Leaving the home", reference: "1 time", count: 1, times: [],
+    categories: ["home", "protection", "guidance"],
+    arabic: "بِسْمِ اللَّهِ، تَوَكَّلْتُ عَلَى اللَّهِ، لَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللَّهِ",
+    english: "In Allah's name; I rely upon Allah. There is no might or power except through Allah.",
+    source: "Hisn 16 • Sunan Abi Dawud 5095", authenticity: "Sahih",
+  },
+  {
+    id: "worry-grief", title: "Refuge from worry and grief", reference: "1 time", count: 1, times: [],
+    categories: ["anxiety", "protection"],
+    arabic: "اللَّهُمَّ إِنِّي أَعُوذُ بِكَ مِنَ الْهَمِّ وَالْحَزَنِ، وَالْعَجْزِ وَالْكَسَلِ، وَالْجُبْنِ وَالْبُخْلِ، وَضَلَعِ الدَّيْنِ، وَغَلَبَةِ الرِّجَالِ",
+    english: "O Allah, protect me from worry, grief, incapacity, laziness, cowardice, miserliness, crushing debt, and being overpowered.",
+    source: "Sahih al-Bukhari 6369", authenticity: "Sahih",
+  },
+  {
+    id: "enter-mosque", title: "Entering the mosque", reference: "1 time", count: 1, times: [],
+    categories: ["prayer"],
+    arabic: "اللَّهُمَّ افْتَحْ لِي أَبْوَابَ رَحْمَتِكَ",
+    english: "O Allah, open for me the doors of Your mercy.",
+    source: "Sahih Muslim 713a", authenticity: "Sahih",
+  },
+  {
+    id: "before-food", title: "Remember Allah before eating", reference: "1 time", count: 1, times: [],
+    categories: ["food", "gratitude"],
+    arabic: "بِسْمِ اللَّهِ أَوَّلَهُ وَآخِرَهُ",
+    english: "In Allah's name, at its beginning and its end.",
+    source: "Sunan Abi Dawud 3767", authenticity: "Sahih",
+  },
+  {
+    id: "sleep-wake", title: "Before sleep", reference: "1 time", count: 1, times: [],
+    categories: ["sleep"],
+    arabic: "بِاسْمِكَ أَمُوتُ وَأَحْيَا",
+    english: "In Your name I die and I live.",
+    source: "Sahih al-Bukhari 6312", authenticity: "Sahih",
+  },
+  {
+    id: "protect-children", title: "Protection for family and children", reference: "1 time", count: 1, times: [],
+    categories: ["family", "protection"],
+    arabic: "أَعُوذُ بِكَلِمَاتِ اللَّهِ التَّامَّةِ مِنْ كُلِّ شَيْطَانٍ وَهَامَّةٍ، وَمِنْ كُلِّ عَيْنٍ لَامَّةٍ",
+    english: "I seek refuge in Allah's perfect words from every devil, harmful creature, and harmful envious eye.",
+    source: "Sahih al-Bukhari 3371", authenticity: "Sahih",
+  },
+  {
+    id: "increase-knowledge", title: "Increase me in knowledge", reference: "Qur'an 20:114 • 1 time", count: 1, times: [],
+    categories: ["knowledge", "guidance"],
+    arabic: "رَبِّ زِدْنِي عِلْمًا",
+    english: "My Lord, increase me in knowledge.",
+    source: "Qur'an 20:114", authenticity: "Qur'an",
+  },
+  {
+    id: "travel-ride", title: "Beginning a journey", reference: "Qur'an 43:13–14 • 1 time", count: 1, times: [],
+    categories: ["travel", "protection"],
+    arabic: "سُبْحَانَ الَّذِي سَخَّرَ لَنَا هَٰذَا وَمَا كُنَّا لَهُ مُقْرِنِينَ ۝ وَإِنَّا إِلَىٰ رَبِّنَا لَمُنقَلِبُونَ",
+    english: "Glory to the One who subjected this for us; we could not have mastered it ourselves, and to our Lord we will return.",
+    source: "Qur'an 43:13–14 • Sahih Muslim 1342", authenticity: "Qur'an / Sahih",
   },
 ];
 

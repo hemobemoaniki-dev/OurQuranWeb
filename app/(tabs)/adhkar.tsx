@@ -10,6 +10,7 @@ import { Icon } from "@/src/components/Icon";
 import { WebPageBackdrop } from "@/src/components/WebPageBackdrop";
 import { useAccount } from "@/src/context/AppState";
 import { computeStreak, todayKey } from "@/src/lib/dates";
+import { formatCountdown, nextAdhkarWindow } from "@/src/lib/adhkar-schedule";
 import { ADHKAR, adhkarFor, dhikrArabic, dhikrEnglish, TASBEEH_PHRASES, type Dhikr } from "@/src/data/adhkar";
 import { makeStyles, useTheme } from "@/src/theme";
 import { arabicFont, serifFont } from "@/src/typography";
@@ -62,6 +63,11 @@ const DESKTOP_CATEGORIES = [
   { key: "guidance", label: "Guidance", icon: "compass-outline" },
   { key: "health", label: "Health", icon: "heart-pulse" },
   { key: "family", label: "Family", icon: "account-group" },
+  { key: "anxiety", label: "Anxiety", icon: "heart-outline" },
+  { key: "travel", label: "Travel", icon: "airplane" },
+  { key: "home", label: "Home", icon: "home-outline" },
+  { key: "food", label: "Food", icon: "food-apple-outline" },
+  { key: "knowledge", label: "Knowledge", icon: "book-education-outline" },
 ] as const;
 type DesktopCategory = typeof DESKTOP_CATEGORIES[number]["key"];
 
@@ -74,15 +80,34 @@ const CATEGORY_WORDS: Record<Exclude<DesktopCategory, "all" | "morning" | "eveni
   guidance: ["guidance", "good of the day", "set right", "light"],
   health: ["well-being", "body", "hearing", "sight", "health"],
   family: ["family", "wealth", "children", "household"],
+  anxiety: ["worry", "grief", "fear", "anxiety", "distress"],
+  travel: ["journey", "travel", "ride"],
+  home: ["home", "house"],
+  food: ["food", "eat", "provision"],
+  knowledge: ["knowledge", "guidance", "learn"],
 };
 
 function DesktopAdhkar() {
   const styles = useStyles();
-  const { colors, scheme } = useTheme();
+  const { colors } = useTheme();
   const { account, setAdhkarCount, setTasbeeh } = useAccount();
   const [category, setCategory] = useState<DesktopCategory>("all");
   const [query, setQuery] = useState("");
   const [index, setIndex] = useState(0);
+  const [nowMs, setNowMs] = useState(() => Date.now());
+  const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null);
+
+  useEffect(() => {
+    const timer = setInterval(() => setNowMs(Date.now()), 30_000);
+    if (typeof navigator !== "undefined" && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => setCoords({ latitude: position.coords.latitude, longitude: position.coords.longitude }),
+        () => {},
+        { enableHighAccuracy: false, maximumAge: 6 * 60 * 60 * 1000, timeout: 5000 },
+      );
+    }
+    return () => clearInterval(timer);
+  }, []);
 
   const items = useMemo(() => {
     const base = category === "morning"
@@ -94,7 +119,8 @@ function DesktopAdhkar() {
     const needle = query.trim().toLowerCase();
     return base.filter((item) => {
       const haystack = `${item.title} ${item.reference} ${item.english} ${item.englishEvening ?? ""} ${item.source}`.toLowerCase();
-      return (!words || words.some((word) => haystack.includes(word))) && (!needle || haystack.includes(needle) || item.arabic.includes(query.trim()));
+      const tagged = item.categories?.includes(category) ?? false;
+      return (!words || tagged || words.some((word) => haystack.includes(word))) && (!needle || haystack.includes(needle) || item.arabic.includes(query.trim()));
     });
   }, [category, query]);
 
@@ -107,15 +133,9 @@ function DesktopAdhkar() {
   const streak = computeStreak(account.history, new Date());
   const selectedPhrase = TASBEEH_PHRASES.find((item) => item.id === account.tasbeeh.phrase) ?? TASBEEH_PHRASES[0];
 
-  const now = new Date();
-  const nextMoment = new Date(now);
-  if (now.getHours() < 18) nextMoment.setHours(18, 0, 0, 0);
-  else {
-    nextMoment.setDate(now.getDate() + 1);
-    nextMoment.setHours(6, 0, 0, 0);
-  }
-  const untilMinutes = Math.max(0, Math.round((nextMoment.getTime() - now.getTime()) / 60_000));
-  const untilLabel = `${Math.floor(untilMinutes / 60)}h ${String(untilMinutes % 60).padStart(2, "0")}m`;
+  const now = new Date(nowMs);
+  const schedule = nextAdhkarWindow(now, coords ?? undefined);
+  const untilLabel = formatCountdown(now, schedule.next);
 
   const move = (delta: number) => {
     if (!items.length) return;
@@ -128,20 +148,11 @@ function DesktopAdhkar() {
     safeHaptic(() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success));
   };
 
-  const share = async () => {
-    if (!current || typeof navigator === "undefined") return;
-    const text = `${dhikrArabic(current, time)}\n\n${dhikrEnglish(current, time)}\n— ${current.source}`;
-    try {
-      if (navigator.share) await navigator.share({ title: current.title, text });
-      else await navigator.clipboard?.writeText(text);
-    } catch {}
-  };
-
   return (
     <>
       <Head><title>Adhkar & Tasbeeh — OurQuran</title><meta name="description" content="Read authentic daily Adhkar, search by purpose, track completion and use a digital Tasbeeh counter." /></Head>
       <View style={styles.desktopRoot}>
-        {scheme === "dark" ? <WebPageBackdrop intensity="strong" /> : null}
+        <WebPageBackdrop intensity="strong" />
         <ScrollView contentContainerStyle={styles.desktopPage} showsVerticalScrollIndicator={false}>
           <View style={styles.desktopHero}>
             <View>
@@ -179,10 +190,10 @@ function DesktopAdhkar() {
                     <Text style={styles.featuredEyebrow}>{category === "all" ? "DAILY ADHKAR" : `${category.toUpperCase()} ADHKAR`}</Text>
                     <Text style={styles.featuredCount}>{index + 1} of {items.length} · {current.reference}</Text>
                   </View>
-                  <View style={[styles.completionChip, complete && styles.completionChipDone]}>
+                  <Pressable accessibilityRole="button" accessibilityLabel={complete ? "Completed" : "Mark this dhikr completed"} onPress={markComplete} style={({ pressed }) => [styles.completionChip, complete && styles.completionChipDone, pressed && styles.desktopPressed]}>
                     <Icon name={complete ? "check-circle" : "progress-check"} size={18} color={complete ? colors.success : colors.gold} />
                     <Text style={styles.completionText}>{complete ? "Completed" : `${done}/${current.count}`}</Text>
-                  </View>
+                  </Pressable>
                 </View>
 
                 <View style={styles.dhikrBody}>
@@ -196,12 +207,6 @@ function DesktopAdhkar() {
                   <Pressable accessibilityRole="button" accessibilityLabel="Next dhikr" onPress={() => move(1)} style={styles.roundArrow}><Icon name="chevron-right" size={30} color={colors.gold} /></Pressable>
                 </View>
 
-                <View style={styles.featuredActions}>
-                  <Pressable accessibilityRole="button" onPress={() => move(-1)} style={({ pressed }) => [styles.secondaryAction, pressed && styles.desktopPressed]}><Icon name="arrow-left" size={20} color={colors.gold} /><Text style={styles.secondaryActionText}>Previous</Text></Pressable>
-                  <View style={styles.dotRow}>{items.slice(0, Math.min(5, items.length)).map((item, dot) => <View key={item.id} style={[styles.dot, dot === index && styles.dotActive]} />)}</View>
-                  <Pressable accessibilityRole="button" onPress={markComplete} style={({ pressed }) => [styles.completeButton, pressed && styles.desktopPressed]}><Icon name="check-circle" size={21} color={colors.onBrandPrimary} /><Text style={styles.completeButtonText}>{complete ? "Completed" : "Mark as completed"}</Text></Pressable>
-                  <Pressable accessibilityRole="button" onPress={() => void share()} style={({ pressed }) => [styles.secondaryAction, pressed && styles.desktopPressed]}><Icon name="share-variant" size={20} color={colors.gold} /><Text style={styles.secondaryActionText}>Share</Text></Pressable>
-                </View>
               </View>
             ) : (
               <View style={styles.desktopEmpty}><Icon name="magnify-close" size={30} color={colors.gold} /><Text style={styles.desktopEmptyText}>No adhkar match this category and search.</Text></View>
@@ -218,13 +223,15 @@ function DesktopAdhkar() {
                 <View style={styles.nextAdhkarCard}>
                   <View style={styles.sideTitleRow}><Icon name="clock-outline" size={23} color={colors.gold} /><Text style={styles.sideTitle}>Next adhkar</Text></View>
                   <Text style={styles.nextTime}>{untilLabel}</Text>
-                  <Text style={styles.sideNote}>{now.getHours() < 18 ? "Until evening Adhkar" : "Until morning Adhkar"}</Text>
-                  <Text style={styles.reminderHint}>Set reminders in Settings.</Text>
+                  <Text style={styles.sideNote}>{schedule.kind === "evening" ? "Until evening Adhkar" : "Until morning Adhkar"}</Text>
+                  <Text style={styles.reminderHint}>{schedule.precise ? "Local sunrise/sunset timing" : "Allow location for local solar timing"}</Text>
                 </View>
                 <View style={styles.tasbeehCard}>
                   <View style={styles.sideTitleRow}><Icon name="counter" size={23} color={colors.gold} /><Text style={styles.sideTitle}>Tasbeeh</Text></View>
-                  <Text style={styles.tasbeehPhrase}>{selectedPhrase.label}</Text>
-                  <View style={styles.tasbeehRing}><Text style={styles.tasbeehCount}>{account.tasbeeh.count}</Text><Text style={styles.tasbeehTarget}>of {account.tasbeeh.target}</Text></View>
+                  <View style={styles.tasbeehPhrasePill}><Text style={styles.tasbeehPhrase}>{selectedPhrase.label}</Text></View>
+                  <Pressable accessibilityRole="button" accessibilityLabel="Increase Tasbeeh count" onPress={() => setTasbeeh((value) => ({ count: value.count + 1 }))} style={({ pressed }) => [styles.tasbeehRing, pressed && styles.desktopPressed]}>
+                    <Text style={styles.tasbeehCount}>{account.tasbeeh.count}</Text><Text style={styles.tasbeehTarget}>of {account.tasbeeh.target}</Text>
+                  </Pressable>
                   <View style={styles.tasbeehActions}>
                     <Pressable accessibilityRole="button" accessibilityLabel="Decrease counter" onPress={() => setTasbeeh({ count: Math.max(0, account.tasbeeh.count - 1) })} style={styles.counterMini}><Icon name="minus" size={20} color={colors.gold} /></Pressable>
                     <Pressable accessibilityRole="button" accessibilityLabel="Reset counter" onPress={() => setTasbeeh({ count: 0 })} style={styles.counterMini}><Icon name="restore" size={20} color={colors.gold} /></Pressable>
@@ -714,28 +721,32 @@ const useStyles = makeStyles((colors) => ({
   nextAdhkarCard: {
     flex: 1,
     minWidth: 0,
-    padding: 18,
+    minHeight: 250,
+    padding: 20,
     borderRadius: 22,
     borderWidth: 1,
     borderColor: colors.goldBorder,
     backgroundColor: colors.surfaceSecondary,
   },
-  nextTime: { color: colors.gold, fontFamily: serifFont, fontSize: 34, lineHeight: 42, fontWeight: "700", marginTop: 26, textAlign: "center" },
+  nextTime: { color: colors.gold, fontFamily: serifFont, fontSize: 38, lineHeight: 44, fontWeight: "800", marginTop: 30, textAlign: "center" },
   reminderHint: { color: colors.gold, fontSize: 10, lineHeight: 15, textAlign: "center", marginTop: 13 },
   tasbeehCard: {
     flex: 1,
     minWidth: 0,
+    minHeight: 250,
     alignItems: "center",
-    padding: 18,
+    justifyContent: "space-between",
+    padding: 20,
     borderRadius: 22,
     borderWidth: 1,
     borderColor: colors.goldBorder,
     backgroundColor: colors.surfaceSecondary,
   },
-  tasbeehPhrase: { color: colors.gold, fontSize: 13, fontWeight: "800", marginTop: 13 },
+  tasbeehPhrasePill: { minHeight: 30, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, backgroundColor: colors.goldSoft, borderWidth: 1, borderColor: colors.goldBorder, alignItems: "center", justifyContent: "center", marginTop: 8 },
+  tasbeehPhrase: { color: colors.gold, fontSize: 13, fontWeight: "900" },
   tasbeehRing: {
-    width: 96,
-    height: 96,
+    width: 112,
+    height: 112,
     borderRadius: 999,
     alignItems: "center",
     justifyContent: "center",
@@ -744,7 +755,7 @@ const useStyles = makeStyles((colors) => ({
     borderColor: colors.gold,
     backgroundColor: colors.goldSoft,
   },
-  tasbeehCount: { color: colors.onSurface, fontSize: 30, lineHeight: 34, fontWeight: "900" },
+  tasbeehCount: { color: colors.onSurface, fontSize: 38, lineHeight: 42, fontWeight: "900" },
   tasbeehTarget: { color: colors.muted, fontSize: 10, fontWeight: "700" },
   tasbeehActions: { flexDirection: "row", alignItems: "center", gap: 8 },
   counterMini: {

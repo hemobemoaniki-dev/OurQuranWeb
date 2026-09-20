@@ -82,31 +82,25 @@ function MobileRead() {
   );
 }
 
-type QuranFilter = "all" | "short" | "medium" | "long";
-
 function DesktopRead() {
   const styles = useStyles();
-  const { colors, scheme } = useTheme();
+  const { colors } = useTheme();
   const router = useRouter();
   const { account } = useAccount();
   const [query, setQuery] = useState("");
-  const [filter, setFilter] = useState<QuranFilter>("all");
   const current = surahMeta(account.currentSurah);
   const progress = Math.min(1, account.currentAyah / Math.max(1, current.ayahs));
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
-    return SURAHS.filter((surah) => {
-      const lengthMatch = filter === "all" || (filter === "short" && surah.ayahs <= 30) || (filter === "medium" && surah.ayahs > 30 && surah.ayahs <= 100) || (filter === "long" && surah.ayahs > 100);
-      return lengthMatch && (!needle || surah.name.toLowerCase().includes(needle) || String(surah.number) === needle);
-    });
-  }, [filter, query]);
+    return SURAHS.filter((surah) => !needle || surah.name.toLowerCase().includes(needle) || String(surah.number) === needle);
+  }, [query]);
 
   return (
     <>
       <Head><title>Read the Quran — OurQuran</title><meta name="description" content="Explore all 114 surahs, continue from your exact ayah, listen to recitation and keep your reading progress." /></Head>
       <View style={styles.desktopRoot}>
-        {scheme === "dark" ? <WebPageBackdrop intensity="strong" /> : null}
+        <WebPageBackdrop intensity="strong" />
         <ScrollView contentContainerStyle={styles.desktopPage} showsVerticalScrollIndicator={false}>
           <View style={styles.desktopHero}>
             <View>
@@ -132,7 +126,6 @@ function DesktopRead() {
             <View><Text style={styles.libraryTitle}>The 114 Surahs</Text><Text style={styles.librarySubtitle}>Choose a chapter and begin with its first ayah.</Text></View>
             <View style={styles.libraryTools}>
               <View style={styles.librarySearch}><Icon name="magnify" size={21} color={colors.gold} /><TextInput value={query} onChangeText={setQuery} placeholder="Search by name or number…" placeholderTextColor={colors.muted} style={styles.librarySearchInput} testID="quran-search" /></View>
-              <View style={styles.lengthFilters}>{(["all", "short", "medium", "long"] as const).map((item) => <Pressable key={item} onPress={() => setFilter(item)} style={[styles.lengthFilter, filter === item && styles.lengthFilterActive]}><Text style={[styles.lengthFilterText, filter === item && styles.lengthFilterTextActive]}>{item === "all" ? "All" : `${item[0].toUpperCase()}${item.slice(1)}`}</Text></Pressable>)}</View>
             </View>
           </View>
 

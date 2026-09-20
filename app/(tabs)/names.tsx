@@ -6,6 +6,7 @@ import { Platform, Pressable, ScrollView, View, useWindowDimensions } from "reac
 import { Text, TextInput } from "@/src/components/AppText";
 import { Icon } from "@/src/components/Icon";
 import { WebPageBackdrop } from "@/src/components/WebPageBackdrop";
+import { useAccount } from "@/src/context/AppState";
 import { NAMES_99, nameOfDay, type DivineName } from "@/src/data/names99";
 import { localDayNumber } from "@/src/lib/dates";
 import { makeStyles, useTheme } from "@/src/theme";
@@ -26,7 +27,6 @@ const FILTER_WORDS: Record<Exclude<NameFilter, "All">, string[]> = {
   Beauty: ["beautiful", "glory", "majestic", "generous", "light", "peace", "love"],
 };
 
-const FAVORITES_KEY = "ourquran_name_favorites_v1";
 const VIEWED_KEY = "ourquran_names_viewed_v1";
 
 function readNumbers(key: string) {
@@ -46,7 +46,7 @@ function storeNumbers(key: string, value: Set<number>) {
 
 export default function Names() {
   const styles = useStyles();
-  const { colors, scheme } = useTheme();
+  const { colors } = useTheme();
   const { width } = useWindowDimensions();
   const desktop = Platform.OS === "web" && width >= 1080;
   const [day, setDay] = useState(() => localDayNumber());
@@ -54,7 +54,8 @@ export default function Names() {
   const [selectedNumber, setSelectedNumber] = useState(featured.number);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<NameFilter>("All");
-  const [favorites, setFavorites] = useState<Set<number>>(() => readNumbers(FAVORITES_KEY));
+  const { account, toggleNameBookmark } = useAccount();
+  const favorites = useMemo(() => new Set(account.appState.nameBookmarks.map((item) => item.nameNumber)), [account.appState.nameBookmarks]);
   const [viewed, setViewed] = useState<Set<number>>(() => readNumbers(VIEWED_KEY));
 
   useEffect(() => {
@@ -83,13 +84,7 @@ export default function Names() {
   };
 
   const toggleFavorite = (number: number) => {
-    setFavorites((current) => {
-      const next = new Set(current);
-      if (next.has(number)) next.delete(number);
-      else next.add(number);
-      storeNumbers(FAVORITES_KEY, next);
-      return next;
-    });
+    toggleNameBookmark(number);
   };
 
   const nextName = () => selectName(NAMES_99[selected.number % NAMES_99.length]);
@@ -99,7 +94,7 @@ export default function Names() {
     <>
       <Head><title>99 Names of Allah — OurQuran</title><meta name="description" content="Explore the 99 Names of Allah with Arabic, meanings, reflection, search and learning progress." /></Head>
       <View style={styles.root}>
-        {desktop && scheme === "dark" ? <WebPageBackdrop intensity="strong" /> : null}
+        {desktop ? <WebPageBackdrop intensity="strong" /> : null}
         <ScrollView contentContainerStyle={styles.page} showsVerticalScrollIndicator={false}>
           <View style={[styles.heroRow, !desktop && styles.stack]}>
             <View style={styles.heroStory}>
@@ -234,12 +229,12 @@ const useStyles = makeStyles((c) => ({
   heroRow: { minHeight: 280, flexDirection: "row", gap: 16, alignItems: "stretch" },
   heroStory: { flex: 1.5, minHeight: 280, borderRadius: 24, overflow: "hidden", padding: 28, justifyContent: "center", borderWidth: 1, borderColor: c.goldBorder, backgroundColor: c.surfaceSecondary },
   heroImage: { position: "absolute", top: 0, right: 0, bottom: 0, left: 0, opacity: 0.36 },
-  heroScrim: { position: "absolute", top: 0, right: 0, bottom: 0, left: 0, backgroundColor: "rgba(2,3,3,0.55)" },
+  heroScrim: { position: "absolute", top: 0, right: 0, bottom: 0, left: 0, backgroundColor: "rgba(2,3,3,0.72)" },
   salam: { color: c.gold, fontFamily: serifFont, fontSize: 19, lineHeight: 24, fontWeight: "700" },
-  heroTitle: { color: c.onSurface, fontFamily: serifFont, fontSize: 52, lineHeight: 59, fontWeight: "700", marginTop: 4 },
+  heroTitle: { color: "#FFFFFF", fontFamily: serifFont, fontSize: 52, lineHeight: 59, fontWeight: "700", marginTop: 4, textShadowColor: "rgba(0,0,0,0.72)", textShadowRadius: 12 },
   heroNumber: { color: c.gold },
-  heroKicker: { color: c.onSurface, fontFamily: serifFont, fontSize: 17, lineHeight: 23, fontWeight: "700", marginTop: 8 },
-  heroCopy: { color: c.muted, maxWidth: 640, fontSize: 15.5, lineHeight: 24, marginTop: 13 },
+  heroKicker: { color: "#FFFFFF", fontFamily: serifFont, fontSize: 17, lineHeight: 23, fontWeight: "800", marginTop: 8, textShadowColor: "rgba(0,0,0,0.72)", textShadowRadius: 10 },
+  heroCopy: { color: "#F1EBDD", maxWidth: 640, fontSize: 15.5, lineHeight: 24, marginTop: 13, fontWeight: "600", textShadowColor: "rgba(0,0,0,0.72)", textShadowRadius: 9 },
   dayCard: { width: 320, minHeight: 280, padding: 22, borderRadius: 22, borderWidth: 1, borderColor: c.goldBorder, backgroundColor: c.surfaceSecondary, alignItems: "center", shadowColor: c.gold, shadowOpacity: 0.1, shadowRadius: 20, shadowOffset: { width: 0, height: 8 } },
   cardHead: { width: "100%", flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   cardEyebrow: { color: c.gold, fontSize: 12, lineHeight: 16, fontWeight: "900", letterSpacing: 1.1 },
@@ -279,7 +274,7 @@ const useStyles = makeStyles((c) => ({
   nameMeaning: { color: c.muted, fontSize: 12.5, lineHeight: 17, textAlign: "center", marginTop: 2 },
   emptyState: { minHeight: 180, borderRadius: 18, borderWidth: 1, borderColor: c.border, backgroundColor: c.surfaceSecondary, alignItems: "center", justifyContent: "center", gap: 10 },
   emptyText: { color: c.muted, fontSize: 15 },
-  detailCard: { width: 400, flexShrink: 0, borderRadius: 22, borderWidth: 1, borderColor: c.goldBorder, backgroundColor: c.surfaceSecondary, padding: 19, gap: 14 },
+  detailCard: { width: 420, flexShrink: 0, alignSelf: "flex-start", borderRadius: 22, borderWidth: 1, borderColor: c.goldBorder, backgroundColor: c.surfaceSecondary, padding: 21, gap: 15, shadowColor: "#000000", shadowOpacity: 0.16, shadowRadius: 18, shadowOffset: { width: 0, height: 8 } },
   detailHead: { flexDirection: "row", alignItems: "center", gap: 12 },
   detailNumber: { width: 42, height: 42, borderRadius: 21, borderWidth: 1, borderColor: c.goldBorder, alignItems: "center", justifyContent: "center" },
   detailNumberText: { color: c.gold, fontFamily: serifFont, fontSize: 18, lineHeight: 22, fontWeight: "700" },
@@ -291,7 +286,7 @@ const useStyles = makeStyles((c) => ({
   detailArabic: { color: c.gold, fontFamily: arabicFont, fontSize: 55, lineHeight: 76, writingDirection: "rtl", textAlign: "center" },
   detailSection: { gap: 5, paddingTop: 3 },
   detailLabel: { color: c.gold, fontSize: 13.5, lineHeight: 18, fontWeight: "900" },
-  detailBody: { color: c.onSurface, fontFamily: serifFont, fontSize: 14.5, lineHeight: 22 },
+  detailBody: { color: c.onSurface, fontSize: 15, lineHeight: 23, fontWeight: "600" },
   benefitsBox: { gap: 8, padding: 13, borderRadius: 15, borderWidth: 1, borderColor: c.goldBorder, backgroundColor: c.goldSoft },
   benefitLine: { flexDirection: "row", alignItems: "center", gap: 9 },
   benefitText: { flex: 1, color: c.onSurface, fontSize: 12.5, lineHeight: 18 },

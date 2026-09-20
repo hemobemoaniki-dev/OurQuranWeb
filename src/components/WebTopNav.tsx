@@ -75,10 +75,6 @@ export const WebTopNav = memo(function WebTopNav({ active }: { active?: NavKey }
           })}
         </View>
         <View style={styles.accountZone}>
-          <Pressable accessibilityRole="button" accessibilityLabel="Search Quran" onPress={() => router.push("/read")} style={({ pressed, hovered }: any) => [styles.searchButton, hovered && styles.glassHover, pressed && styles.pressed]}>
-            <Icon name="magnify" size={26} color="#FFFDF7" />
-          </Pressable>
-          <View style={styles.accountDivider} />
           <Pressable accessibilityRole="button" accessibilityLabel={user ? "Open profile" : "Sign in"} onPress={() => router.push(user ? "/settings/profile" : "/auth")} style={({ pressed, hovered }: any) => [styles.accountButton, hovered && styles.glassHover, pressed && styles.pressed]}>
             <ProfileAvatar value={user ? account.photoURL : undefined} size={40} />
             <Text style={styles.accountName} numberOfLines={1}>{name}</Text>
@@ -107,7 +103,7 @@ const styles = StyleSheet.create({
   navText: { color: "#EFEAE0", fontFamily: serifFont, fontSize: 16.5, lineHeight: 22 },
   navTextActive: { color: "#F2CE52" },
   navUnderline: { position: "absolute", left: 13, right: 13, bottom: 9, height: 2, borderRadius: 2, backgroundColor: "#F2CE52", shadowColor: "#FFD760", shadowOpacity: 0.9, shadowRadius: 8, shadowOffset: { width: 0, height: 0 } },
-  accountZone: { minWidth: 260, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 12 },
+  accountZone: { minWidth: 205, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 12 },
   searchButton: { width: 46, height: 46, borderRadius: 15, borderWidth: 1, borderColor: "transparent", alignItems: "center", justifyContent: "center", cursor: "pointer" },
   accountDivider: { width: 1, height: 38, backgroundColor: "rgba(255,255,255,0.22)" },
   accountButton: { maxWidth: 190, minHeight: 54, paddingHorizontal: 10, borderRadius: 18, flexDirection: "row", alignItems: "center", gap: 9, cursor: "pointer", borderWidth: 1, borderColor: "transparent" },

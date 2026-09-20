@@ -1,15 +1,18 @@
 import { readerTheme, type ReaderThemeId } from "@/src/lib/reader-themes";
 import { RECITERS } from "@/src/data/reciters";
+import { DEFAULT_SITE_BACKGROUND, siteBackground, type SiteBackgroundId } from "@/src/data/site-backgrounds";
 // users/{uid} account model + local-first merge logic (ported from web semantics).
 import type { DayStat, History } from "@/src/lib/dates";
 import { todayKey } from "@/src/lib/dates";
 
 export type Bookmark = { surah: number; ayah: number; createdAt: string };
+export type NameBookmark = { nameNumber: number; createdAt: string };
 type Progress = { history: History; totalHasanaat: number; completedReads: number; totalSeconds: number };
 
 export type AppSettings = {
   readerTheme: ReaderThemeId;
   theme: "dark" | "light" | "system";
+  siteBackground: SiteBackgroundId;
   readingSize: "small" | "standard" | "large" | "xlarge";
   reciter: string;
   speed: number;
@@ -48,7 +51,12 @@ export type Account = {
   totalSeconds: number;
   todayKey: string;
   todayStats: DayStat;
-  appState: { bookmarks: Bookmark[]; removedBookmarks?: Record<string, string> };
+  appState: {
+    bookmarks: Bookmark[];
+    nameBookmarks: NameBookmark[];
+    removedBookmarks?: Record<string, string>;
+    removedNameBookmarks?: Record<string, string>;
+  };
   revision: number;
   lastMutationId: string;
   updatedAt: string; // ISO
@@ -65,7 +73,7 @@ export function accountTimestamp(value: any): string {
   return Number.isFinite(ms) && Math.abs(ms) <= 8.64e15 ? new Date(ms).toISOString() : new Date(0).toISOString();
 }
 
-export const SCHEMA_VERSION = 3;
+export const SCHEMA_VERSION = 4;
 const emptyProgress = (): Progress => ({ history: {}, totalHasanaat: 0, completedReads: 0, totalSeconds: 0 });
 const safeCount = (value: unknown): number => typeof value === "number" && Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0;
 function normalizeProgress(value: any): Progress {
@@ -118,6 +126,7 @@ const VALID_SPEEDS = new Set([0.5, 0.75, 1, 1.25, 1.5, 1.75, 2]);
 export function defaultSettings(): AppSettings {
   return {
     theme: "dark",
+    siteBackground: DEFAULT_SITE_BACKGROUND,
     readerTheme: "moonlit-orchid",
     readingSize: "standard",
     reciter: "alafasy",
@@ -152,7 +161,7 @@ export function defaultAccount(partial: Partial<Account> = {}): Account {
     totalSeconds: 0,
     todayKey: todayKey(),
     todayStats: { hasanaat: 0, ayat: 0 },
-    appState: { bookmarks: [] },
+    appState: { bookmarks: [], nameBookmarks: [] },
     revision: 0,
     lastMutationId: "",
     // Epoch so a fresh default never wins over real cloud data during merge.
@@ -169,6 +178,7 @@ export function normalizeSettings(s: any): AppSettings {
   return {
     readerTheme: readerTheme(s.readerTheme).id,
     theme: VALID_THEMES.includes(s.theme) ? s.theme : d.theme,
+    siteBackground: siteBackground(s.siteBackground).id,
     readingSize: ["small", "standard", "large", "xlarge"].includes(s.readingSize)
       ? s.readingSize
       : d.readingSize,
@@ -231,7 +241,12 @@ export function fromRemote(uid: string, data: any): Account {
     totalSeconds: data.totalSeconds ?? 0,
     todayKey: data.todayKey ?? todayKey(),
     todayStats: data.todayStats ?? base.todayStats,
-    appState: { bookmarks: Array.isArray(data.appState?.bookmarks) ? data.appState.bookmarks : [], removedBookmarks: data.appState?.removedBookmarks ?? {} },
+    appState: {
+      bookmarks: Array.isArray(data.appState?.bookmarks) ? data.appState.bookmarks : [],
+      nameBookmarks: Array.isArray(data.appState?.nameBookmarks) ? data.appState.nameBookmarks : [],
+      removedBookmarks: data.appState?.removedBookmarks ?? {},
+      removedNameBookmarks: data.appState?.removedNameBookmarks ?? {},
+    },
     revision: data.revision ?? 0,
     lastMutationId: data.lastMutationId ?? "",
     updatedAt: accountTimestamp(data.updatedAt),
@@ -319,6 +334,20 @@ export function mergeAccounts(remote: Account | null, local: Account): Account {
     if (removedBookmarks[key] && removedBookmarks[key] >= b.createdAt) bmMap.delete(key);
   }
 
+  // 99 Names favorites use the same account-first merge semantics as Quran bookmarks.
+  const nameBmMap = new Map<string, NameBookmark>();
+  for (const b of [...remote.appState.nameBookmarks, ...local.appState.nameBookmarks]) {
+    const key = String(b.nameNumber);
+    if (!nameBmMap.has(key) || b.createdAt > nameBmMap.get(key)!.createdAt) nameBmMap.set(key, b);
+  }
+  const removedNameBookmarks = { ...remote.appState.removedNameBookmarks };
+  for (const [key, date] of Object.entries(local.appState.removedNameBookmarks ?? {})) {
+    if (!removedNameBookmarks[key] || date > removedNameBookmarks[key]) removedNameBookmarks[key] = date;
+  }
+  for (const [key, b] of nameBmMap) {
+    if (removedNameBookmarks[key] && removedNameBookmarks[key] >= b.createdAt) nameBmMap.delete(key);
+  }
+
   // Adhkar progress: if same day, take max per dhikr; else newer wins.
   let mergedAdhkar = explicit.adhkarProgress;
   if (local.adhkarProgress.date === remote.adhkarProgress.date) {
@@ -347,7 +376,12 @@ export function mergeAccounts(remote: Account | null, local: Account): Account {
     completedReads: Math.max(local.completedReads, remote.completedReads),
     totalSeconds: Math.max(local.totalSeconds, remote.totalSeconds),
     adhkarProgress: mergedAdhkar,
-    appState: { bookmarks: Array.from(bmMap.values()), removedBookmarks },
+    appState: {
+      bookmarks: Array.from(bmMap.values()),
+      nameBookmarks: Array.from(nameBmMap.values()),
+      removedBookmarks,
+      removedNameBookmarks,
+    },
     revision: Math.max(local.revision, remote.revision),
     updatedAt: explicit.updatedAt,
   });

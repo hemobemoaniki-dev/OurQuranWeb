@@ -67,6 +67,8 @@ type AccountApi = {
   }) => Promise<{ ok: boolean; error?: string }>;
   toggleBookmark: (surah: number, ayah: number) => void;
   isBookmarked: (surah: number, ayah: number) => boolean;
+  toggleNameBookmark: (nameNumber: number) => void;
+  isNameBookmarked: (nameNumber: number) => boolean;
   resetLocalData: () => Promise<void>;
   deleteAccount: (password?: string) => Promise<{ ok: boolean; error?: string }>;
   flush: () => Promise<void>;
@@ -77,7 +79,7 @@ const AuthContext = createContext<AuthApi | null>(null);
 const AccountContext = createContext<AccountApi | null>(null);
 
 type ReaderApi = Pick<AccountApi, "hydrated" | "saveReaderPosition" | "commitReward" | "addReadingSeconds" | "updateSettings" | "toggleBookmark" | "isBookmarked" | "flush"> & {
-  account: Pick<Account, "currentSurah" | "currentAyah"> & { settings: Pick<Account["settings"], "reciter" | "speed" | "autoplay" | "readerTheme"> };
+  account: Pick<Account, "currentSurah" | "currentAyah"> & { settings: Pick<Account["settings"], "reciter" | "speed" | "autoplay" | "readerTheme" | "readingSize"> };
 };
 const ReaderContext = createContext<ReaderApi | null>(null);
 
@@ -329,7 +331,8 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
         Object.keys(guest.history).length > 0 ||
         guest.currentSurah !== 1 ||
         guest.currentAyah !== 1 ||
-        guest.appState.bookmarks.length > 0
+        guest.appState.bookmarks.length > 0 ||
+        guest.appState.nameBookmarks.length > 0
       );
       if (hadGuest && guest) localAcc = absorbGuest(localAcc, guest);
       if (cancelled) return;
@@ -680,6 +683,27 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     [],
   );
 
+  const toggleNameBookmark = useCallback(
+    (nameNumber: number) => {
+      if (!Number.isInteger(nameNumber) || nameNumber < 1 || nameNumber > 99) return;
+      applyMutation((a) => {
+        const exists = a.appState.nameBookmarks.some((b) => b.nameNumber === nameNumber);
+        const nameBookmarks = exists
+          ? a.appState.nameBookmarks.filter((b) => b.nameNumber !== nameNumber)
+          : [...a.appState.nameBookmarks, { nameNumber, createdAt: new Date().toISOString() }];
+        const removedNameBookmarks = { ...a.appState.removedNameBookmarks };
+        if (exists) removedNameBookmarks[String(nameNumber)] = new Date().toISOString();
+        return { ...a, appState: { ...a.appState, nameBookmarks, removedNameBookmarks } };
+      });
+    },
+    [applyMutation],
+  );
+
+  const isNameBookmarked = useCallback(
+    (nameNumber: number) => accountRef.current.appState.nameBookmarks.some((b) => b.nameNumber === nameNumber),
+    [],
+  );
+
   const deleteAccount = useCallback(async (password?: string) => {
     const u = userRef.current;
     const current = accountRef.current;
@@ -792,6 +816,8 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
       updateProfile,
       toggleBookmark,
       isBookmarked,
+      toggleNameBookmark,
+      isNameBookmarked,
       resetLocalData,
       deleteAccount,
       flush,
@@ -813,6 +839,8 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
       updateProfile,
       toggleBookmark,
       isBookmarked,
+      toggleNameBookmark,
+      isNameBookmarked,
       resetLocalData,
       deleteAccount,
       flush,
@@ -823,8 +851,8 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
   // Cloud status and reward counters do not need to redraw the Arabic reader.
   const bookmarkSignature = account.appState.bookmarks.map((b) => `${b.surah}:${b.ayah}`).sort().join(",");
   const readerAccount = useMemo(() => ({ currentSurah: account.currentSurah, currentAyah: account.currentAyah,
-    settings: { readerTheme: account.settings.readerTheme, reciter: account.settings.reciter, speed: account.settings.speed, autoplay: account.settings.autoplay },
-  }), [account.currentSurah, account.currentAyah, account.settings.readerTheme, account.settings.reciter, account.settings.speed, account.settings.autoplay]);
+    settings: { readerTheme: account.settings.readerTheme, readingSize: account.settings.readingSize, reciter: account.settings.reciter, speed: account.settings.speed, autoplay: account.settings.autoplay },
+  }), [account.currentSurah, account.currentAyah, account.settings.readerTheme, account.settings.readingSize, account.settings.reciter, account.settings.speed, account.settings.autoplay]);
   const readerApi = useMemo<ReaderApi>(() => ({ account: readerAccount, hydrated, saveReaderPosition, commitReward,
     addReadingSeconds, updateSettings, toggleBookmark, isBookmarked, flush,
     // Signature invalidates bookmark consumers only when membership changes.

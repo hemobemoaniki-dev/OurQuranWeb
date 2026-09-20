@@ -11,6 +11,7 @@ import { SubHeader } from "@/src/components/SubHeader";
 import { WebPageBackdrop } from "@/src/components/WebPageBackdrop";
 import { useAccount, useAuth } from "@/src/context/AppState";
 import { RECITERS } from "@/src/data/reciters";
+import { siteBackground } from "@/src/data/site-backgrounds";
 import { formatK, monthValue, todayValue, weekValue } from "@/src/lib/dates";
 import { makeStyles, useTheme } from "@/src/theme";
 import { serifFont } from "@/src/typography";
@@ -121,6 +122,7 @@ function MobileSettingsHome({ inTab = false }: { inTab?: boolean }) {
         {/* App settings */}
         <Section title="APP SETTINGS">
           <Row icon="palette-outline" label="App Theme" onPress={() => router.push("/settings/theme")} />
+          <Row icon="image-multiple-outline" label="Website Background" value={siteBackground(account.settings.siteBackground).name} onPress={() => router.push("/settings/background")} />
           <Row icon="target" label="Daily Quran Goal" onPress={() => router.push("/settings/goal")} />
           <Row icon="bell-outline" label="Notifications" onPress={() => router.push("/settings/notifications")} />
           <Row icon="web" label="Language" onPress={() => router.push("/settings/language")} last />
@@ -156,6 +158,7 @@ function DesktopSettingsHome() {
   const [busy, setBusy] = useState<"sync" | "signout" | "">("");
   const [message, setMessage] = useState("");
   const reciter = RECITERS.find((item) => item.id === account.settings.reciter)?.name ?? "Selected reciter";
+  const background = siteBackground(account.settings.siteBackground);
   const readingSizes = ["small", "standard", "large", "xlarge"] as const;
   const speeds = [0.5, 0.75, 1, 1.25, 1.5, 2];
 
@@ -194,7 +197,7 @@ function DesktopSettingsHome() {
     <>
       <Head><title>Settings — OurQuran</title><meta name="description" content="Personalize your Quran reading, recitation, goals, reminders, account and privacy settings." /></Head>
       <View style={styles.desktopSettingsRoot}>
-        {scheme === "dark" ? <WebPageBackdrop intensity="strong" /> : null}
+        <WebPageBackdrop intensity="strong" />
         <ScrollView contentContainerStyle={styles.desktopSettingsPage} showsVerticalScrollIndicator={false}>
           <View style={styles.settingsHero}>
             <View>
@@ -241,7 +244,8 @@ function DesktopSettingsHome() {
 
             <SettingsPanel icon="palette-outline" title="Theme & appearance" description="Set the atmosphere for your daily reading.">
               <View style={styles.themeChoices}>{(["dark", "light", "system"] as const).map((theme) => <Pressable key={theme} onPress={() => updateSettings({ theme })} style={[styles.themeChoice, account.settings.theme === theme && styles.themeChoiceActive]}><Icon name={theme === "dark" ? "weather-night" : theme === "light" ? "white-balance-sunny" : "cellphone"} size={24} color={account.settings.theme === theme ? colors.gold : colors.muted} /><Text style={[styles.themeChoiceText, account.settings.theme === theme && styles.themeChoiceTextActive]}>{theme[0].toUpperCase() + theme.slice(1)}</Text></Pressable>)}</View>
-              <Text style={styles.panelFootnote}>System follows your device automatically. Your choice is saved across sessions.</Text>
+              <SettingAction icon="image-multiple-outline" label="Website background" value={background.name} onPress={() => router.push("/settings/background")} />
+              <Text style={styles.panelFootnote}>Theme and background choices sync across sessions. Background presets keep a contrast layer behind content for readability.</Text>
             </SettingsPanel>
 
             <SettingsPanel icon="bell-outline" title="Notifications & reminders" description="A gentle invitation back to the Qur’an.">
