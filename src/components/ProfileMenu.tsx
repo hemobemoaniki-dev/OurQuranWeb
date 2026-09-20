@@ -10,9 +10,11 @@ import { useAccount, useAuth } from "@/src/context/AppState";
 export const ProfileMenu = memo(function ProfileMenu({
   accent = "#ECCA69",
   compact = false,
+  onBeforeAction,
 }: {
   accent?: string;
   compact?: boolean;
+  onBeforeAction?: () => void;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -32,7 +34,7 @@ export const ProfileMenu = memo(function ProfileMenu({
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Sign in"
-        onPress={() => router.push("/auth")}
+        onPress={() => { onBeforeAction?.(); router.push("/auth"); }}
         style={({ pressed, hovered }: any) => [
           styles.trigger,
           compact && styles.triggerCompact,
@@ -74,6 +76,7 @@ export const ProfileMenu = memo(function ProfileMenu({
 
           <Pressable
             onPress={() => {
+              onBeforeAction?.();
               setOpen(false);
               router.push("/settings/profile");
             }}
@@ -91,6 +94,7 @@ export const ProfileMenu = memo(function ProfileMenu({
 
           <Pressable
             onPress={() => {
+              onBeforeAction?.();
               setOpen(false);
               router.push("/preferences");
             }}
@@ -109,6 +113,7 @@ export const ProfileMenu = memo(function ProfileMenu({
             onPress={async () => {
               if (signingOut) return;
               setSigningOut(true);
+              onBeforeAction?.();
               try {
                 await signOut();
                 setOpen(false);
