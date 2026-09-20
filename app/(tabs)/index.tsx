@@ -254,16 +254,23 @@ export default function Home() {
               <View style={styles.heroProgressTrack}>
                 <LinearGradient
                   pointerEvents="none"
-                  colors={["#FFF08A", "#F6C73D", "#F0A82D"]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={[styles.heroProgressFill, { width: `${Math.max(4, readingPct * 100)}%` }]}
+                  colors={["#B06F18", "#DDAE3B", "#F4D06A", "#E7B13C"]}
+                  locations={[0, 0.38, 0.72, 1]}
+                  start={{ x: 0, y: 0.5 }}
+                  end={{ x: 1, y: 0.5 }}
+                  style={[
+                    styles.heroProgressFill,
+                    readingPct > 0 && styles.heroProgressFillVisible,
+                    { width: `${readingPct * 100}%` },
+                  ]}
                 >
-                  <View style={styles.heroProgressGlow} />
+                  <View style={styles.heroProgressSheen} />
+                  {readingPct > 0 ? (
+                    <View style={styles.heroProgressValueWrap}>
+                      <Text style={styles.heroProgressValue}>{Math.round(readingPct * 100)}%</Text>
+                    </View>
+                  ) : null}
                 </LinearGradient>
-                <View pointerEvents="none" style={styles.heroProgressLabelWrap}>
-                  <Text style={styles.heroProgressText}>{Math.round(readingPct * 100)}% through this surah</Text>
-                </View>
               </View>
               <View style={styles.heroFoot}>
                 <View style={styles.readButton}>
@@ -782,13 +789,13 @@ const useStyles = makeStyles((c) => ({
     minWidth: 300,
     height: 34,
     borderRadius: 999,
-    backgroundColor: "rgba(8,8,8,0.46)",
+    backgroundColor: "rgba(10,11,12,0.58)",
     borderWidth: 1,
-    borderColor: c.goldBorder,
+    borderColor: "rgba(236,202,105,0.34)",
     overflow: "hidden",
     marginTop: 22,
-    shadowColor: c.gold,
-    shadowOpacity: 0.18,
+    shadowColor: "#D8A83A",
+    shadowOpacity: 0.12,
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 0 },
   },
@@ -797,45 +804,42 @@ const useStyles = makeStyles((c) => ({
     left: 0,
     top: 0,
     bottom: 0,
-    minWidth: 22,
     borderRadius: 999,
-    justifyContent: "center",
-    shadowColor: "#FFD95A",
-    shadowOpacity: 0.55,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 0 },
-  },
-  heroProgressGlow: {
-    position: "absolute",
-    right: 0,
-    top: 3,
-    bottom: 3,
-    width: 22,
-    borderRadius: 999,
-    backgroundColor: "rgba(255,246,171,0.88)",
-    shadowColor: "#FFE66D",
-    shadowOpacity: 0.95,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 0 },
-  },
-  heroProgressLabelWrap: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    top: 0,
-    bottom: 0,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 16,
+    overflow: "hidden",
+    shadowColor: "#EBC55A",
+    shadowOpacity: 0.34,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 0 },
   },
-  heroProgressText: {
-    color: "#FFF9E8",
+  heroProgressFillVisible: { minWidth: 64 },
+  heroProgressSheen: {
+    position: "absolute",
+    left: 7,
+    right: 7,
+    top: 3,
+    height: 7,
+    borderRadius: 999,
+    backgroundColor: "rgba(255,250,216,0.28)",
+  },
+  heroProgressValueWrap: {
+    minWidth: 48,
+    minHeight: 24,
+    paddingHorizontal: 9,
+    borderRadius: 999,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(63,39,5,0.20)",
+  },
+  heroProgressValue: {
+    color: "#FFFDF4",
     fontSize: 13.5,
     lineHeight: 18,
     fontWeight: "900",
-    letterSpacing: 0.15,
-    textShadowColor: "rgba(0,0,0,0.72)",
-    textShadowRadius: 7,
+    letterSpacing: 0.2,
+    textShadowColor: "rgba(58,34,0,0.55)",
+    textShadowRadius: 5,
     textShadowOffset: { width: 0, height: 1 },
   },
   heroFoot: { marginTop: 14, flexDirection: "row", alignItems: "center", gap: 18 },
