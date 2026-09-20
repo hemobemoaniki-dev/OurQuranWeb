@@ -16,6 +16,11 @@ function load(file, mocks = {}, globals = {}) {
     if (name in mocks) return mocks[name];
     if (name.startsWith('@/') && name.endsWith('.json')) return require(path.join(root, name.slice(2)));
     if (name.startsWith('@/')) return load(name.slice(2) + '.ts', mocks, globals);
+    if (name.startsWith('.') && /\.(png|jpe?g|webp|gif|svg)$/i.test(name)) {
+      const assetPath = path.resolve(path.dirname(path.join(root, file)), name);
+      if (!fs.existsSync(assetPath)) throw new Error(`Missing local asset: ${assetPath}`);
+      return assetPath;
+    }
     if (name.startsWith('.') && name.endsWith('.json')) return require(path.resolve(path.dirname(path.join(root, file)), name));
     return require(name);
   }, console, setTimeout, clearTimeout, AbortController, ...globals }, { filename: file });
