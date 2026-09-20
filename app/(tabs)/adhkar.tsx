@@ -89,7 +89,7 @@ const CATEGORY_WORDS: Record<Exclude<DesktopCategory, "all" | "morning" | "eveni
 
 function DesktopAdhkar() {
   const styles = useStyles();
-  const { colors, scheme } = useTheme();
+  const { colors } = useTheme();
   const { account, setAdhkarCount, setTasbeeh } = useAccount();
   const [category, setCategory] = useState<DesktopCategory>("all");
   const [query, setQuery] = useState("");
