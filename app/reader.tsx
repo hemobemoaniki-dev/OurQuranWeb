@@ -197,13 +197,13 @@ export default function Reader() {
   const ayah = data?.ayahs[ayahIndex];
   const numberInSurah = ayah?.numberInSurah ?? ayahIndex + 1;
   const prefetchAudio = audio.prefetch;
-  // Do not start network work while the user is rapidly jumping through Ayahs.
-  // Once the visible verse has been stable for 650 ms, warm only that verse.
+  // Warm the visible verse quickly after navigation so audio feels immediate
+  // without doing network work in the actual tap handler.
   useEffect(() => {
     if (exitingRef.current || !readerFocused.current || !surahNum || data?.number !== surahNum || !ayah || audio.isPlaying || audio.isLoading) return;
     const timer = setTimeout(() => {
       if (!exitingRef.current && readerFocused.current) prefetchAudio(surahNum, numberInSurah);
-    }, 650);
+    }, 180);
     return () => clearTimeout(timer);
   }, [surahNum, data?.number, ayah, numberInSurah, prefetchAudio, audio.isPlaying, audio.isLoading]);
   const meta = surahMeta(surahNum ?? 1);
@@ -256,7 +256,7 @@ export default function Reader() {
 
       setTimeout(() => {
         committing.current = false;
-      }, 180);
+      }, 70);
     },
     [data, ayah, surahNum, ayahIndex, numberInSurah, settings.autoplay, audio, commitReward, saveReaderPosition],
   );
@@ -313,17 +313,27 @@ export default function Reader() {
 
     let deltas: Record<string, number> = {};
     try {
+      // Stop the local session clock synchronously, but leave account/storage
+      // mutations out of the navigation path.
       deltas = stopSession();
-      if (surahNum != null) saveReaderPosition(surahNum, numberInSurah);
-    } catch {
-      // Navigation must never be blocked by persistence/session bookkeeping.
-    }
+    } catch {}
 
     exitReaderAudio();
 
-    // Navigate first; account aggregation and storage flushing are allowed to
-    // finish after the Reader has safely left the route.
+    // Route transition is the first visible action. Position writes, reading
+    // time aggregation and sync flushing happen after the browser has painted
+    // the destination so Back / I'm Done never feels gated by persistence.
     router.replace("/");
+
+    runAfterPaint(() => {
+      try {
+        if (surahNum != null) saveReaderPosition(surahNum, numberInSurah);
+        for (const [day, seconds] of Object.entries(deltas)) {
+          if (seconds > 0) addReadingSeconds(seconds, day);
+        }
+      } catch {}
+      void Promise.resolve().then(flush).catch(() => {});
+    });
 
     // Never leave the controls permanently locked if a stale browser route
     // blocks the transition.
@@ -332,16 +342,7 @@ export default function Reader() {
         exitStartedRef.current = false;
         exitingRef.current = false;
       }
-    }, 800);
-
-    void Promise.resolve().then(() => {
-      try {
-        for (const [day, seconds] of Object.entries(deltas)) {
-          if (seconds > 0) addReadingSeconds(seconds, day);
-        }
-      } catch {}
-      return Promise.resolve().then(flush).catch(() => {});
-    });
+    }, 500);
   }, [addReadingSeconds, flush, numberInSurah, router, saveReaderPosition, stopSession, surahNum]);
 
   const imDone = useCallback(() => {
