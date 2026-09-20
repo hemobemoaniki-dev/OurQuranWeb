@@ -123,6 +123,9 @@ const aliases: Record<string, string> = {
   "book-education-outline": "education",
   "account-heart-outline": "accountHeart",
   "image-multiple-outline": "images",
+  "heart-multiple-outline": "hearts",
+  "description": "document",
+  "alert-circle-outline": "alert",
 };
 
 const nodes: Record<string, SvgNode[]> = {
@@ -216,6 +219,8 @@ const nodes: Record<string, SvgNode[]> = {
   education: [["path",{d:"M4 6c2.8-.7 5.3-.2 8 1.4v11c-2.7-1.6-5.2-2.1-8-1.4Z"}],["path",{d:"M20 6c-2.8-.7-5.3-.2-8 1.4v11c2.7-1.6 5.2-2.1 8-1.4Z"}],["path",{d:"M9 4h6"}]],
   accountHeart: [["circle",{cx:9,cy:8,r:3}],["path",{d:"M3 20a6 6 0 0 1 10.5-4"}],["path",{d:"M16.5 13.2c1.1-1.4 3.5-.7 3.5 1.2 0 1.7-3.5 4-3.5 4s-3.5-2.3-3.5-4c0-1.9 2.4-2.6 3.5-1.2Z"}]],
   images: [["rect",{x:5,y:5,width:15,height:14,rx:2}],["path",{d:"m7 16 3.5-4 2.5 3 2-2 3 3"}],["circle",{cx:15.5,cy:9,r:1.2}],["path",{d:"M3 8v10a3 3 0 0 0 3 3h11"}]],
+  hearts: [["path",{d:"M9.5 18s-5.5-3.4-7-6.6C1.3 8.8 3 6.4 5.7 6.4c1.6 0 2.8.8 3.8 2.1 1-1.3 2.2-2.1 3.8-2.1 2.7 0 4.4 2.4 3.2 5-1.5 3.2-7 6.6-7 6.6Z"}],["path",{d:"M15.5 16.5s4.3-2.6 5.5-5.1c1-2-.4-3.9-2.5-3.9-1.2 0-2.1.6-3 1.6"}]],
+  document: [["path",{d:"M6 3h9l3 3v15H6Z"}],["path",{d:"M15 3v4h4M9 11h6M9 15h6M9 19h4"}]],
 };
 
 function fallback(): SvgNode[] {
