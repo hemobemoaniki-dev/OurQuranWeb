@@ -151,7 +151,7 @@ function CustomTabBar({ state }: any) {
           size={72}
           orientation="vertical"
           lightText={scheme === "dark"}
-          markVariant="appIcon"
+          markVariant="mark"
         />
       </View>
 
