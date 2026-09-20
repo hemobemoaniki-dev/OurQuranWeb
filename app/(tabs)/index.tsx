@@ -109,15 +109,13 @@ export default function Home() {
       cancelMetricsMotion();
       const from = metricsOffsetRef.current;
       const distance = target - from;
-      const duration = 680;
+      const duration = 360;
       const startedAt = performance.now();
 
       const frame = (now: number) => {
         const raw = Math.min(1, (now - startedAt) / duration);
-        // Quintic ease-in-out: very soft launch and settle without feeling sluggish.
-        const eased = raw < 0.5
-          ? 16 * Math.pow(raw, 5)
-          : 1 - Math.pow(-2 * raw + 2, 5) / 2;
+        // Fast premium ease: decisive movement with a soft landing.
+        const eased = 1 - Math.pow(1 - raw, 4);
         const x = from + distance * eased;
         metricsOffsetRef.current = x;
         metricsRef.current?.scrollTo({ x, animated: false });
@@ -144,7 +142,7 @@ export default function Home() {
       const currentIndex = PERIODS.findIndex((item) => item.key === period);
       const next = PERIODS[(currentIndex + 1) % PERIODS.length].key;
       slideMetricsTo(next, true);
-    }, 6200);
+    }, 3800);
     return () => clearInterval(timer);
   }, [metricsWidth, period, slideMetricsTo]);
 
@@ -264,8 +262,7 @@ export default function Home() {
                     { width: `${readingPct * 100}%` },
                   ]}
                 >
-                  <View style={styles.heroProgressSheen} />
-                  {readingPct > 0 ? (
+                  {readingPct >= 0.1 ? (
                     <View style={styles.heroProgressValueWrap}>
                       <Text style={styles.heroProgressValue}>{Math.round(readingPct * 100)}%</Text>
                     </View>
@@ -521,14 +518,23 @@ const JourneyMetric = memo(function JourneyMetric({
 }) {
   const styles = useStyles();
   return (
-    <View style={[styles.statCard, { borderColor: `${tint}42` }]}>
+    <View style={[styles.statCard, { borderColor: `${tint}4D`, shadowColor: tint }]}>
       <LinearGradient
         pointerEvents="none"
-        colors={[`${tint}14`, "transparent"]}
+        colors={[`${tint}26`, `${tint}0D`, "rgba(255,255,255,0.018)", "transparent"]}
+        locations={[0, 0.32, 0.62, 1]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.fill}
       />
+      <LinearGradient
+        pointerEvents="none"
+        colors={[`${tint}66`, `${tint}16`, "transparent"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={styles.metricTopGlow}
+      />
+      <View pointerEvents="none" style={[styles.metricAura, { backgroundColor: `${tint}14`, shadowColor: tint }]} />
       <View style={[styles.metricIcon, { borderColor: `${tint}70`, backgroundColor: `${tint}13` }]}>
         <Icon name={icon} size={21} color={tint} />
       </View>
@@ -591,15 +597,13 @@ function QuickAccessCarousel() {
       cancelMotion();
       const from = offsetRef.current;
       const distance = target - from;
-      const duration = 520;
+      const duration = 340;
       const startedAt = Date.now();
 
       const frame = () => {
         const elapsed = Date.now() - startedAt;
         const raw = Math.min(1, elapsed / duration);
-        const eased = raw < 0.5
-          ? 4 * raw * raw * raw
-          : 1 - Math.pow(-2 * raw + 2, 3) / 2;
+        const eased = 1 - Math.pow(1 - raw, 4);
         const x = from + distance * eased;
         offsetRef.current = x;
         ref.current?.scrollTo({ x, animated: false });
@@ -622,7 +626,7 @@ function QuickAccessCarousel() {
 
   useEffect(() => {
     if (!pageWidth) return;
-    const timer = setInterval(() => goTo(page + 1), 5600);
+    const timer = setInterval(() => goTo(page + 1), 4000);
     return () => clearInterval(timer);
   }, [goTo, page, pageWidth]);
 
@@ -692,7 +696,22 @@ function QuickAction({
   const styles = useStyles();
   const { colors } = useTheme();
   return (
-    <Pressable style={({ pressed }) => [styles.quickAction, pressed && styles.cardPressed]} onPress={onPress}>
+    <Pressable
+      style={({ pressed, hovered }: any) => [
+        styles.quickAction,
+        hovered && styles.quickActionHover,
+        pressed && styles.cardPressed,
+      ]}
+      onPress={onPress}
+    >
+      <LinearGradient
+        pointerEvents="none"
+        colors={["rgba(236,202,105,0.16)", "rgba(255,255,255,0.025)", "transparent"]}
+        locations={[0, 0.42, 1]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.quickActionGlow}
+      />
       <View style={styles.quickIcon}>
         <Icon name={icon} size={22} color={colors.gold} />
       </View>
@@ -787,17 +806,17 @@ const useStyles = makeStyles((c) => ({
     width: "72%",
     maxWidth: 590,
     minWidth: 300,
-    height: 34,
+    height: 30,
     borderRadius: 999,
-    backgroundColor: "rgba(10,11,12,0.58)",
+    backgroundColor: "rgba(8,9,10,0.68)",
     borderWidth: 1,
-    borderColor: "rgba(236,202,105,0.34)",
+    borderColor: "rgba(236,202,105,0.30)",
     overflow: "hidden",
     marginTop: 22,
-    shadowColor: "#D8A83A",
-    shadowOpacity: 0.12,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 0 },
+    shadowColor: "#000000",
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 5 },
   },
   heroProgressFill: {
     position: "absolute",
@@ -808,39 +827,32 @@ const useStyles = makeStyles((c) => ({
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
-    shadowColor: "#EBC55A",
-    shadowOpacity: 0.34,
-    shadowRadius: 14,
+    shadowColor: "#E7B84D",
+    shadowOpacity: 0.36,
+    shadowRadius: 12,
     shadowOffset: { width: 0, height: 0 },
   },
-  heroProgressFillVisible: { minWidth: 64 },
-  heroProgressSheen: {
-    position: "absolute",
-    left: 7,
-    right: 7,
-    top: 3,
-    height: 7,
-    borderRadius: 999,
-    backgroundColor: "rgba(255,250,216,0.28)",
-  },
+  heroProgressFillVisible: {},
   heroProgressValueWrap: {
-    minWidth: 48,
-    minHeight: 24,
-    paddingHorizontal: 9,
-    borderRadius: 999,
+    position: "absolute",
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(63,39,5,0.20)",
+    paddingHorizontal: 6,
+    backgroundColor: "transparent",
   },
   heroProgressValue: {
-    color: "#FFFDF4",
-    fontSize: 13.5,
-    lineHeight: 18,
+    color: "#1B1205",
+    fontSize: 13,
+    lineHeight: 17,
     fontWeight: "900",
-    letterSpacing: 0.2,
-    textShadowColor: "rgba(58,34,0,0.55)",
-    textShadowRadius: 5,
-    textShadowOffset: { width: 0, height: 1 },
+    letterSpacing: 0.15,
+    textShadowColor: "rgba(255,244,196,0.32)",
+    textShadowRadius: 3,
+    textShadowOffset: { width: 0, height: 0 },
   },
   heroFoot: { marginTop: 14, flexDirection: "row", alignItems: "center", gap: 18 },
   heroQuote: { position: "absolute", right: 28, bottom: 31, maxWidth: 190, color: c.onSurface, fontFamily: serifFont, fontStyle: "italic", fontSize: 16, lineHeight: 23, textAlign: "right", opacity: 0.82 },
@@ -909,15 +921,27 @@ const useStyles = makeStyles((c) => ({
   periods: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
-    padding: 4,
-    borderRadius: 15,
+    gap: 5,
+    padding: 5,
+    borderRadius: 18,
     borderWidth: 1,
-    borderColor: c.border,
-    backgroundColor: c.surfaceSecondary,
+    borderColor: c.goldBorder,
+    backgroundColor: "rgba(9,9,8,0.54)",
+    shadowColor: "#000000",
+    shadowOpacity: 0.18,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 6 },
   },
-  period: { minWidth: 76, height: 34, paddingHorizontal: 12, borderRadius: 11, alignItems: "center", justifyContent: "center", cursor: "pointer" },
-  periodActive: { backgroundColor: c.goldSoft, borderWidth: 1, borderColor: c.goldBorder },
+  period: { minWidth: 82, height: 38, paddingHorizontal: 14, borderRadius: 13, alignItems: "center", justifyContent: "center", cursor: "pointer" },
+  periodActive: {
+    backgroundColor: c.goldSoft,
+    borderWidth: 1,
+    borderColor: c.goldBorder,
+    shadowColor: c.gold,
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 0 },
+  },
   periodText: { color: c.muted, fontSize: 14, lineHeight: 18, fontWeight: "800" },
   periodTextActive: { color: c.gold },
 
@@ -929,17 +953,48 @@ const useStyles = makeStyles((c) => ({
     flex: 1,
     flexBasis: 0,
     minWidth: 190,
-    minHeight: 138,
-    padding: 19,
-    borderRadius: 20,
+    minHeight: 146,
+    padding: 20,
+    borderRadius: 24,
     borderWidth: 1,
-    backgroundColor: c.surfaceSecondary,
+    backgroundColor: "rgba(12,13,14,0.58)",
     overflow: "hidden",
+    shadowOpacity: 0.14,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 8 },
   },
-  metricIcon: { width: 40, height: 40, borderRadius: 13, borderWidth: 1, alignItems: "center", justifyContent: "center" },
+  metricTopGlow: {
+    position: "absolute",
+    left: 18,
+    right: 18,
+    top: 0,
+    height: 1.5,
+    borderRadius: 999,
+  },
+  metricAura: {
+    position: "absolute",
+    right: -24,
+    top: -34,
+    width: 118,
+    height: 118,
+    borderRadius: 59,
+    opacity: 0.72,
+    shadowOpacity: 0.34,
+    shadowRadius: 34,
+    shadowOffset: { width: 0, height: 0 },
+  },
+  metricIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255,255,255,0.025)",
+  },
   statValue: { fontFamily: serifFont, fontSize: 35, lineHeight: 40, fontWeight: "700", letterSpacing: -0.6, marginTop: 10 },
   statLabel: { color: c.muted, fontSize: 14.5, lineHeight: 19, fontWeight: "700", marginTop: 2 },
-  metricBars: { position: "absolute", right: 18, bottom: 18, width: 92, height: 68, flexDirection: "row", alignItems: "flex-end", gap: 7, opacity: 0.32 },
+  metricBars: { position: "absolute", right: 18, bottom: 18, width: 92, height: 68, flexDirection: "row", alignItems: "flex-end", gap: 7, opacity: 0.48 },
   metricBar: { flex: 1, minHeight: 8, borderRadius: 7 },
 
   lowerRow: { flexDirection: "row", gap: 18, alignItems: "stretch" },
@@ -955,12 +1010,17 @@ const useStyles = makeStyles((c) => ({
   quickPanel: {
     flex: 0.85,
     minWidth: 360,
-    minHeight: 242,
+    minHeight: 252,
     padding: 24,
-    borderRadius: 24,
+    borderRadius: 26,
     borderWidth: 1,
-    borderColor: c.border,
-    backgroundColor: c.surfaceSecondary,
+    borderColor: c.goldBorder,
+    backgroundColor: "rgba(10,11,12,0.56)",
+    shadowColor: "#000000",
+    shadowOpacity: 0.18,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 9 },
+    overflow: "hidden",
   },
   panelHead: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 14 },
   panelTitle: { color: c.onSurface, fontFamily: serifFont, fontSize: 23, lineHeight: 28, fontWeight: "700" },
@@ -994,33 +1054,71 @@ const useStyles = makeStyles((c) => ({
   quickCarouselTrack: { alignItems: "stretch" },
   quickPage: { flexDirection: "row", flexWrap: "wrap", gap: 10, alignContent: "flex-start" },
   quickPager: { flexDirection: "row", alignItems: "center", gap: 8 },
-  quickPagerButton: { width: 30, height: 30, borderRadius: 10, borderWidth: 1, borderColor: c.goldBorder, backgroundColor: c.goldSoft, alignItems: "center", justifyContent: "center", cursor: "pointer" },
+  quickPagerButton: {
+    width: 34,
+    height: 34,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: c.goldBorder,
+    backgroundColor: "rgba(212,175,55,0.12)",
+    alignItems: "center",
+    justifyContent: "center",
+    cursor: "pointer",
+    shadowColor: c.gold,
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 0 },
+  },
   quickDots: { flexDirection: "row", alignItems: "center", gap: 5 },
-  quickDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: c.borderStrong },
-  quickDotActive: { width: 16, backgroundColor: c.gold },
+  quickDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: "rgba(255,255,255,0.22)" },
+  quickDotActive: { width: 20, backgroundColor: c.gold, shadowColor: c.gold, shadowOpacity: 0.5, shadowRadius: 6, shadowOffset: { width: 0, height: 0 } },
   quickAction: {
     width: "48%",
     flexGrow: 1,
-    minHeight: 76,
+    minHeight: 80,
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderRadius: 16,
+    gap: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+    borderRadius: 18,
     borderWidth: 1,
-    borderColor: c.border,
-    backgroundColor: c.goldSoft,
-    shadowColor: c.gold,
-    shadowOpacity: 0.07,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 3 },
+    borderColor: "rgba(236,202,105,0.26)",
+    backgroundColor: "rgba(27,24,18,0.68)",
+    shadowColor: "#000000",
+    shadowOpacity: 0.18,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
     cursor: "pointer",
+    overflow: "hidden",
   },
-  quickIcon: { width: 37, height: 37, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: c.goldSoft, borderWidth: 1, borderColor: c.goldBorder },
+  quickActionHover: {
+    transform: [{ translateY: -2 }],
+    borderColor: "rgba(236,202,105,0.52)",
+    backgroundColor: "rgba(38,32,21,0.76)",
+    shadowColor: c.gold,
+    shadowOpacity: 0.16,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 5 },
+  },
+  quickActionGlow: { position: "absolute", top: 0, right: 0, bottom: 0, left: 0 },
+  quickIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(212,175,55,0.12)",
+    borderWidth: 1,
+    borderColor: c.goldBorder,
+    shadowColor: c.gold,
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 0 },
+  },
   quickCopy: { flex: 1, minWidth: 0 },
-  quickLabel: { color: c.onSurface, fontSize: 15.5, lineHeight: 20, fontWeight: "800" },
-  quickHint: { color: c.muted, fontSize: 12.5, lineHeight: 16, fontWeight: "500", marginTop: 2 },
+  quickLabel: { color: c.onSurface, fontSize: 16, lineHeight: 20, fontWeight: "900", letterSpacing: 0.05 },
+  quickHint: { color: c.muted, fontSize: 12.5, lineHeight: 16, fontWeight: "600", marginTop: 3 },
 
   syncBanner: {
     minHeight: 68,
