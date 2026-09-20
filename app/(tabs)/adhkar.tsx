@@ -56,36 +56,91 @@ const DESKTOP_CATEGORIES = [
   { key: "morning", label: "Morning", icon: "white-balance-sunny" },
   { key: "evening", label: "Evening", icon: "weather-night" },
   { key: "prayer", label: "Prayer", icon: "mosque" },
+  { key: "after-prayer", label: "After Prayer", icon: "check-circle-outline" },
+  { key: "adhan", label: "Adhan", icon: "bullhorn-outline" },
+  { key: "wudu", label: "Wudu", icon: "water-outline" },
+  { key: "mosque", label: "Mosque", icon: "mosque" },
   { key: "sleep", label: "Sleep", icon: "bed-outline" },
+  { key: "waking", label: "Waking", icon: "weather-sunset-up" },
   { key: "gratitude", label: "Gratitude", icon: "heart" },
+  { key: "praise", label: "Praise", icon: "star-four-points-outline" },
   { key: "protection", label: "Protection", icon: "shield-star-outline" },
   { key: "forgiveness", label: "Forgiveness", icon: "hand-back-right-outline" },
   { key: "guidance", label: "Guidance", icon: "compass-outline" },
+  { key: "faith", label: "Faith", icon: "book-open-variant" },
   { key: "health", label: "Health", icon: "heart-pulse" },
+  { key: "illness", label: "Illness", icon: "medical-bag" },
   { key: "family", label: "Family", icon: "account-group" },
   { key: "anxiety", label: "Anxiety", icon: "heart-outline" },
+  { key: "provision", label: "Provision", icon: "hand-coin-outline" },
   { key: "travel", label: "Travel", icon: "airplane" },
   { key: "home", label: "Home", icon: "home-outline" },
   { key: "food", label: "Food", icon: "food-apple-outline" },
+  { key: "rain", label: "Rain", icon: "weather-rainy" },
+  { key: "restroom", label: "Restroom", icon: "door" },
+  { key: "clothing", label: "Clothing", icon: "tshirt-crew-outline" },
   { key: "knowledge", label: "Knowledge", icon: "book-education-outline" },
+  { key: "salawat", label: "Salawat", icon: "account-heart-outline" },
 ] as const;
 type DesktopCategory = typeof DESKTOP_CATEGORIES[number]["key"];
 
 const CATEGORY_WORDS: Record<Exclude<DesktopCategory, "all" | "morning" | "evening">, string[]> = {
-  prayer: ["prayer", "worship", "allah", "lord"],
-  sleep: ["sleep", "night", "drowsiness", "bed"],
-  gratitude: ["praise", "thanks", "blessing", "favour", "grateful"],
+  prayer: ["prayer", "salah", "worship", "mosque", "adhan", "wudu"],
+  "after-prayer": ["after prayer", "finished his prayer", "remembrance after the prayer"],
+  adhan: ["adhan", "call to prayer"],
+  wudu: ["wudu", "ablution"],
+  mosque: ["mosque", "masjid"],
+  sleep: ["sleep", "bed", "night", "drowsiness"],
+  waking: ["waking", "wake", "upon waking", "resurrection"],
+  gratitude: ["praise", "thanks", "blessing", "favour", "favor", "grateful"],
+  praise: ["praise", "subhan", "alhamdulillah", "glory"],
   protection: ["protect", "refuge", "harm", "evil", "guard", "sufficient"],
-  forgiveness: ["forgiv", "pardon", "sin", "istighfar"],
-  guidance: ["guidance", "good of the day", "set right", "light"],
-  health: ["well-being", "body", "hearing", "sight", "health"],
-  family: ["family", "wealth", "children", "household"],
-  anxiety: ["worry", "grief", "fear", "anxiety", "distress"],
+  forgiveness: ["forgiv", "pardon", "sin", "istighfar", "ghufran"],
+  guidance: ["guidance", "guide", "good of the day", "set right", "light"],
+  faith: ["faith", "islam", "oneness", "testify", "fitrah"],
+  health: ["well-being", "body", "hearing", "sight", "health", "heal"],
+  illness: ["sick", "heal", "illness", "disease"],
+  family: ["family", "children", "household"],
+  anxiety: ["worry", "grief", "fear", "anxiety", "distress", "debt"],
+  provision: ["provision", "bounty", "wealth", "lawful", "fed me", "provided"],
   travel: ["journey", "travel", "ride"],
   home: ["home", "house"],
-  food: ["food", "eat", "provision"],
-  knowledge: ["knowledge", "guidance", "learn"],
+  food: ["food", "eat", "eating", "fed me"],
+  rain: ["rain", "downpour"],
+  restroom: ["restroom", "toilet", "privy"],
+  clothing: ["garment", "clothed", "clothing"],
+  knowledge: ["knowledge", "learn"],
+  salawat: ["salawat", "prophet", "muhammad", "blessings upon"],
 };
+
+function adhkarCorpus(item: Dhikr) {
+  return [
+    item.id,
+    item.title,
+    item.reference,
+    item.english,
+    item.englishEvening ?? "",
+    item.source,
+    item.authenticity,
+    ...(item.categories ?? []),
+  ].join(" ").toLowerCase();
+}
+
+function belongsToCategory(item: Dhikr, category: DesktopCategory) {
+  if (category === "all") return true;
+  if (category === "morning" || category === "evening") return item.times.includes(category);
+  if (item.categories?.includes(category)) return true;
+  const corpus = adhkarCorpus(item);
+  return CATEGORY_WORDS[category].some((word) => corpus.includes(word));
+}
+
+function categoryMatchesSearch(category: typeof DESKTOP_CATEGORIES[number], needle: string) {
+  if (!needle) return false;
+  const label = `${category.key} ${category.label}`.toLowerCase();
+  if (label.includes(needle)) return true;
+  if (category.key === "all" || category.key === "morning" || category.key === "evening") return false;
+  return CATEGORY_WORDS[category.key].some((word) => word.includes(needle) || needle.includes(word));
+}
 
 function DesktopAdhkar() {
   const styles = useStyles();
@@ -109,19 +164,35 @@ function DesktopAdhkar() {
     return () => clearInterval(timer);
   }, []);
 
+  const categoryCounts = useMemo(() => {
+    const counts = new Map<DesktopCategory, number>();
+    for (const spec of DESKTOP_CATEGORIES) {
+      counts.set(spec.key, ADHKAR.filter((item) => belongsToCategory(item, spec.key)).length);
+    }
+    return counts;
+  }, []);
+
   const items = useMemo(() => {
-    const base = category === "morning"
-      ? adhkarFor("morning")
-      : category === "evening"
-        ? adhkarFor("evening")
-        : ADHKAR;
-    const words = category === "all" || category === "morning" || category === "evening" ? null : CATEGORY_WORDS[category];
-    const needle = query.trim().toLowerCase();
-    return base.filter((item) => {
-      const haystack = `${item.title} ${item.reference} ${item.english} ${item.englishEvening ?? ""} ${item.source}`.toLowerCase();
-      const tagged = item.categories?.includes(category) ?? false;
-      return (!words || tagged || words.some((word) => haystack.includes(word))) && (!needle || haystack.includes(needle) || item.arabic.includes(query.trim()));
-    });
+    const rawQuery = query.trim();
+    const needle = rawQuery.toLowerCase();
+
+    // Search is global on purpose. Typing "sleep", "wudu", "protection",
+    // "Bukhari", an Arabic phrase, or any other category/source term searches
+    // the whole authenticated library rather than being trapped inside the
+    // currently selected chip.
+    if (needle) {
+      const categoryHits = DESKTOP_CATEGORIES
+        .filter((spec) => categoryMatchesSearch(spec, needle))
+        .map((spec) => spec.key);
+
+      return ADHKAR.filter((item) => {
+        const direct = adhkarCorpus(item).includes(needle) || item.arabic.includes(rawQuery) || (item.arabicEvening?.includes(rawQuery) ?? false);
+        const categoryHit = categoryHits.some((key) => belongsToCategory(item, key));
+        return direct || categoryHit;
+      });
+    }
+
+    return ADHKAR.filter((item) => belongsToCategory(item, category));
   }, [category, query]);
 
   const current = items[index] ?? null;
@@ -168,16 +239,17 @@ function DesktopAdhkar() {
               {DESKTOP_CATEGORIES.map((item) => {
                 const active = category === item.key;
                 return (
-                  <Pressable key={item.key} onPress={() => { setCategory(item.key); setIndex(0); }} style={[styles.categoryButton, active && styles.categoryButtonActive]} testID={`adhkar-category-${item.key}`}>
+                  <Pressable key={item.key} onPress={() => { setCategory(item.key); setQuery(""); setIndex(0); }} style={[styles.categoryButton, active && styles.categoryButtonActive]} testID={`adhkar-category-${item.key}`}>
                     <Icon name={item.icon as any} size={21} color={active ? colors.gold : colors.onSurface} />
                     <Text style={[styles.categoryText, active && styles.categoryTextActive]}>{item.label}</Text>
+                    <Text style={[styles.categoryCount, active && styles.categoryCountActive]}>{categoryCounts.get(item.key) ?? 0}</Text>
                   </Pressable>
                 );
               })}
             </ScrollView>
             <View style={styles.desktopSearch}>
               <Icon name="magnify" size={22} color={colors.gold} />
-              <TextInput value={query} onChangeText={(value) => { setQuery(value); setIndex(0); }} placeholder="Search adhkar…" placeholderTextColor={colors.muted} style={styles.desktopSearchInput} testID="adhkar-search" />
+              <TextInput value={query} onChangeText={(value) => { setQuery(value); if (value.trim()) setCategory("all"); setIndex(0); }} placeholder="Search adhkar, source or category…" placeholderTextColor={colors.muted} style={styles.desktopSearchInput} testID="adhkar-search" />
             </View>
           </View>
 
@@ -189,6 +261,7 @@ function DesktopAdhkar() {
                   <View style={styles.featuredHeadCopy}>
                     <Text style={styles.featuredEyebrow}>{category === "all" ? "DAILY ADHKAR" : `${category.toUpperCase()} ADHKAR`}</Text>
                     <Text style={styles.featuredCount}>{index + 1} of {items.length} · {current.reference}</Text>
+                    {query.trim() ? <Text style={styles.searchScope}>Global search · {items.length} of {ADHKAR.length} authenticated entries</Text> : null}
                   </View>
                   <Pressable accessibilityRole="button" accessibilityLabel={complete ? "Completed" : "Mark this dhikr completed"} onPress={markComplete} style={({ pressed }) => [styles.completionChip, complete && styles.completionChipDone, pressed && styles.desktopPressed]}>
                     <Icon name={complete ? "check-circle" : "progress-check"} size={18} color={complete ? colors.success : colors.gold} />
@@ -530,10 +603,10 @@ const useStyles = makeStyles((colors) => ({
     borderColor: colors.borderStrong,
     backgroundColor: colors.surfaceSecondary,
   },
-  desktopCategories: { flexDirection: "row", alignItems: "center", gap: 6, paddingRight: 8 },
+  desktopCategories: { flexDirection: "row", alignItems: "center", gap: 7, paddingRight: 12 },
   categoryButton: {
-    minWidth: 82,
-    minHeight: 64,
+    minWidth: 86,
+    minHeight: 70,
     alignItems: "center",
     justifyContent: "center",
     gap: 5,
@@ -545,10 +618,12 @@ const useStyles = makeStyles((colors) => ({
     cursor: "pointer",
   },
   categoryButtonActive: { backgroundColor: colors.goldSoft, borderColor: colors.goldBorder },
-  categoryText: { color: colors.onSurfaceSecondary, fontSize: 12, fontWeight: "700" },
+  categoryText: { color: colors.onSurfaceSecondary, fontSize: 12, fontWeight: "800" },
   categoryTextActive: { color: colors.gold },
+  categoryCount: { color: colors.muted, fontSize: 9.5, lineHeight: 12, fontWeight: "800", opacity: 0.82 },
+  categoryCountActive: { color: colors.gold, opacity: 1 },
   desktopSearch: {
-    width: 275,
+    width: 320,
     minHeight: 52,
     flexDirection: "row",
     alignItems: "center",
@@ -598,6 +673,7 @@ const useStyles = makeStyles((colors) => ({
   featuredHeadCopy: { flex: 1, gap: 4 },
   featuredEyebrow: { color: colors.gold, fontSize: 12, fontWeight: "800", letterSpacing: 1.8 },
   featuredCount: { color: colors.muted, fontSize: 13, fontWeight: "600" },
+  searchScope: { color: colors.gold, fontSize: 10.5, lineHeight: 14, fontWeight: "800", marginTop: 1 },
   completionChip: {
     minHeight: 40,
     flexDirection: "row",
