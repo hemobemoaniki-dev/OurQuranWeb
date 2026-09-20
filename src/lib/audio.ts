@@ -89,6 +89,12 @@ function waitUntilLoaded(request: number) {
   });
 }
 
+async function safeClearPreloadedSource(uri: string) {
+  try {
+    await clearPreloadedSource({ uri });
+  } catch {}
+}
+
 async function sourceFor(reciterId: string, surah: number, ayah: number) {
   try {
     return (await getCachedAyahUri(reciterId, surah, ayah)) ?? recitationUrl(reciterId, surah, ayah);
@@ -126,7 +132,7 @@ function prepareAyah(reciterId: string, surah: number, ayah: number, current: bo
     if (generation !== preloadGeneration) return;
 
     if (preloadedSource) {
-      await clearPreloadedSource({ uri: preloadedSource }).catch(() => {});
+      await safeClearPreloadedSource(preloadedSource);
       preloadedSource = null;
       preloadedKey = null;
     }
@@ -140,7 +146,7 @@ function prepareAyah(reciterId: string, surah: number, ayah: number, current: bo
     await preload({ uri: source });
     if (generation === preloadGeneration) preloadedSource = source;
     else {
-      await clearPreloadedSource({ uri: source }).catch(() => {});
+      await safeClearPreloadedSource(source);
       if (preloadedKey === targetKey) preloadedKey = null;
     }
   }).catch(() => {
@@ -153,7 +159,7 @@ function discardPreloads() {
   const oldSource = preloadedSource;
   preloadedSource = null;
   preloadedKey = null;
-  if (oldSource) void clearPreloadedSource({ uri: oldSource }).catch(() => {});
+  if (oldSource) void safeClearPreloadedSource(oldSource);
 }
 
 function ensurePlayer() {

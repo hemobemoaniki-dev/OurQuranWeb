@@ -163,7 +163,7 @@ export default function Names() {
                     const active = selected.number === item.number;
                     const saved = favorites.has(item.number);
                     return (
-                      <Pressable key={item.number} accessibilityRole="button" onPress={() => selectName(item)} style={({ pressed }) => [styles.nameCard, active && styles.nameCardActive, pressed && styles.pressed]} testID={`name-row-${item.number}`}>
+                      <Pressable key={item.number} accessibilityRole={Platform.OS === "web" ? undefined : "button"} onPress={() => selectName(item)} style={({ pressed }) => [styles.nameCard, active && styles.nameCardActive, pressed && styles.pressed]} testID={`name-row-${item.number}`}>
                         <View style={styles.nameCardTop}>
                           <View style={styles.numBadge}><Text style={styles.numText}>{item.number}</Text></View>
                           <Pressable accessibilityRole="button" accessibilityLabel={saved ? "Remove from favorites" : "Add to favorites"} onPress={(event) => { event.stopPropagation(); toggleFavorite(item.number); }} hitSlop={8}>
