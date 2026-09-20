@@ -8,6 +8,7 @@ import { memo } from "react";
 import { Platform, Pressable, StyleSheet, View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+// Shared adaptive glass navigation.
 type NavKey = "home" | "quran" | "adhkar" | "names" | "settings";
 
 const NAV: { key: NavKey; label: string; href: "/" | "/read" | "/adhkar" | "/names" | "/preferences" }[] = [
