@@ -791,19 +791,29 @@ test('bottom tabs stay mounted, switch without animation and load icon font befo
   assert.match(rootLayout, /"Material Design Icons":\s*require\("@react-native-vector-icons\/material-design-icons\/fonts\/MaterialDesignIcons\.ttf"\)/);
 });
 
-test('web desktop shell uses premium top navigation, wide dashboard and adaptive Reader workspace', () => {
+test('web desktop shell uses premium top navigation, wide dashboard and cinematic Reader workspace', () => {
   const tabs = fs.readFileSync(path.join(root, 'app/(tabs)/_layout.tsx'), 'utf8');
   const home = fs.readFileSync(path.join(root, 'app/(tabs)/index.tsx'), 'utf8');
   const reader = fs.readFileSync(path.join(root, 'app/reader.tsx'), 'utf8');
+  const desktop = fs.readFileSync(path.join(root, 'src/components/DesktopReaderExperience.tsx'), 'utf8');
   const brand = fs.readFileSync(path.join(root, 'src/components/BrandMark.tsx'), 'utf8');
   assert.match(tabs, /<WebTopNav/);
   assert.match(home, /maxWidth:\s*1580/);
   assert.match(home, /Quick access/);
   assert.match(home, /Weekly journey/);
-  assert.match(reader, /<WebTopNav active="quran"/);
-  assert.match(reader, /styles\.infoPanel/);
-  assert.match(reader, /translationDivider/);
+  assert.match(reader, /<DesktopReaderExperience/);
   assert.match(reader, /desktopReader/);
+  assert.match(desktop, /backdropFilter/);
+  assert.match(desktop, /reader-desktop-reciter-menu/);
+  assert.match(desktop, /reader-desktop-speed-menu/);
+  assert.match(desktop, /reader-desktop-autoplay-menu/);
+  assert.match(desktop, /reader-desktop-previous/);
+  assert.match(desktop, /reader-desktop-im-done/);
+  assert.match(desktop, /reader-desktop-next/);
+  assert.match(desktop, /updateSettings\(\{ reciter: item\.id \}\)/);
+  assert.match(desktop, /updateSettings\(\{ speed \}\)/);
+  assert.match(desktop, /updateSettings\(\{ autoplay: true \}\)/);
+  assert.match(desktop, /updateSettings\(\{ autoplay: false \}\)/);
   assert.match(brand, /name="mosque"/);
 });
 
