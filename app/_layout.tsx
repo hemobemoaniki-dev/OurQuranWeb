@@ -12,7 +12,7 @@ import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { ErrorBoundary } from "@/src/components/error-boundary";
-import { BRAND_FAVICON_URI } from "@/src/components/BrandMark";
+import { BRAND_TAB_ICON_DARK_URI, BRAND_TAB_ICON_LIGHT_URI } from "@/src/components/BrandMark";
 import { ReminderScheduler } from "@/src/components/ReminderScheduler";
 import { ReaderWarmup } from "@/src/components/ReaderWarmup";
 import { AppProviders } from "@/src/context/AppState";
@@ -84,10 +84,15 @@ export default function RootLayout() {
           content="A modern Quran reading experience with recitation, translations, daily goals, streaks, Adhkar, Tasbeeh and synced progress."
         />
         <meta name="twitter:card" content="summary" />
-        <meta name="theme-color" content="#030303" />
-        <link rel="icon" type="image/svg+xml" sizes="any" href={BRAND_FAVICON_URI} />
-        <link rel="shortcut icon" href={BRAND_FAVICON_URI} />
-        <link rel="manifest" href="/site.webmanifest" />
+        <meta name="color-scheme" content="dark light" />
+        <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#050505" />
+        <meta name="theme-color" media="(prefers-color-scheme: light)" content="#F7F4EE" />
+        <link rel="icon" type="image/svg+xml" sizes="any" media="(prefers-color-scheme: dark)" href="/favicon-brand-dark-v7.svg?v=7" />
+        <link rel="icon" type="image/svg+xml" sizes="any" media="(prefers-color-scheme: light)" href="/favicon-brand-light-v7.svg?v=7" />
+        <link rel="icon" type="image/png" sizes="any" media="(prefers-color-scheme: dark)" href={BRAND_TAB_ICON_DARK_URI} />
+        <link rel="icon" type="image/svg+xml" sizes="any" media="(prefers-color-scheme: light)" href={BRAND_TAB_ICON_LIGHT_URI} />
+        <link rel="shortcut icon" href="/favicon-brand-v7.svg?v=7" />
+        <link rel="manifest" href="/site.webmanifest?v=7" />
       </Head>
       <ErrorBoundary resetKey={pathname}>
       <QueryClientProvider client={queryClient}>
