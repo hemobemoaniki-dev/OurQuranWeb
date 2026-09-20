@@ -117,7 +117,7 @@ const VALID_SPEEDS = new Set([0.5, 0.75, 1, 1.25, 1.5, 1.75, 2]);
 
 export function defaultSettings(): AppSettings {
   return {
-    theme: "light",
+    theme: "dark",
     readerTheme: "moonlit-orchid",
     readingSize: "standard",
     reciter: "alafasy",

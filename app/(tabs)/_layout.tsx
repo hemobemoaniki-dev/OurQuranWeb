@@ -2,13 +2,14 @@ import { Text } from "@/src/components/AppText";
 import { BrandLockup } from "@/src/components/BrandLockup";
 import { Icon, type IconName } from "@/src/components/Icon";
 import { TasbeehIcon } from "@/src/components/TasbeehIcon";
+import { WebTopNav } from "@/src/components/WebTopNav";
 import { useAccount, useAuth } from "@/src/context/AppState";
 import { makeStyles, useTheme } from "@/src/theme";
 import { LinearGradient } from "expo-linear-gradient";
 import { Tabs, useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { memo } from "react";
-import { Pressable, View } from "react-native";
+import { Platform, Pressable, View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const PRIVACY_URL = "https://ourquran.web.app/privacy";
@@ -182,6 +183,30 @@ function CustomTabBar({ state }: any) {
 }
 
 export default function TabsLayout() {
+  const { width } = useWindowDimensions();
+  const desktopWeb = Platform.OS === "web" && width >= 900;
+
+  if (desktopWeb) {
+    return (
+      <View style={{ flex: 1, backgroundColor: "#030303" }}>
+        <WebTopNav />
+        <View style={{ flex: 1 }}>
+          <Tabs
+            detachInactiveScreens={false}
+            screenOptions={{ headerShown: false, lazy: false, freezeOnBlur: true, animation: "none", tabBarHideOnKeyboard: true }}
+            tabBar={() => null}
+          >
+            <Tabs.Screen name="index" />
+            <Tabs.Screen name="read" />
+            <Tabs.Screen name="adhkar" />
+            <Tabs.Screen name="names" />
+            <Tabs.Screen name="preferences" />
+          </Tabs>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <Tabs
       detachInactiveScreens={false}

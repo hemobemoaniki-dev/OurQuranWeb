@@ -1,27 +1,38 @@
 import Head from "expo-router/head";
 import { Text, TextInput } from "@/src/components/AppText";
-import { useEffect, useState } from "react";
-import { FlatList, Modal, Pressable, StyleSheet, View } from "react-native";
+import { useEffect, useMemo, useState } from "react";
+import { FlatList, Modal, Platform, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 
 import { SubHeader } from "@/src/components/SubHeader";
 import { Icon } from "@/src/components/Icon";
+import { WebPageBackdrop } from "@/src/components/WebPageBackdrop";
 import { useAccount } from "@/src/context/AppState";
-import { todayKey } from "@/src/lib/dates";
-import { adhkarFor, dhikrArabic, dhikrEnglish, TASBEEH_PHRASES, type Dhikr } from "@/src/data/adhkar";
+import { computeStreak, todayKey } from "@/src/lib/dates";
+import { ADHKAR, adhkarFor, dhikrArabic, dhikrEnglish, TASBEEH_PHRASES, type Dhikr } from "@/src/data/adhkar";
 import { makeStyles, useTheme } from "@/src/theme";
+import { arabicFont, serifFont } from "@/src/typography";
 
 type Mode = "morning" | "evening" | "tasbeeh";
 
+function safeHaptic(action: () => unknown) {
+  try {
+    void Promise.resolve(action()).catch(() => {});
+  } catch {}
+}
+
 export default function Adhkar() {
   const styles = useStyles();
+  const { width } = useWindowDimensions();
   const [mode, setMode] = useState<Mode>("morning");
   const { resetAdhkarIfNewDay } = useAccount();
 
   useEffect(() => {
     resetAdhkarIfNewDay();
   }, [resetAdhkarIfNewDay]);
+
+  if (Platform.OS === "web" && width >= 1080) return <DesktopAdhkar />;
 
   return (
     <>
@@ -35,6 +46,196 @@ export default function Adhkar() {
       </View>
       {mode === "tasbeeh" ? <Tasbeeh /> : <DhikrList time={mode} />}
     </View>
+    </>
+  );
+}
+
+const DESKTOP_CATEGORIES = [
+  { key: "all", label: "All", icon: "view-grid-outline" },
+  { key: "morning", label: "Morning", icon: "white-balance-sunny" },
+  { key: "evening", label: "Evening", icon: "weather-night" },
+  { key: "prayer", label: "Prayer", icon: "mosque" },
+  { key: "sleep", label: "Sleep", icon: "bed-outline" },
+  { key: "gratitude", label: "Gratitude", icon: "heart" },
+  { key: "protection", label: "Protection", icon: "shield-star-outline" },
+  { key: "forgiveness", label: "Forgiveness", icon: "hand-back-right-outline" },
+  { key: "guidance", label: "Guidance", icon: "compass-outline" },
+  { key: "health", label: "Health", icon: "heart-pulse" },
+  { key: "family", label: "Family", icon: "account-group" },
+] as const;
+type DesktopCategory = typeof DESKTOP_CATEGORIES[number]["key"];
+
+const CATEGORY_WORDS: Record<Exclude<DesktopCategory, "all" | "morning" | "evening">, string[]> = {
+  prayer: ["prayer", "worship", "allah", "lord"],
+  sleep: ["sleep", "night", "drowsiness", "bed"],
+  gratitude: ["praise", "thanks", "blessing", "favour", "grateful"],
+  protection: ["protect", "refuge", "harm", "evil", "guard", "sufficient"],
+  forgiveness: ["forgiv", "pardon", "sin", "istighfar"],
+  guidance: ["guidance", "good of the day", "set right", "light"],
+  health: ["well-being", "body", "hearing", "sight", "health"],
+  family: ["family", "wealth", "children", "household"],
+};
+
+function DesktopAdhkar() {
+  const styles = useStyles();
+  const { colors, scheme } = useTheme();
+  const { account, setAdhkarCount, setTasbeeh } = useAccount();
+  const [category, setCategory] = useState<DesktopCategory>("all");
+  const [query, setQuery] = useState("");
+  const [index, setIndex] = useState(0);
+
+  const items = useMemo(() => {
+    const base = category === "morning"
+      ? adhkarFor("morning")
+      : category === "evening"
+        ? adhkarFor("evening")
+        : ADHKAR;
+    const words = category === "all" || category === "morning" || category === "evening" ? null : CATEGORY_WORDS[category];
+    const needle = query.trim().toLowerCase();
+    return base.filter((item) => {
+      const haystack = `${item.title} ${item.reference} ${item.english} ${item.englishEvening ?? ""} ${item.source}`.toLowerCase();
+      return (!words || words.some((word) => haystack.includes(word))) && (!needle || haystack.includes(needle) || item.arabic.includes(query.trim()));
+    });
+  }, [category, query]);
+
+  const current = items[index] ?? null;
+  const time: "morning" | "evening" = category === "evening" ? "evening" : "morning";
+  const countKey = current ? `${time}:${current.id}` : "";
+  const counts = account.adhkarProgress.date === todayKey() ? account.adhkarProgress.counts : {};
+  const done = current ? counts[countKey] ?? 0 : 0;
+  const complete = !!current && done >= current.count;
+  const streak = computeStreak(account.history, new Date());
+  const selectedPhrase = TASBEEH_PHRASES.find((item) => item.id === account.tasbeeh.phrase) ?? TASBEEH_PHRASES[0];
+
+  const now = new Date();
+  const nextMoment = new Date(now);
+  if (now.getHours() < 18) nextMoment.setHours(18, 0, 0, 0);
+  else {
+    nextMoment.setDate(now.getDate() + 1);
+    nextMoment.setHours(6, 0, 0, 0);
+  }
+  const untilMinutes = Math.max(0, Math.round((nextMoment.getTime() - now.getTime()) / 60_000));
+  const untilLabel = `${Math.floor(untilMinutes / 60)}h ${String(untilMinutes % 60).padStart(2, "0")}m`;
+
+  const move = (delta: number) => {
+    if (!items.length) return;
+    setIndex((value) => (value + delta + items.length) % items.length);
+  };
+
+  const markComplete = () => {
+    if (!current) return;
+    setAdhkarCount(countKey, current.count);
+    safeHaptic(() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success));
+  };
+
+  const share = async () => {
+    if (!current || typeof navigator === "undefined") return;
+    const text = `${dhikrArabic(current, time)}\n\n${dhikrEnglish(current, time)}\n— ${current.source}`;
+    try {
+      if (navigator.share) await navigator.share({ title: current.title, text });
+      else await navigator.clipboard?.writeText(text);
+    } catch {}
+  };
+
+  return (
+    <>
+      <Head><title>Adhkar & Tasbeeh — OurQuran</title><meta name="description" content="Read authentic daily Adhkar, search by purpose, track completion and use a digital Tasbeeh counter." /></Head>
+      <View style={styles.desktopRoot}>
+        {scheme === "dark" ? <WebPageBackdrop intensity="strong" /> : null}
+        <ScrollView contentContainerStyle={styles.desktopPage} showsVerticalScrollIndicator={false}>
+          <View style={styles.desktopHero}>
+            <View>
+              <Text style={styles.desktopEyebrow}>DHIKR BRINGS TRANQUILITY</Text>
+              <Text style={styles.desktopTitle}>Adhkar</Text>
+              <Text style={styles.desktopSubtitle}>Fill your day with the remembrance of Allah.</Text>
+            </View>
+            <Text style={styles.desktopQuote}>“Remember Allah often that you may be successful.”{`\n`}— Qur’an 62:10</Text>
+          </View>
+
+          <View style={styles.categoryShell}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.desktopCategories}>
+              {DESKTOP_CATEGORIES.map((item) => {
+                const active = category === item.key;
+                return (
+                  <Pressable key={item.key} onPress={() => { setCategory(item.key); setIndex(0); }} style={[styles.categoryButton, active && styles.categoryButtonActive]} testID={`adhkar-category-${item.key}`}>
+                    <Icon name={item.icon as any} size={21} color={active ? colors.gold : colors.onSurface} />
+                    <Text style={[styles.categoryText, active && styles.categoryTextActive]}>{item.label}</Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+            <View style={styles.desktopSearch}>
+              <Icon name="magnify" size={22} color={colors.gold} />
+              <TextInput value={query} onChangeText={(value) => { setQuery(value); setIndex(0); }} placeholder="Search adhkar…" placeholderTextColor={colors.muted} style={styles.desktopSearchInput} testID="adhkar-search" />
+            </View>
+          </View>
+
+          <View style={styles.desktopContentRow}>
+            {current ? (
+              <View style={styles.featuredDhikr} testID={`dhikr-card-${current.id}`}>
+                <View style={styles.featuredHead}>
+                  <View style={styles.featuredIcon}><Icon name={time === "morning" ? "white-balance-sunny" : "weather-night"} size={29} color={colors.gold} /></View>
+                  <View style={styles.featuredHeadCopy}>
+                    <Text style={styles.featuredEyebrow}>{category === "all" ? "DAILY ADHKAR" : `${category.toUpperCase()} ADHKAR`}</Text>
+                    <Text style={styles.featuredCount}>{index + 1} of {items.length} · {current.reference}</Text>
+                  </View>
+                  <View style={[styles.completionChip, complete && styles.completionChipDone]}>
+                    <Icon name={complete ? "check-circle" : "progress-check"} size={18} color={complete ? colors.success : colors.gold} />
+                    <Text style={styles.completionText}>{complete ? "Completed" : `${done}/${current.count}`}</Text>
+                  </View>
+                </View>
+
+                <View style={styles.dhikrBody}>
+                  <Pressable accessibilityRole="button" accessibilityLabel="Previous dhikr" onPress={() => move(-1)} style={styles.roundArrow}><Icon name="chevron-left" size={30} color={colors.gold} /></Pressable>
+                  <View style={styles.dhikrTextColumn}>
+                    <Text style={styles.featuredArabic}>{dhikrArabic(current, time)}</Text>
+                    <View style={styles.ornamentRow}><View style={styles.ornamentLine} /><Icon name="star-four-points" size={22} color={colors.gold} /><View style={styles.ornamentLine} /></View>
+                    <Text style={styles.featuredEnglish}>{dhikrEnglish(current, time)}</Text>
+                    <Text style={styles.featuredSource}>{current.source} · {current.authenticity}</Text>
+                  </View>
+                  <Pressable accessibilityRole="button" accessibilityLabel="Next dhikr" onPress={() => move(1)} style={styles.roundArrow}><Icon name="chevron-right" size={30} color={colors.gold} /></Pressable>
+                </View>
+
+                <View style={styles.featuredActions}>
+                  <Pressable accessibilityRole="button" onPress={() => move(-1)} style={({ pressed }) => [styles.secondaryAction, pressed && styles.desktopPressed]}><Icon name="arrow-left" size={20} color={colors.gold} /><Text style={styles.secondaryActionText}>Previous</Text></Pressable>
+                  <View style={styles.dotRow}>{items.slice(0, Math.min(5, items.length)).map((item, dot) => <View key={item.id} style={[styles.dot, dot === index && styles.dotActive]} />)}</View>
+                  <Pressable accessibilityRole="button" onPress={markComplete} style={({ pressed }) => [styles.completeButton, pressed && styles.desktopPressed]}><Icon name="check-circle" size={21} color={colors.onBrandPrimary} /><Text style={styles.completeButtonText}>{complete ? "Completed" : "Mark as completed"}</Text></Pressable>
+                  <Pressable accessibilityRole="button" onPress={() => void share()} style={({ pressed }) => [styles.secondaryAction, pressed && styles.desktopPressed]}><Icon name="share-variant" size={20} color={colors.gold} /><Text style={styles.secondaryActionText}>Share</Text></Pressable>
+                </View>
+              </View>
+            ) : (
+              <View style={styles.desktopEmpty}><Icon name="magnify-close" size={30} color={colors.gold} /><Text style={styles.desktopEmptyText}>No adhkar match this category and search.</Text></View>
+            )}
+
+            <View style={styles.desktopSide}>
+              <View style={styles.streakCard}>
+                <View style={styles.sideTitleRow}><Icon name="fire" size={25} color={colors.gold} /><Text style={styles.sideTitle}>Daily streak</Text></View>
+                <Text style={styles.streakNumber}>{streak}</Text>
+                <Text style={styles.streakDays}>days</Text>
+                <Text style={styles.sideNote}>Keep remembering. Every dhikr counts.</Text>
+              </View>
+              <View style={styles.sideBottomRow}>
+                <View style={styles.nextAdhkarCard}>
+                  <View style={styles.sideTitleRow}><Icon name="clock-outline" size={23} color={colors.gold} /><Text style={styles.sideTitle}>Next adhkar</Text></View>
+                  <Text style={styles.nextTime}>{untilLabel}</Text>
+                  <Text style={styles.sideNote}>{now.getHours() < 18 ? "Until evening Adhkar" : "Until morning Adhkar"}</Text>
+                  <Text style={styles.reminderHint}>Set reminders in Settings.</Text>
+                </View>
+                <View style={styles.tasbeehCard}>
+                  <View style={styles.sideTitleRow}><Icon name="counter" size={23} color={colors.gold} /><Text style={styles.sideTitle}>Tasbeeh</Text></View>
+                  <Text style={styles.tasbeehPhrase}>{selectedPhrase.label}</Text>
+                  <View style={styles.tasbeehRing}><Text style={styles.tasbeehCount}>{account.tasbeeh.count}</Text><Text style={styles.tasbeehTarget}>of {account.tasbeeh.target}</Text></View>
+                  <View style={styles.tasbeehActions}>
+                    <Pressable accessibilityRole="button" accessibilityLabel="Decrease counter" onPress={() => setTasbeeh({ count: Math.max(0, account.tasbeeh.count - 1) })} style={styles.counterMini}><Icon name="minus" size={20} color={colors.gold} /></Pressable>
+                    <Pressable accessibilityRole="button" accessibilityLabel="Reset counter" onPress={() => setTasbeeh({ count: 0 })} style={styles.counterMini}><Icon name="restore" size={20} color={colors.gold} /></Pressable>
+                    <Pressable accessibilityRole="button" accessibilityLabel="Increase counter" onPress={() => setTasbeeh((value) => ({ count: value.count + 1 }))} style={[styles.counterMini, styles.counterMiniPrimary]}><Icon name="plus" size={20} color={colors.onBrandPrimary} /></Pressable>
+                  </View>
+                </View>
+              </View>
+            </View>
+          </View>
+        </ScrollView>
+      </View>
     </>
   );
 }
@@ -95,7 +296,7 @@ function DhikrCard({ dhikr, time }: { dhikr: Dhikr; time: "morning" | "evening" 
   const complete = done >= dhikr.count;
 
   const tap = () => {
-    Haptics.selectionAsync().catch(() => {});
+    safeHaptic(() => Haptics.selectionAsync());
     setAdhkarCount(countKey, (current) => Math.min(dhikr.count, current + 1));
   };
 
@@ -147,8 +348,8 @@ function Tasbeeh() {
 
   const tap = () => {
     const next = count + 1;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-    if (next === target) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+    safeHaptic(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light));
+    if (next === target) safeHaptic(() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success));
     setTasbeeh((current) => ({ count: current.count + 1 }));
   };
 
@@ -209,7 +410,7 @@ function Tasbeeh() {
       <Pressable
         style={styles.resetBtn}
         onPress={() => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+          safeHaptic(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium));
           setTasbeeh({ count: 0 });
         }}
         testID="tasbeeh-reset"
@@ -279,6 +480,285 @@ function Tasbeeh() {
 
 const useStyles = makeStyles((colors) => ({
   root: { flex: 1, backgroundColor: colors.surface },
+  desktopRoot: { flex: 1, backgroundColor: colors.surface, position: "relative", overflow: "hidden" },
+  desktopPage: {
+    width: "100%",
+    maxWidth: 1540,
+    alignSelf: "center",
+    paddingHorizontal: 32,
+    paddingTop: 30,
+    paddingBottom: 72,
+    gap: 20,
+    zIndex: 1,
+  },
+  desktopHero: {
+    minHeight: 152,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 32,
+    paddingHorizontal: 38,
+    paddingVertical: 24,
+    borderRadius: 26,
+    borderWidth: 1,
+    borderColor: colors.goldBorder,
+    backgroundColor: colors.surfaceSecondary,
+    shadowColor: colors.gold,
+    shadowOpacity: 0.12,
+    shadowRadius: 28,
+    shadowOffset: { width: 0, height: 12 },
+  },
+  desktopEyebrow: { color: colors.gold, fontSize: 12, fontWeight: "800", letterSpacing: 2.5, marginBottom: 7 },
+  desktopTitle: { color: colors.onSurface, fontFamily: serifFont, fontSize: 52, lineHeight: 58, fontWeight: "700", letterSpacing: -1.4 },
+  desktopSubtitle: { color: colors.onSurfaceSecondary, fontSize: 18, lineHeight: 27, marginTop: 4 },
+  desktopQuote: { color: colors.gold, fontFamily: serifFont, fontSize: 17, lineHeight: 27, maxWidth: 420, textAlign: "right", opacity: 0.92 },
+  categoryShell: {
+    minHeight: 88,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    padding: 10,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
+    backgroundColor: colors.surfaceSecondary,
+  },
+  desktopCategories: { flexDirection: "row", alignItems: "center", gap: 6, paddingRight: 8 },
+  categoryButton: {
+    minWidth: 82,
+    minHeight: 64,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 5,
+    paddingHorizontal: 13,
+    paddingVertical: 9,
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: "transparent",
+    cursor: "pointer",
+  },
+  categoryButtonActive: { backgroundColor: colors.goldSoft, borderColor: colors.goldBorder },
+  categoryText: { color: colors.onSurfaceSecondary, fontSize: 12, fontWeight: "700" },
+  categoryTextActive: { color: colors.gold },
+  desktopSearch: {
+    width: 275,
+    minHeight: 52,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingHorizontal: 16,
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: colors.goldBorder,
+    backgroundColor: colors.surfaceTertiary,
+  },
+  desktopSearchInput: { flex: 1, color: colors.onSurface, fontSize: 15, paddingVertical: 10 },
+  desktopContentRow: { flexDirection: "row", alignItems: "stretch", gap: 20 },
+  featuredDhikr: {
+    flex: 1,
+    minWidth: 0,
+    minHeight: 552,
+    borderRadius: 26,
+    borderWidth: 1,
+    borderColor: colors.goldBorder,
+    backgroundColor: colors.surfaceSecondary,
+    overflow: "hidden",
+    shadowColor: colors.gold,
+    shadowOpacity: 0.09,
+    shadowRadius: 26,
+    shadowOffset: { width: 0, height: 12 },
+  },
+  featuredHead: {
+    minHeight: 86,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    paddingHorizontal: 24,
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.divider,
+  },
+  featuredIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: colors.goldBorder,
+    backgroundColor: colors.goldSoft,
+  },
+  featuredHeadCopy: { flex: 1, gap: 4 },
+  featuredEyebrow: { color: colors.gold, fontSize: 12, fontWeight: "800", letterSpacing: 1.8 },
+  featuredCount: { color: colors.muted, fontSize: 13, fontWeight: "600" },
+  completionChip: {
+    minHeight: 40,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+    paddingHorizontal: 14,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: colors.goldBorder,
+    backgroundColor: colors.goldSoft,
+  },
+  completionChipDone: { borderColor: colors.success, backgroundColor: "rgba(45,106,79,0.16)" },
+  completionText: { color: colors.onSurface, fontSize: 12, fontWeight: "800" },
+  dhikrBody: {
+    flex: 1,
+    minHeight: 360,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 22,
+    paddingHorizontal: 22,
+    paddingVertical: 30,
+  },
+  roundArrow: {
+    width: 52,
+    height: 52,
+    flexShrink: 0,
+    borderRadius: 999,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: colors.goldBorder,
+    backgroundColor: colors.surfaceTertiary,
+    cursor: "pointer",
+  },
+  dhikrTextColumn: { flex: 1, maxWidth: 820, alignItems: "center", justifyContent: "center", gap: 16 },
+  featuredArabic: {
+    color: colors.onSurface,
+    fontFamily: arabicFont,
+    fontSize: 37,
+    lineHeight: 64,
+    textAlign: "center",
+    writingDirection: "rtl",
+  },
+  ornamentRow: { width: "62%", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 12 },
+  ornamentLine: { height: 1, flex: 1, backgroundColor: colors.goldBorder },
+  featuredEnglish: { color: colors.onSurface, fontFamily: serifFont, fontSize: 22, lineHeight: 34, textAlign: "center", fontStyle: "italic" },
+  featuredSource: { color: colors.gold, fontSize: 12, lineHeight: 18, textAlign: "center", fontWeight: "700", letterSpacing: 0.35 },
+  featuredActions: {
+    minHeight: 84,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    borderTopWidth: 1,
+    borderTopColor: colors.divider,
+  },
+  secondaryAction: {
+    minHeight: 46,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 7,
+    paddingHorizontal: 16,
+    borderRadius: 13,
+    borderWidth: 1,
+    borderColor: colors.goldBorder,
+    backgroundColor: colors.surfaceTertiary,
+    cursor: "pointer",
+  },
+  secondaryActionText: { color: colors.gold, fontSize: 13, fontWeight: "800" },
+  dotRow: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 4 },
+  dot: { width: 6, height: 6, borderRadius: 999, backgroundColor: colors.borderStrong },
+  dotActive: { width: 22, backgroundColor: colors.gold },
+  completeButton: {
+    minHeight: 48,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingHorizontal: 20,
+    borderRadius: 14,
+    backgroundColor: colors.brandPrimary,
+    cursor: "pointer",
+    shadowColor: colors.gold,
+    shadowOpacity: 0.24,
+    shadowRadius: 14,
+  },
+  completeButtonText: { color: colors.onBrandPrimary, fontSize: 14, fontWeight: "900" },
+  desktopPressed: { opacity: 0.74, transform: [{ scale: 0.985 }] },
+  desktopEmpty: {
+    flex: 1,
+    minHeight: 552,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 14,
+    borderRadius: 26,
+    borderWidth: 1,
+    borderColor: colors.goldBorder,
+    backgroundColor: colors.surfaceSecondary,
+  },
+  desktopEmptyText: { color: colors.onSurface, fontFamily: serifFont, fontSize: 20 },
+  desktopSide: { width: 390, flexShrink: 0, gap: 18 },
+  streakCard: {
+    minHeight: 220,
+    alignItems: "center",
+    padding: 22,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: colors.goldBorder,
+    backgroundColor: colors.surfaceSecondary,
+  },
+  sideTitleRow: { width: "100%", flexDirection: "row", alignItems: "center", gap: 9 },
+  sideTitle: { color: colors.onSurface, fontFamily: serifFont, fontSize: 18, fontWeight: "700" },
+  streakNumber: { color: colors.gold, fontFamily: serifFont, fontSize: 72, lineHeight: 78, fontWeight: "700", marginTop: 12 },
+  streakDays: { color: colors.onSurface, fontSize: 13, fontWeight: "800", letterSpacing: 1.5, textTransform: "uppercase" },
+  sideNote: { color: colors.muted, fontSize: 12, lineHeight: 18, textAlign: "center", marginTop: 8 },
+  sideBottomRow: { flex: 1, flexDirection: "row", gap: 14 },
+  nextAdhkarCard: {
+    flex: 1,
+    minWidth: 0,
+    padding: 18,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: colors.goldBorder,
+    backgroundColor: colors.surfaceSecondary,
+  },
+  nextTime: { color: colors.gold, fontFamily: serifFont, fontSize: 34, lineHeight: 42, fontWeight: "700", marginTop: 26, textAlign: "center" },
+  reminderHint: { color: colors.gold, fontSize: 10, lineHeight: 15, textAlign: "center", marginTop: 13 },
+  tasbeehCard: {
+    flex: 1,
+    minWidth: 0,
+    alignItems: "center",
+    padding: 18,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: colors.goldBorder,
+    backgroundColor: colors.surfaceSecondary,
+  },
+  tasbeehPhrase: { color: colors.gold, fontSize: 13, fontWeight: "800", marginTop: 13 },
+  tasbeehRing: {
+    width: 96,
+    height: 96,
+    borderRadius: 999,
+    alignItems: "center",
+    justifyContent: "center",
+    marginVertical: 13,
+    borderWidth: 3,
+    borderColor: colors.gold,
+    backgroundColor: colors.goldSoft,
+  },
+  tasbeehCount: { color: colors.onSurface, fontSize: 30, lineHeight: 34, fontWeight: "900" },
+  tasbeehTarget: { color: colors.muted, fontSize: 10, fontWeight: "700" },
+  tasbeehActions: { flexDirection: "row", alignItems: "center", gap: 8 },
+  counterMini: {
+    width: 34,
+    height: 34,
+    borderRadius: 999,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: colors.goldBorder,
+    backgroundColor: colors.surfaceTertiary,
+    cursor: "pointer",
+  },
+  counterMiniPrimary: { backgroundColor: colors.brandPrimary, borderColor: colors.brandPrimary },
   segmentWrap: {
     flexDirection: "row",
     gap: 8,

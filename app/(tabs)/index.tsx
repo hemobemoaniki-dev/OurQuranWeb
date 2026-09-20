@@ -2,7 +2,9 @@ import { Text } from "@/src/components/AppText";
 import { BrandMark } from "@/src/components/BrandMark";
 import { Icon, type IconName } from "@/src/components/Icon";
 import { ProfileAvatar } from "@/src/components/ProfileAvatar";
+import { ReaderBackdrop } from "@/src/components/ReaderBackdrop";
 import { StreakBadge } from "@/src/components/StreakBadge";
+import { WebPageBackdrop } from "@/src/components/WebPageBackdrop";
 import { useAccount, useAuth } from "@/src/context/AppState";
 import { surahMeta } from "@/src/data/surahs";
 import { computeStreak, dateKey, formatK } from "@/src/lib/dates";
@@ -15,10 +17,11 @@ import {
 } from "@/src/lib/dashboard";
 import { consumePendingCrownCelebration, crownActiveForStreak } from "@/src/lib/streak-crown";
 import { makeStyles, useTheme } from "@/src/theme";
+import { serifFont } from "@/src/typography";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
-import { Pressable, ScrollView, View, useWindowDimensions } from "react-native";
+import { Platform, Pressable, ScrollView, View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const PERIODS: { key: Period; label: string }[] = [
@@ -32,6 +35,7 @@ export default function Home() {
   const { colors, scheme } = useTheme();
   const { width } = useWindowDimensions();
   const compact = width < 1180;
+  const desktopWeb = Platform.OS === "web" && width >= 900;
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { account, hydrated, syncStatus, lastSyncAt, updateSettings } = useAccount();
@@ -109,6 +113,7 @@ export default function Home() {
 
   return (
     <View style={styles.root}>
+      {Platform.OS === "web" && scheme === "dark" ? <WebPageBackdrop intensity="strong" /> : null}
       <ScrollView
         contentContainerStyle={[styles.content, { paddingTop: insets.top + 24 }]}
         showsVerticalScrollIndicator={false}
@@ -120,7 +125,7 @@ export default function Home() {
             <Text style={styles.topSub}>Continue your Quran journey with focus and consistency.</Text>
           </View>
 
-          <View style={styles.topActions}>
+          {!desktopWeb ? <View style={styles.topActions}>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={scheme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
@@ -149,7 +154,7 @@ export default function Home() {
               </View>
               <Icon name="chevron-down" size={17} color={colors.muted} />
             </Pressable>
-          </View>
+          </View> : null}
         </View>
 
         <View style={[styles.primaryRow, compact && styles.stackRow]}>
@@ -158,6 +163,7 @@ export default function Home() {
             onPress={() => router.push("/reader")}
             testID="continue-reading-card"
           >
+            {Platform.OS === "web" ? <ReaderBackdrop id="solar-ember" /> : null}
             <LinearGradient
               pointerEvents="none"
               colors={scheme === "dark"
@@ -186,6 +192,7 @@ export default function Home() {
                 </View>
               </View>
             </View>
+            {desktopWeb ? <Text style={styles.heroQuote}>“A light for every step forward.”</Text> : null}
           </Pressable>
 
           <Pressable
@@ -221,6 +228,7 @@ export default function Home() {
                   {goalReached ? "Alhamdulillah — keep going." : `${Math.max(0, goal - todayAyat)} remaining today`}
                 </Text>
               </View>
+              {desktopWeb ? <Text style={styles.goalQuote}>“Small steps lead to great heights.”</Text> : null}
             </View>
             <View style={styles.track}>
               <View style={[styles.trackFill, { width: `${goalPct * 100}%` }]} />
@@ -231,7 +239,7 @@ export default function Home() {
         <View style={styles.journeyHead}>
           <View>
             <Text style={styles.sectionTitle}>Your journey</Text>
-            <Text style={styles.sectionSub}>A compact view of your reading momentum.</Text>
+            <Text style={styles.sectionSub}>A snapshot of your reading momentum.</Text>
           </View>
           <View style={styles.periods} accessibilityRole="tablist">
             {PERIODS.map((item) => (
@@ -387,6 +395,11 @@ const JourneyMetric = memo(function JourneyMetric({
         {value}
       </Text>
       <Text style={styles.statLabel}>{label}</Text>
+      <View pointerEvents="none" style={styles.metricBars}>
+        {[0.35, 0.54, 0.68, 0.82, 1].map((height, index) => (
+          <View key={index} style={[styles.metricBar, { height: `${height * 100}%`, backgroundColor: tint }]} />
+        ))}
+      </View>
     </View>
   );
 });
@@ -419,30 +432,31 @@ function QuickAction({
 }
 
 const useStyles = makeStyles((c) => ({
-  root: { flex: 1, backgroundColor: c.surface },
+  root: { flex: 1, backgroundColor: c.surface, position: "relative" },
   content: {
     width: "100%",
     maxWidth: 1580,
     alignSelf: "center",
-    paddingHorizontal: 34,
-    paddingBottom: 30,
-    gap: 18,
+    paddingHorizontal: 36,
+    paddingBottom: 38,
+    gap: 20,
+    zIndex: 1,
   },
   fill: { position: "absolute", top: 0, right: 0, bottom: 0, left: 0 },
   pressed: { opacity: 0.68, transform: [{ scale: 0.975 }] },
   cardPressed: { opacity: 0.78, transform: [{ scale: 0.995 }] },
 
   topBar: {
-    minHeight: 72,
+    minHeight: 94,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     gap: 20,
   },
   topCopy: { flex: 1, minWidth: 0 },
-  salamLine: { color: c.gold, fontSize: 14, lineHeight: 18, fontWeight: "900", letterSpacing: 0.9 },
-  greetingName: { color: c.onSurface, fontSize: 33, lineHeight: 39, fontWeight: "900", letterSpacing: -0.9 },
-  topSub: { color: c.muted, fontSize: 14, lineHeight: 20, fontWeight: "600", marginTop: 4 },
+  salamLine: { color: c.gold, fontSize: 16, lineHeight: 21, fontWeight: "900", letterSpacing: 0.35 },
+  greetingName: { color: c.onSurface, fontFamily: serifFont, fontSize: 43, lineHeight: 48, fontWeight: "700", letterSpacing: -1.1 },
+  topSub: { color: c.muted, fontSize: 16, lineHeight: 23, fontWeight: "500", marginTop: 3 },
   topActions: { flexDirection: "row", alignItems: "center", gap: 10 },
   iconAction: {
     width: 44,
@@ -476,8 +490,8 @@ const useStyles = makeStyles((c) => ({
   stackRow: { flexDirection: "column" },
   hero: {
     flex: 1.7,
-    minHeight: 215,
-    borderRadius: 26,
+    minHeight: 250,
+    borderRadius: 24,
     borderWidth: 1,
     borderColor: c.goldBorder,
     backgroundColor: c.surfaceSecondary,
@@ -488,17 +502,18 @@ const useStyles = makeStyles((c) => ({
     position: "absolute",
     right: 28,
     top: 28,
-    opacity: 0.20,
+    opacity: 0.26,
     transform: [{ rotate: "-4deg" }],
   },
-  heroContent: { flex: 1, justifyContent: "center", paddingHorizontal: 34, paddingVertical: 30, maxWidth: 820 },
-  eyebrow: { color: c.gold, fontSize: 11.5, lineHeight: 15, fontWeight: "900", letterSpacing: 1.85 },
-  heroTitle: { color: c.onSurface, fontSize: 46, lineHeight: 54, fontWeight: "900", letterSpacing: -1.25, marginTop: 8 },
-  heroMeta: { color: c.muted, fontSize: 15.5, lineHeight: 21, fontWeight: "700", marginTop: 4 },
+  heroContent: { flex: 1, justifyContent: "center", paddingHorizontal: 34, paddingVertical: 30, maxWidth: 760, zIndex: 1 },
+  eyebrow: { color: c.gold, fontSize: 13, lineHeight: 17, fontWeight: "900", letterSpacing: 1.45 },
+  heroTitle: { color: c.onSurface, fontFamily: serifFont, fontSize: 52, lineHeight: 59, fontWeight: "700", letterSpacing: -1.1, marginTop: 9 },
+  heroMeta: { color: c.muted, fontSize: 17, lineHeight: 23, fontWeight: "600", marginTop: 4 },
   heroProgressTrack: { width: "68%", maxWidth: 520, height: 5, borderRadius: 4, backgroundColor: c.surfaceTertiary, overflow: "hidden", marginTop: 22 },
   heroProgressFill: { height: 5, borderRadius: 4, backgroundColor: c.gold },
   heroFoot: { marginTop: 12, flexDirection: "row", alignItems: "center", gap: 18 },
-  heroProgressText: { color: c.muted, fontSize: 13.5, lineHeight: 18, fontWeight: "700" },
+  heroProgressText: { color: c.muted, fontSize: 15, lineHeight: 20, fontWeight: "600" },
+  heroQuote: { position: "absolute", right: 28, bottom: 31, maxWidth: 190, color: c.onSurface, fontFamily: serifFont, fontStyle: "italic", fontSize: 16, lineHeight: 23, textAlign: "right", opacity: 0.82 },
   readButton: {
     minWidth: 126,
     height: 42,
@@ -514,14 +529,14 @@ const useStyles = makeStyles((c) => ({
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 3 },
   },
-  readButtonText: { color: c.onBrandPrimary, fontSize: 14.5, lineHeight: 18, fontWeight: "900" },
+  readButtonText: { color: c.onBrandPrimary, fontSize: 15.5, lineHeight: 20, fontWeight: "900" },
 
   goalCard: {
     flex: 0.82,
     minWidth: 310,
-    minHeight: 215,
-    padding: 22,
-    borderRadius: 26,
+    minHeight: 250,
+    padding: 25,
+    borderRadius: 24,
     borderWidth: 1,
     borderColor: c.goldBorder,
     backgroundColor: c.surfaceSecondary,
@@ -530,24 +545,25 @@ const useStyles = makeStyles((c) => ({
     cursor: "pointer",
   },
   goalTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
-  goalTitle: { color: c.onSurface, fontSize: 21, lineHeight: 26, fontWeight: "900", marginTop: 5 },
+  goalTitle: { color: c.onSurface, fontFamily: serifFont, fontSize: 25, lineHeight: 31, fontWeight: "700", marginTop: 6 },
   goalCenter: { flex: 1, flexDirection: "row", alignItems: "center", gap: 20 },
   goalRing: {
-    width: 92,
-    height: 92,
-    borderRadius: 46,
+    width: 102,
+    height: 102,
+    borderRadius: 51,
     borderWidth: 7,
     borderColor: c.goldBorder,
     backgroundColor: c.goldSoft,
     alignItems: "center",
     justifyContent: "center",
   },
-  goalPercent: { color: c.onSurface, fontSize: 27, lineHeight: 32, fontWeight: "900", letterSpacing: -0.7 },
-  goalRingLabel: { color: c.muted, fontSize: 10, lineHeight: 13, fontWeight: "800" },
+  goalPercent: { color: c.onSurface, fontFamily: serifFont, fontSize: 31, lineHeight: 36, fontWeight: "700", letterSpacing: -0.7 },
+  goalRingLabel: { color: c.muted, fontSize: 11.5, lineHeight: 15, fontWeight: "700" },
   goalNumbers: { flex: 1, minWidth: 0 },
-  goalValue: { color: c.onSurface, fontSize: 36, lineHeight: 41, fontWeight: "900" },
-  goalTotal: { color: c.muted, fontSize: 14, lineHeight: 19, fontWeight: "800" },
-  goalHelper: { color: c.muted, fontSize: 12.5, lineHeight: 17, fontWeight: "600", marginTop: 7 },
+  goalValue: { color: c.onSurface, fontFamily: serifFont, fontSize: 39, lineHeight: 44, fontWeight: "700" },
+  goalTotal: { color: c.muted, fontSize: 15.5, lineHeight: 20, fontWeight: "700" },
+  goalHelper: { color: c.muted, fontSize: 13.5, lineHeight: 18, fontWeight: "500", marginTop: 7 },
+  goalQuote: { flex: 1, maxWidth: 150, color: c.onSurface, fontFamily: serifFont, fontStyle: "italic", fontSize: 14.5, lineHeight: 21, textAlign: "center", opacity: 0.8 },
   track: { height: 5, borderRadius: 4, backgroundColor: c.surfaceTertiary, overflow: "hidden" },
   trackFill: { height: 5, borderRadius: 4, backgroundColor: c.gold },
 
@@ -558,8 +574,8 @@ const useStyles = makeStyles((c) => ({
     justifyContent: "space-between",
     gap: 18,
   },
-  sectionTitle: { color: c.onSurface, fontSize: 29, lineHeight: 34, fontWeight: "900", letterSpacing: -0.65 },
-  sectionSub: { color: c.muted, fontSize: 13, lineHeight: 18, fontWeight: "600", marginTop: 3 },
+  sectionTitle: { color: c.onSurface, fontFamily: serifFont, fontSize: 33, lineHeight: 39, fontWeight: "700", letterSpacing: -0.5 },
+  sectionSub: { color: c.muted, fontSize: 15, lineHeight: 21, fontWeight: "500", marginTop: 3 },
   periods: {
     flexDirection: "row",
     alignItems: "center",
@@ -572,7 +588,7 @@ const useStyles = makeStyles((c) => ({
   },
   period: { minWidth: 76, height: 34, paddingHorizontal: 12, borderRadius: 11, alignItems: "center", justifyContent: "center", cursor: "pointer" },
   periodActive: { backgroundColor: c.goldSoft, borderWidth: 1, borderColor: c.goldBorder },
-  periodText: { color: c.muted, fontSize: 12.5, lineHeight: 16, fontWeight: "900" },
+  periodText: { color: c.muted, fontSize: 14, lineHeight: 18, fontWeight: "800" },
   periodTextActive: { color: c.gold },
 
   metricsRow: { flexDirection: "row", flexWrap: "wrap", gap: 14 },
@@ -580,22 +596,24 @@ const useStyles = makeStyles((c) => ({
     flex: 1,
     flexBasis: 0,
     minWidth: 190,
-    minHeight: 124,
-    padding: 16,
+    minHeight: 138,
+    padding: 19,
     borderRadius: 20,
     borderWidth: 1,
     backgroundColor: c.surfaceSecondary,
     overflow: "hidden",
   },
-  metricIcon: { width: 38, height: 38, borderRadius: 13, borderWidth: 1, alignItems: "center", justifyContent: "center" },
-  statValue: { fontSize: 33, lineHeight: 39, fontWeight: "900", letterSpacing: -0.8, marginTop: 11 },
-  statLabel: { color: c.muted, fontSize: 13, lineHeight: 17, fontWeight: "800", marginTop: 2 },
+  metricIcon: { width: 40, height: 40, borderRadius: 13, borderWidth: 1, alignItems: "center", justifyContent: "center" },
+  statValue: { fontFamily: serifFont, fontSize: 35, lineHeight: 40, fontWeight: "700", letterSpacing: -0.6, marginTop: 10 },
+  statLabel: { color: c.muted, fontSize: 14.5, lineHeight: 19, fontWeight: "700", marginTop: 2 },
+  metricBars: { position: "absolute", right: 18, bottom: 18, width: 92, height: 68, flexDirection: "row", alignItems: "flex-end", gap: 7, opacity: 0.32 },
+  metricBar: { flex: 1, minHeight: 8, borderRadius: 7 },
 
   lowerRow: { flexDirection: "row", gap: 18, alignItems: "stretch" },
   weekPanel: {
     flex: 1.35,
-    minHeight: 218,
-    padding: 22,
+    minHeight: 242,
+    padding: 24,
     borderRadius: 24,
     borderWidth: 1,
     borderColor: c.border,
@@ -604,31 +622,31 @@ const useStyles = makeStyles((c) => ({
   quickPanel: {
     flex: 0.85,
     minWidth: 360,
-    minHeight: 218,
-    padding: 22,
+    minHeight: 242,
+    padding: 24,
     borderRadius: 24,
     borderWidth: 1,
     borderColor: c.border,
     backgroundColor: c.surfaceSecondary,
   },
   panelHead: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 14 },
-  panelTitle: { color: c.onSurface, fontSize: 20, lineHeight: 25, fontWeight: "900" },
-  panelSub: { color: c.muted, fontSize: 12.5, lineHeight: 17, fontWeight: "600", marginTop: 3 },
+  panelTitle: { color: c.onSurface, fontFamily: serifFont, fontSize: 23, lineHeight: 28, fontWeight: "700" },
+  panelSub: { color: c.muted, fontSize: 14, lineHeight: 19, fontWeight: "500", marginTop: 3 },
   streakPill: { flexDirection: "row", alignItems: "center", gap: 5, minHeight: 34, paddingHorizontal: 11, borderRadius: 12, backgroundColor: c.goldSoft, borderWidth: 1, borderColor: c.goldBorder },
   streakValue: { color: c.onSurface, fontSize: 18, lineHeight: 22, fontWeight: "900" },
   streakLabel: { color: c.muted, fontSize: 11, lineHeight: 14, fontWeight: "800" },
   weekRow: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10, marginTop: 20 },
   day: { flex: 1, alignItems: "center", gap: 7, minWidth: 58 },
-  dayLetter: { color: c.onSurface, fontSize: 12.5, lineHeight: 16, fontWeight: "900" },
+  dayLetter: { color: c.onSurface, fontSize: 14, lineHeight: 18, fontWeight: "800" },
   dayNode: { width: 56, height: 56, borderRadius: 18, borderWidth: 2, alignItems: "center", justifyContent: "center" },
   dayDot: { width: 6, height: 6, borderRadius: 3 },
-  dayState: { fontSize: 10.5, lineHeight: 14, fontWeight: "900" },
+  dayState: { fontSize: 12, lineHeight: 16, fontWeight: "800" },
 
   quickGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginTop: 18 },
   quickAction: {
     width: "48%",
     flexGrow: 1,
-    minHeight: 68,
+    minHeight: 76,
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
@@ -646,11 +664,11 @@ const useStyles = makeStyles((c) => ({
   },
   quickIcon: { width: 37, height: 37, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: c.goldSoft, borderWidth: 1, borderColor: c.goldBorder },
   quickCopy: { flex: 1, minWidth: 0 },
-  quickLabel: { color: c.onSurface, fontSize: 14, lineHeight: 18, fontWeight: "900" },
-  quickHint: { color: c.muted, fontSize: 10.5, lineHeight: 14, fontWeight: "600", marginTop: 2 },
+  quickLabel: { color: c.onSurface, fontSize: 15.5, lineHeight: 20, fontWeight: "800" },
+  quickHint: { color: c.muted, fontSize: 12.5, lineHeight: 16, fontWeight: "500", marginTop: 2 },
 
   syncBanner: {
-    minHeight: 58,
+    minHeight: 68,
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
@@ -664,8 +682,8 @@ const useStyles = makeStyles((c) => ({
   },
   syncDot: { width: 9, height: 9, borderRadius: 5 },
   syncCopy: { flex: 1, minWidth: 0 },
-  syncTitle: { color: c.onSurface, fontSize: 14.5, lineHeight: 19, fontWeight: "900" },
-  syncNote: { color: c.muted, fontSize: 11.5, lineHeight: 16, fontWeight: "600", marginTop: 2 },
+  syncTitle: { color: c.onSurface, fontSize: 15.5, lineHeight: 20, fontWeight: "800" },
+  syncNote: { color: c.muted, fontSize: 13, lineHeight: 18, fontWeight: "500", marginTop: 2 },
   syncAction: { flexDirection: "row", alignItems: "center", gap: 6, minHeight: 32, paddingHorizontal: 10, borderRadius: 11, backgroundColor: c.goldSoft },
   syncActionText: { color: c.gold, fontSize: 12.5, lineHeight: 16, fontWeight: "900" },
 }));

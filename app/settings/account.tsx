@@ -72,7 +72,7 @@ export default function AccountSettings() {
 
   const doReset = async () => {
     setResetConfirm(false);
-    try { await resetLocalData(); router.replace("/(tabs)"); }
+    try { await resetLocalData(); router.replace("/"); }
     catch { setMsg({ type: "error", text: "Could not reset local data. Please try again." }); }
   };
 
@@ -88,11 +88,11 @@ export default function AccountSettings() {
     }
     setDeletePassword("");
     setDeleteConfirm(false);
-    router.replace("/(tabs)");
+    router.replace("/");
   };
 
   const doSignOut = async () => {
-    try { await signOut(); router.replace("/(tabs)"); }
+    try { await signOut(); router.replace("/"); }
     catch { setMsg({ type: "error", text: "Could not sign out. Please try again." }); }
   };
 

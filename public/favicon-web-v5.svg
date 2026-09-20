@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="gold" x1="8" y1="10" x2="54" y2="55" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFF0A2"/>
+      <stop offset=".45" stop-color="#F0C94D"/>
+      <stop offset="1" stop-color="#B98212"/>
+    </linearGradient>
+    <filter id="halo" x="-35%" y="-35%" width="170%" height="170%">
+      <feGaussianBlur stdDeviation="1.5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <g filter="url(#halo)" stroke="#3B2A08" stroke-width="1.6" stroke-linejoin="round">
+    <path d="M31.8 48.5C25.7 42.3 18.5 39 8.7 38.7V14.2c9.3.2 17.2 3.8 23.1 10.2z" fill="#FFFDF5"/>
+    <path d="M32.2 48.5C38.3 42.3 45.5 39 55.3 38.7V14.2c-9.3.2-17.2 3.8-23.1 10.2z" fill="#FFFDF5"/>
+    <path d="M31.8 48.5C23.2 47 15.4 48.2 5.4 52.7c8.1-7.1 15.3-10.6 26.4-10.8z" fill="url(#gold)"/>
+    <path d="M32.2 48.5C40.8 47 48.6 48.2 58.6 52.7c-8.1-7.1-15.3-10.6-26.4-10.8z" fill="url(#gold)"/>
+    <path d="M32 24v25.5" fill="none" stroke="url(#gold)" stroke-width="3" stroke-linecap="round"/>
+    <path d="M13.5 20.3c6.2.8 10.8 2.9 14.7 6.6M13.5 27.2c5.9.7 10.4 2.7 14.7 6.2" fill="none" stroke="#C79B2A" stroke-width="1.8" stroke-linecap="round"/>
+    <path d="M50.5 20.3c-6.2.8-10.8 2.9-14.7 6.6M50.5 27.2c-5.9.7-10.4 2.7-14.7 6.2" fill="none" stroke="#C79B2A" stroke-width="1.8" stroke-linecap="round"/>
+  </g>
+  <path d="M52 7l2.5 4.5L59 14l-4.5 2.5L52 21l-2.5-4.5L45 14l4.5-2.5z" fill="url(#gold)"/>
+</svg>

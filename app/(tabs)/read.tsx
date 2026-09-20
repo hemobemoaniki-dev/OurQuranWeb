@@ -1,16 +1,24 @@
 import Head from "expo-router/head";
-import { Text } from "@/src/components/AppText";
+import { Text, TextInput } from "@/src/components/AppText";
 import { useRouter } from "expo-router";
-import { FlatList, Pressable, View } from "react-native";
+import { useMemo, useState } from "react";
+import { FlatList, Platform, Pressable, ScrollView, View, useWindowDimensions } from "react-native";
 
 import { SubHeader } from "@/src/components/SubHeader";
 import { Icon } from "@/src/components/Icon";
+import { WebPageBackdrop } from "@/src/components/WebPageBackdrop";
 import { useAccount } from "@/src/context/AppState";
 import { SURAHS, surahMeta } from "@/src/data/surahs";
 import { makeStyles, useTheme } from "@/src/theme";
 import { serifFont } from "@/src/typography";
 
 export default function ReadTab() {
+  const { width } = useWindowDimensions();
+  if (Platform.OS === "web" && width >= 1080) return <DesktopRead />;
+  return <MobileRead />;
+}
+
+function MobileRead() {
   const styles = useStyles();
   const { colors } = useTheme();
   const router = useRouter();
@@ -74,8 +82,125 @@ export default function ReadTab() {
   );
 }
 
+type QuranFilter = "all" | "short" | "medium" | "long";
+
+function DesktopRead() {
+  const styles = useStyles();
+  const { colors, scheme } = useTheme();
+  const router = useRouter();
+  const { account } = useAccount();
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState<QuranFilter>("all");
+  const current = surahMeta(account.currentSurah);
+  const progress = Math.min(1, account.currentAyah / Math.max(1, current.ayahs));
+
+  const filtered = useMemo(() => {
+    const needle = query.trim().toLowerCase();
+    return SURAHS.filter((surah) => {
+      const lengthMatch = filter === "all" || (filter === "short" && surah.ayahs <= 30) || (filter === "medium" && surah.ayahs > 30 && surah.ayahs <= 100) || (filter === "long" && surah.ayahs > 100);
+      return lengthMatch && (!needle || surah.name.toLowerCase().includes(needle) || String(surah.number) === needle);
+    });
+  }, [filter, query]);
+
+  return (
+    <>
+      <Head><title>Read the Quran — OurQuran</title><meta name="description" content="Explore all 114 surahs, continue from your exact ayah, listen to recitation and keep your reading progress." /></Head>
+      <View style={styles.desktopRoot}>
+        {scheme === "dark" ? <WebPageBackdrop intensity="strong" /> : null}
+        <ScrollView contentContainerStyle={styles.desktopPage} showsVerticalScrollIndicator={false}>
+          <View style={styles.desktopHero}>
+            <View>
+              <Text style={styles.desktopEyebrow}>THE FINAL REVELATION</Text>
+              <Text style={styles.desktopTitle}>Read the Qur’an</Text>
+              <Text style={styles.desktopSubtitle}>Every ayah is an invitation to pause, reflect, and draw nearer.</Text>
+            </View>
+            <Text style={styles.desktopQuote}>“This is the Book about which there is no doubt, a guidance for the mindful.”{`\n`}— Qur’an 2:2</Text>
+          </View>
+
+          <Pressable onPress={() => router.push("/reader")} style={({ pressed }) => [styles.desktopContinue, pressed && styles.desktopPressed]} testID="read-continue-card">
+            <View style={styles.continueOrnament}><Icon name="book-open-page-variant" size={54} color={colors.gold} /></View>
+            <View style={styles.desktopContinueCopy}>
+              <Text style={styles.desktopEyebrow}>CONTINUE YOUR JOURNEY</Text>
+              <Text style={styles.desktopContinueTitle}>{current.name}</Text>
+              <Text style={styles.desktopContinueMeta}>Ayah {account.currentAyah} of {current.ayahs} · {Math.round(progress * 100)}% complete</Text>
+              <View style={styles.desktopProgressTrack}><View style={[styles.desktopProgressFill, { width: `${progress * 100}%` }]} /></View>
+            </View>
+            <View style={styles.desktopReadButton}><Icon name="play" size={21} color={colors.onBrandPrimary} /><Text style={styles.desktopReadButtonText}>Resume reading</Text><Icon name="arrow-right" size={19} color={colors.onBrandPrimary} /></View>
+          </Pressable>
+
+          <View style={styles.libraryHead}>
+            <View><Text style={styles.libraryTitle}>The 114 Surahs</Text><Text style={styles.librarySubtitle}>Choose a chapter and begin with its first ayah.</Text></View>
+            <View style={styles.libraryTools}>
+              <View style={styles.librarySearch}><Icon name="magnify" size={21} color={colors.gold} /><TextInput value={query} onChangeText={setQuery} placeholder="Search by name or number…" placeholderTextColor={colors.muted} style={styles.librarySearchInput} testID="quran-search" /></View>
+              <View style={styles.lengthFilters}>{(["all", "short", "medium", "long"] as const).map((item) => <Pressable key={item} onPress={() => setFilter(item)} style={[styles.lengthFilter, filter === item && styles.lengthFilterActive]}><Text style={[styles.lengthFilterText, filter === item && styles.lengthFilterTextActive]}>{item === "all" ? "All" : `${item[0].toUpperCase()}${item.slice(1)}`}</Text></Pressable>)}</View>
+            </View>
+          </View>
+
+          <View style={styles.surahGrid}>
+            {filtered.map((surah) => {
+              const active = surah.number === account.currentSurah;
+              return (
+                <Pressable key={surah.number} onPress={() => router.push({ pathname: "/reader", params: { surah: surah.number, ayah: 1 } })} style={({ pressed, hovered }: any) => [styles.surahCard, active && styles.surahCardActive, hovered && styles.surahCardHover, pressed && styles.desktopPressed]} testID={`surah-row-${surah.number}`}>
+                  <View style={[styles.desktopNumBadge, active && styles.desktopNumBadgeActive]}><Text style={[styles.desktopNumText, active && styles.desktopNumTextActive]}>{String(surah.number).padStart(3, "0")}</Text></View>
+                  <View style={styles.surahCardCopy}><Text style={styles.desktopSurahName}>{surah.name}</Text><Text style={styles.desktopSurahMeta}>{surah.ayahs} ayahs</Text></View>
+                  {active ? <View style={styles.currentChip}><Text style={styles.currentChipText}>CURRENT</Text></View> : null}
+                  <Icon name="arrow-top-right" size={18} color={colors.gold} />
+                </Pressable>
+              );
+            })}
+          </View>
+          {!filtered.length ? <View style={styles.libraryEmpty}><Icon name="magnify-close" size={28} color={colors.gold} /><Text style={styles.libraryEmptyText}>No surahs match that search.</Text></View> : null}
+        </ScrollView>
+      </View>
+    </>
+  );
+}
+
 const useStyles = makeStyles((colors) => ({
   root: { flex: 1, backgroundColor: colors.surface },
+  desktopRoot: { flex: 1, backgroundColor: colors.surface, position: "relative", overflow: "hidden" },
+  desktopPage: { width: "100%", maxWidth: 1540, alignSelf: "center", paddingHorizontal: 34, paddingTop: 30, paddingBottom: 76, gap: 20, zIndex: 1 },
+  desktopHero: { minHeight: 152, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 30, paddingHorizontal: 38, paddingVertical: 24, borderRadius: 26, borderWidth: 1, borderColor: colors.goldBorder, backgroundColor: colors.surfaceSecondary, shadowColor: colors.gold, shadowOpacity: 0.1, shadowRadius: 28, shadowOffset: { width: 0, height: 12 } },
+  desktopEyebrow: { color: colors.gold, fontSize: 12, lineHeight: 17, fontWeight: "900", letterSpacing: 2.3, marginBottom: 7 },
+  desktopTitle: { color: colors.onSurface, fontFamily: serifFont, fontSize: 52, lineHeight: 58, fontWeight: "700", letterSpacing: -1.3 },
+  desktopSubtitle: { color: colors.onSurfaceSecondary, fontSize: 17.5, lineHeight: 27, marginTop: 4 },
+  desktopQuote: { color: colors.gold, fontFamily: serifFont, fontSize: 17, lineHeight: 27, maxWidth: 470, textAlign: "right" },
+  desktopContinue: { minHeight: 174, flexDirection: "row", alignItems: "center", gap: 22, paddingHorizontal: 28, paddingVertical: 24, borderRadius: 25, borderWidth: 1, borderColor: colors.goldBorder, backgroundColor: colors.surfaceSecondary, cursor: "pointer", overflow: "hidden", shadowColor: colors.gold, shadowOpacity: 0.1, shadowRadius: 24, shadowOffset: { width: 0, height: 10 } },
+  continueOrnament: { width: 105, height: 105, borderRadius: 999, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: colors.goldBorder, backgroundColor: colors.goldSoft, shadowColor: colors.gold, shadowOpacity: 0.25, shadowRadius: 22 },
+  desktopContinueCopy: { flex: 1, minWidth: 0 },
+  desktopContinueTitle: { color: colors.onSurface, fontFamily: serifFont, fontSize: 34, lineHeight: 41, fontWeight: "700" },
+  desktopContinueMeta: { color: colors.onSurfaceSecondary, fontSize: 13.5, lineHeight: 20, marginTop: 3 },
+  desktopProgressTrack: { width: "72%", maxWidth: 650, height: 6, borderRadius: 99, backgroundColor: colors.surfaceTertiary, overflow: "hidden", marginTop: 18 },
+  desktopProgressFill: { height: 6, borderRadius: 99, backgroundColor: colors.gold },
+  desktopReadButton: { minHeight: 52, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 9, paddingHorizontal: 20, borderRadius: 15, backgroundColor: colors.brandPrimary, shadowColor: colors.gold, shadowOpacity: 0.22, shadowRadius: 16 },
+  desktopReadButtonText: { color: colors.onBrandPrimary, fontSize: 14, fontWeight: "900" },
+  desktopPressed: { opacity: 0.7, transform: [{ scale: 0.99 }] },
+  libraryHead: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 22, paddingTop: 4 },
+  libraryTitle: { color: colors.onSurface, fontFamily: serifFont, fontSize: 30, lineHeight: 37, fontWeight: "700" },
+  librarySubtitle: { color: colors.muted, fontSize: 13, lineHeight: 19, marginTop: 2 },
+  libraryTools: { flexDirection: "row", alignItems: "center", gap: 11 },
+  librarySearch: { width: 285, minHeight: 48, flexDirection: "row", alignItems: "center", gap: 9, paddingHorizontal: 14, borderRadius: 14, borderWidth: 1, borderColor: colors.goldBorder, backgroundColor: colors.surfaceSecondary },
+  librarySearchInput: { flex: 1, color: colors.onSurface, fontSize: 14, lineHeight: 20, paddingVertical: 10 },
+  lengthFilters: { flexDirection: "row", alignItems: "center", gap: 5, padding: 5, borderRadius: 14, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surfaceSecondary },
+  lengthFilter: { minHeight: 37, alignItems: "center", justifyContent: "center", paddingHorizontal: 13, borderRadius: 10, cursor: "pointer" },
+  lengthFilterActive: { backgroundColor: colors.goldSoft, borderWidth: 1, borderColor: colors.goldBorder },
+  lengthFilterText: { color: colors.muted, fontSize: 11.5, fontWeight: "800" },
+  lengthFilterTextActive: { color: colors.gold },
+  surahGrid: { width: "100%", flexDirection: "row", flexWrap: "wrap", gap: 12 },
+  surahCard: { width: "32.78%", minWidth: 330, minHeight: 92, flexDirection: "row", alignItems: "center", gap: 14, paddingHorizontal: 17, paddingVertical: 14, borderRadius: 18, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surfaceSecondary, cursor: "pointer" },
+  surahCardActive: { borderColor: colors.gold, backgroundColor: colors.goldSoft },
+  surahCardHover: { borderColor: colors.goldBorder, transform: [{ translateY: -1 }] },
+  desktopNumBadge: { width: 49, height: 49, borderRadius: 14, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: colors.goldBorder, backgroundColor: colors.surfaceTertiary },
+  desktopNumBadgeActive: { backgroundColor: colors.brandPrimary, borderColor: colors.brandPrimary },
+  desktopNumText: { color: colors.gold, fontFamily: serifFont, fontSize: 14, fontWeight: "700" },
+  desktopNumTextActive: { color: colors.onBrandPrimary },
+  surahCardCopy: { flex: 1, minWidth: 0 },
+  desktopSurahName: { color: colors.onSurface, fontFamily: serifFont, fontSize: 19, lineHeight: 24, fontWeight: "700" },
+  desktopSurahMeta: { color: colors.muted, fontSize: 11.5, lineHeight: 17, marginTop: 3 },
+  currentChip: { paddingHorizontal: 8, paddingVertical: 5, borderRadius: 99, backgroundColor: colors.goldSoft },
+  currentChipText: { color: colors.gold, fontSize: 8.5, fontWeight: "900", letterSpacing: 0.8 },
+  libraryEmpty: { minHeight: 180, alignItems: "center", justifyContent: "center", gap: 12, borderRadius: 22, borderWidth: 1, borderColor: colors.goldBorder, backgroundColor: colors.surfaceSecondary },
+  libraryEmptyText: { color: colors.onSurface, fontFamily: serifFont, fontSize: 19 },
   content: { width: "100%", maxWidth: 980, alignSelf: "center", paddingHorizontal: 28, paddingBottom: 56 },
   headerWrap: { gap: 14, paddingTop: 12, paddingBottom: 12 },
   sectionEyebrow: { color: colors.gold, fontSize: 11, letterSpacing: 1.5, fontWeight: "700", marginTop: 4 },

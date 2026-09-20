@@ -3,8 +3,10 @@ import { Icon } from "@/src/components/Icon";
 import { useAuth } from "@/src/context/AppState";
 import { auth } from "@/src/lib/firebase";
 import { makeStyles, useTheme } from "@/src/theme";
+import { serifFont } from "@/src/typography";
 import { useRouter } from "expo-router";
 import Head from "expo-router/head";
+import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { useState, type ComponentProps } from "react";
@@ -74,7 +76,8 @@ export default function AuthScreen() {
   const [busy, setBusy] = useState<BusyAction>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const isWide = width >= 920;
+  const viewportWidth = Platform.OS === "web" && typeof window !== "undefined" ? window.innerWidth : width;
+  const isWide = viewportWidth >= 1080;
   const showGoogle = Platform.OS === "web";
   const background = scheme === "dark"
     ? (["#020202", "#080704", "#120D03"] as const)
@@ -93,10 +96,10 @@ export default function AuthScreen() {
 
   const close = () => {
     if (router.canGoBack()) router.back();
-    else router.replace("/(tabs)");
+    else router.replace("/");
   };
 
-  const finishAuth = () => router.replace("/(tabs)");
+  const finishAuth = () => router.replace("/");
 
   const submit = async () => {
     if (busy) return;
@@ -281,7 +284,7 @@ export default function AuthScreen() {
                             <ActivityIndicator color="#1A1814" />
                           ) : (
                             <>
-                              <Text style={styles.googleMark}>G</Text>
+                              <Image source="/google-g.svg" style={styles.googleMark} contentFit="contain" accessibilityLabel="Google" />
                               <Text style={styles.googleButtonText}>Continue with Google</Text>
                             </>
                           )}
@@ -634,7 +637,7 @@ const useStyles = makeStyles((colors) => ({
   ambientGlow: { position: "absolute", borderRadius: 999, backgroundColor: colors.goldSoft, opacity: 0.7 },
   ambientGlowTop: { width: 420, height: 420, top: -220, right: -145 },
   ambientGlowBottom: { width: 310, height: 310, bottom: -185, left: -120, opacity: 0.45 },
-  page: { width: "100%", maxWidth: 1120, alignSelf: "center", flex: 1 },
+  page: { width: "100%", maxWidth: 1240, alignSelf: "center", flex: 1 },
   topBar: { minHeight: 58, flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 24 },
   brandRow: { flexDirection: "row", alignItems: "center", gap: 10 },
   brandMark: {
@@ -646,20 +649,20 @@ const useStyles = makeStyles((colors) => ({
     borderWidth: 1, borderColor: colors.goldBorder,
   },
   brandSpark: { position: "absolute", right: -2, top: -2, width: 8, height: 8, backgroundColor: colors.gold, transform: [{ rotate: "45deg" }] },
-  brandName: { color: colors.onSurface, fontSize: 21, lineHeight: 24, fontWeight: "900", letterSpacing: -0.45 },
+  brandName: { color: colors.onSurface, fontFamily: serifFont, fontSize: 23, lineHeight: 26, fontWeight: "700", letterSpacing: -0.45 },
   brandTag: { color: colors.gold, fontSize: 7, lineHeight: 10, fontWeight: "900", letterSpacing: 1.5, marginTop: 1 },
   closeButton: {
     width: 44, height: 44, borderRadius: 15, borderCurve: "continuous", alignItems: "center", justifyContent: "center",
     backgroundColor: colors.surfaceSecondary, borderWidth: 1, borderColor: colors.border,
   },
   layout: { flex: 1, gap: 26, justifyContent: "center" },
-  layoutWide: { flexDirection: "row", alignItems: "center", gap: 64, paddingBottom: 42 },
+  layoutWide: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 44, paddingTop: 12, paddingBottom: 42 },
   storyColumn: { width: "100%", maxWidth: 620, alignSelf: "center", gap: 16 },
-  storyColumnWide: { flex: 1, maxWidth: 590, alignSelf: "auto" },
+  storyColumnWide: { flex: 1, maxWidth: 650, alignSelf: "auto" },
   eyebrowRow: { flexDirection: "row", alignItems: "center", gap: 10 },
   eyebrowLine: { width: 28, height: 2, borderRadius: 2, backgroundColor: colors.gold },
   eyebrow: { color: colors.gold, fontSize: 11, lineHeight: 16, fontWeight: "900", letterSpacing: 1.4 },
-  heroTitle: { color: colors.onSurface, fontSize: 36, lineHeight: 41, fontWeight: "900", letterSpacing: -1.15, maxWidth: 560 },
+  heroTitle: { color: colors.onSurface, fontFamily: serifFont, fontSize: 36, lineHeight: 43, fontWeight: "700", letterSpacing: -1.15, maxWidth: 560 },
   heroTitleWide: { fontSize: 52, lineHeight: 57, letterSpacing: -1.9 },
   heroSubtitle: { color: colors.muted, fontSize: 16, lineHeight: 25, maxWidth: 545 },
   benefitPanel: {
@@ -687,14 +690,15 @@ const useStyles = makeStyles((colors) => ({
     borderRadius: 999, backgroundColor: colors.goldSoft, borderWidth: 1, borderColor: colors.goldBorder,
   },
   securePillText: { color: colors.gold, fontSize: 9, lineHeight: 12, fontWeight: "900", letterSpacing: 1.15 },
-  cardTitle: { color: colors.onSurface, fontSize: 28, lineHeight: 34, fontWeight: "900", letterSpacing: -0.75, marginTop: 2 },
+  cardTitle: { color: colors.onSurface, fontFamily: serifFont, fontSize: 30, lineHeight: 36, fontWeight: "700", letterSpacing: -0.75, marginTop: 2 },
   cardSubtitle: { color: colors.muted, fontSize: 14, lineHeight: 22 },
   actionStack: { gap: 12, marginTop: 6 },
   googleButton: {
     minHeight: 56, borderRadius: 18, borderCurve: "continuous", backgroundColor: "#FFFFFF", borderWidth: 1,
-    borderColor: "rgba(0,0,0,0.10)", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 11,
+    borderColor: "rgba(168,126,20,0.28)", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 11,
+    boxShadow: "0 8px 24px rgba(95,68,10,0.08)",
   },
-  googleMark: { width: 22, color: "#4285F4", fontSize: 20, lineHeight: 24, fontWeight: "900", textAlign: "center" },
+  googleMark: { width: 21, height: 21 },
   googleButtonText: { color: "#1A1814", fontSize: 15, lineHeight: 20, fontWeight: "800" },
   dividerRow: { flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 1 },
   divider: { flex: 1, height: 1, backgroundColor: colors.divider },
@@ -714,7 +718,7 @@ const useStyles = makeStyles((colors) => ({
   legalDot: { width: 3, height: 3, borderRadius: 2, backgroundColor: colors.muted, opacity: 0.7 },
   backRow: { alignSelf: "flex-start", minHeight: 36, flexDirection: "row", alignItems: "center", gap: 7, paddingRight: 10 },
   backText: { color: colors.gold, fontSize: 13, lineHeight: 18, fontWeight: "800" },
-  formTitle: { color: colors.onSurface, fontSize: 28, lineHeight: 34, fontWeight: "900", letterSpacing: -0.75 },
+  formTitle: { color: colors.onSurface, fontFamily: serifFont, fontSize: 30, lineHeight: 36, fontWeight: "700", letterSpacing: -0.75 },
   formSubtitle: { color: colors.muted, fontSize: 14, lineHeight: 21, marginTop: -7 },
   modeTabs: {
     minHeight: 48, flexDirection: "row", padding: 4, borderRadius: 16, borderCurve: "continuous",

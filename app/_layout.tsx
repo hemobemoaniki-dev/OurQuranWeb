@@ -84,8 +84,8 @@ export default function RootLayout() {
         />
         <meta name="twitter:card" content="summary" />
         <meta name="theme-color" content="#030303" />
-        <link rel="icon" type="image/svg+xml" sizes="any" href="/favicon-web-v4.svg?v=4" />
-        <link rel="shortcut icon" href="/favicon-web-v4.svg?v=4" />
+        <link rel="icon" type="image/svg+xml" sizes="any" href="/favicon-web-v5.svg?v=5" />
+        <link rel="shortcut icon" href="/favicon-web-v5.svg?v=5" />
         <link rel="manifest" href="/site.webmanifest" />
       </Head>
       <ErrorBoundary resetKey={pathname}>

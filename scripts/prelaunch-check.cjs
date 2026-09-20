@@ -634,8 +634,8 @@ test("Reader exit always reaches Home and browser back cleanup avoids stale rout
   const exit = reader.slice(start, end);
   assert.match(exit, /stopSession\(\)/);
   assert.match(exit, /exitReaderAudio\(\)/);
-  assert.match(exit, /router\.replace\("\/\(tabs\)"\)/);
-  assert.ok(exit.indexOf('router.replace("/(tabs)")') < exit.indexOf('addReadingSeconds(seconds, day)'));
+  assert.match(exit, /router\.replace\("\/"\)/);
+  assert.ok(exit.indexOf('router.replace("/")') < exit.indexOf('addReadingSeconds(seconds, day)'));
   assert.match(reader, /window\.addEventListener\("popstate", handleBrowserBack\)/);
   assert.match(reader, /onBack=\{\(\) => finishReaderAndGoHome\(true\)\}/);
   assert.match(reader, /onPress=\{imDone\}/);
@@ -791,16 +791,16 @@ test('bottom tabs stay mounted, switch without animation and load icon font befo
   assert.match(rootLayout, /"Material Design Icons":\s*require\("@react-native-vector-icons\/material-design-icons\/fonts\/MaterialDesignIcons\.ttf"\)/);
 });
 
-test('web desktop shell uses a compact rail, wide dashboard and adaptive Reader workspace', () => {
+test('web desktop shell uses premium top navigation, wide dashboard and adaptive Reader workspace', () => {
   const tabs = fs.readFileSync(path.join(root, 'app/(tabs)/_layout.tsx'), 'utf8');
   const home = fs.readFileSync(path.join(root, 'app/(tabs)/index.tsx'), 'utf8');
   const reader = fs.readFileSync(path.join(root, 'app/reader.tsx'), 'utf8');
   const brand = fs.readFileSync(path.join(root, 'src/components/BrandMark.tsx'), 'utf8');
-  assert.match(tabs, /width:\s*128/);
+  assert.match(tabs, /<WebTopNav/);
   assert.match(home, /maxWidth:\s*1580/);
   assert.match(home, /Quick access/);
   assert.match(home, /Weekly journey/);
-  assert.match(reader, /styles\.toolRail/);
+  assert.match(reader, /<WebTopNav active="quran"/);
   assert.match(reader, /styles\.infoPanel/);
   assert.match(reader, /translationDivider/);
   assert.match(reader, /desktopReader/);
@@ -813,9 +813,9 @@ test('web favicon uses a validated export asset plus the versioned glowing brows
   const manifest = fs.readFileSync(path.join(root, 'public/site.webmanifest'), 'utf8');
   assert.match(config, /favicon-web-v3\.png/);
   assert.doesNotMatch(config, /"favicon": "\.\/assets\/images\/icon\.png"/);
-  assert.match(layout, /\/favicon-web-v4\.svg\?v=4/);
-  assert.match(manifest, /\/favicon-web-v4\.svg/);
-  assert.ok(fs.existsSync(path.join(root, 'public/favicon-web-v4.svg')));
+  assert.match(layout, /\/favicon-web-v5\.svg\?v=5/);
+  assert.match(manifest, /\/favicon-web-v5\.svg/);
+  assert.ok(fs.existsSync(path.join(root, 'public/favicon-web-v5.svg')));
 });
 
 test('top streak badge avoids duplicate red-green week state and links progress metrics', () => {
@@ -985,7 +985,7 @@ test('reader themes sync independently, validate unknown IDs and retain newer ch
   const local = { ...old, settings: { ...old.settings, readerTheme: 'sakura-mist' }, settingsUpdatedAt: { readerTheme: '2026-09-18T12:00:00Z' } };
   const merged = account.mergeAccounts(old, local);
   assert.equal(merged.settings.readerTheme, 'sakura-mist');
-  assert.equal(merged.settings.theme, 'light');
+  assert.equal(merged.settings.theme, 'dark');
   const savedDark = { ...merged, settings: { ...merged.settings, theme: 'dark' } };
   assert.equal(account.fromRemote('theme-user', savedDark).settings.theme, 'dark');
   assert.equal(account.fromRemote('theme-user', merged).settings.readerTheme, 'sakura-mist');

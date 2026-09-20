@@ -1,5 +1,7 @@
 import { Platform, Text as NativeText, TextInput as NativeTextInput, StyleSheet, type TextProps, type TextInputProps } from 'react-native';
 
+const WEB_UI_FONT = '"Inter", "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI Variable", "Segoe UI", sans-serif';
+
 // Keep Arabic shaping and explicit display faces; use bundled fonts for Latin UI.
 function face(style: TextProps['style'], children?: React.ReactNode) {
   const flat = StyleSheet.flatten(style) ?? {};
@@ -7,10 +9,10 @@ function face(style: TextProps['style'], children?: React.ReactNode) {
   if (flat.fontFamily || arabic) return {};
   const weight = flat.fontWeight === 'bold' ? 700 : Number(flat.fontWeight ?? 500);
   if (Platform.OS === 'web') {
-    return {
-      fontFamily: weight >= 800 ? 'LatoBlack' : weight >= 600 ? 'LatoBold' : 'LatoRegular',
-      fontWeight: 'normal' as const,
-    };
+    // Let the browser render a crisp variable system face. The previous web
+    // setup forced every weight into a separate Lato file, which made dense
+    // desktop pages look small and synthetic.
+    return { fontFamily: WEB_UI_FONT };
   }
   return { fontFamily: weight >= 800 ? 'LatoBlack' : weight >= 600 ? 'LatoBold' : 'LatoRegular', fontWeight: 'normal' as const };
 }

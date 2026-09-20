@@ -50,5 +50,5 @@ jobs:
       - name: Verify exported web shell
         run: |
           test -s dist/index.html
-          test -s dist/favicon-web-v4.svg
+          test -s dist/favicon-web-v5.svg
           test -s dist/site.webmanifest
