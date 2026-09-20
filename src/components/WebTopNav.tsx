@@ -1,5 +1,4 @@
 import { Text } from "@/src/components/AppText";
-import { Icon } from "@/src/components/Icon";
 import { BrandMark } from "@/src/components/BrandMark";
 import { ProfileMenu } from "@/src/components/ProfileMenu";
 import { serifFont } from "@/src/typography";
