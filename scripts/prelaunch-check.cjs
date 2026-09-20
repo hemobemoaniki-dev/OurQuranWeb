@@ -708,6 +708,8 @@ test('every statically referenced web icon has a real SVG mapping', () => {
   for (const match of aliasesBlock.matchAll(/["']([^"']+)["']\s*:/g)) supported.add(match[1]);
   for (const match of nodesBlock.matchAll(/^\s*([A-Za-z][A-Za-z0-9_]*)\s*:/gm)) supported.add(match[1]);
 
+  const missingIcons = new Map();
+
   function visit(dir) {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
       const full = path.join(dir, entry.name);
@@ -747,12 +749,22 @@ test('every statically referenced web icon has a real SVG mapping', () => {
       ts.forEachChild(node, walk);
     }
     walk(ast);
-    for (const name of names) assert.ok(supported.has(name), `Missing web icon mapping for "${name}" referenced by ${path.relative(root, file)}`);
+    for (const name of names) {
+      if (supported.has(name)) continue;
+      const files = missingIcons.get(name) ?? [];
+      files.push(path.relative(root, file));
+      missingIcons.set(name, files);
+    }
   }
 
   visit(path.join(root, 'app'));
   visit(path.join(root, 'src/components'));
 
+  assert.deepEqual(
+    [...missingIcons.entries()].map(([name, files]) => ({ name, files })),
+    [],
+    'Missing web icon mappings: ' + JSON.stringify([...missingIcons.entries()]),
+  );
   assert.doesNotMatch(iconSource, /M9 12h6M12 9v6/);
 });
 
