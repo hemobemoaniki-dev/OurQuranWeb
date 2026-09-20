@@ -148,9 +148,10 @@ function CustomTabBar({ state }: any) {
       <View style={styles.brand}>
         <BrandLockup
           tint={colors.gold}
-          size={68}
+          size={72}
           orientation="vertical"
           lightText={scheme === "dark"}
+          markVariant="appIcon"
         />
       </View>
 
