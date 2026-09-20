@@ -12,6 +12,7 @@ import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { ErrorBoundary } from "@/src/components/error-boundary";
+import { BRAND_FAVICON_URI } from "@/src/components/BrandMark";
 import { ReminderScheduler } from "@/src/components/ReminderScheduler";
 import { ReaderWarmup } from "@/src/components/ReaderWarmup";
 import { AppProviders } from "@/src/context/AppState";
@@ -84,8 +85,8 @@ export default function RootLayout() {
         />
         <meta name="twitter:card" content="summary" />
         <meta name="theme-color" content="#030303" />
-        <link rel="icon" type="image/svg+xml" sizes="any" href="/favicon-web-v5.svg?v=5" />
-        <link rel="shortcut icon" href="/favicon-web-v5.svg?v=5" />
+        <link rel="icon" type="image/svg+xml" sizes="any" href={BRAND_FAVICON_URI} />
+        <link rel="shortcut icon" href={BRAND_FAVICON_URI} />
         <link rel="manifest" href="/site.webmanifest" />
       </Head>
       <ErrorBoundary resetKey={pathname}>

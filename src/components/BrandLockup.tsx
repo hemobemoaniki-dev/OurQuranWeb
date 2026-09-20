@@ -3,19 +3,23 @@ import { View } from "react-native";
 
 import { Text } from "@/src/components/AppText";
 import { BrandMark } from "@/src/components/BrandMark";
+import { serifFont } from "@/src/typography";
 
 export const BrandLockup = memo(function BrandLockup({
   tint,
   size = 58,
   orientation = "horizontal",
   lightText = false,
+  markVariant,
 }: {
   tint: string;
   size?: number;
   orientation?: "horizontal" | "vertical";
   lightText?: boolean;
+  markVariant?: "mark" | "appIcon";
 }) {
   const vertical = orientation === "vertical";
+  const resolvedMarkVariant = markVariant ?? (vertical ? "appIcon" : "mark");
   return (
     <View
       style={{
@@ -26,11 +30,12 @@ export const BrandLockup = memo(function BrandLockup({
       }}
       pointerEvents="none"
     >
-      <BrandMark size={size} tint={tint} glow={tint} intensity="strong" />
+      <BrandMark size={size} tint={tint} glow={tint} intensity="strong" variant={resolvedMarkVariant} />
       <View style={{ alignItems: vertical ? "center" : "flex-start", minWidth: 0 }}>
         <Text
           style={{
             color: lightText ? "#FFFFFF" : "#17130D",
+            fontFamily: serifFont,
             fontSize: vertical ? 17 : 24,
             lineHeight: vertical ? 20 : 28,
             fontWeight: "900",

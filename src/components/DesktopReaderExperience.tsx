@@ -1,5 +1,6 @@
 import { Text } from "@/src/components/AppText";
 import { Icon } from "@/src/components/Icon";
+import { BrandMark } from "@/src/components/BrandMark";
 import { useAccount, useReaderAccount } from "@/src/context/AppState";
 import { useSession } from "@/src/context/SessionContext";
 import { RECITERS, reciterById } from "@/src/data/reciters";
@@ -8,7 +9,7 @@ import { formatClock } from "@/src/lib/dates";
 import { arabicFont, serifFont } from "@/src/typography";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { ActivityIndicator, Image, Platform, Pressable, ScrollView, Share, StyleSheet, View } from "react-native";
+import { ActivityIndicator, Platform, Pressable, ScrollView, Share, StyleSheet, View } from "react-native";
 import { useState } from "react";
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2] as const;
@@ -101,7 +102,7 @@ export function DesktopReaderExperience({
     <View style={styles.screen} testID="desktop-cinematic-reader">
       <View style={[styles.topNav, webGlass, { borderColor: theme.border + "88" }]}>
         <View style={styles.brandWrap}>
-          <Image source={require("../../assets/images/ourquran-web-mark.png")} style={styles.brandMark} resizeMode="cover" />
+          <BrandMark size={54} tint={theme.accent} glow={theme.accent} intensity="medium" variant="mark" />
           <View>
             <Text style={styles.brandName}>OurQuran</Text>
             <Text style={[styles.brandTagline, { color: theme.accent }]}>READ AND ASCEND</Text>
@@ -542,8 +543,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(5,5,4,0.82)",
     borderBottomWidth: 1,
   },
-  brandWrap: { width: 300, flexDirection: "row", alignItems: "center", gap: 12 },
-  brandMark: { width: 46, height: 46, borderRadius: 12 },
+  brandWrap: { width: 315, flexDirection: "row", alignItems: "center", gap: 14 },
   brandName: { color: "#FFFFFF", fontFamily: serifFont, fontSize: 26, lineHeight: 29, fontWeight: "700" },
   brandTagline: { fontSize: 8, lineHeight: 11, letterSpacing: 2.2, fontWeight: "900" },
   navLinks: { flex: 1, flexDirection: "row", justifyContent: "center", alignItems: "stretch", gap: 20 },
