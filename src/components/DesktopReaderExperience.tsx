@@ -1,7 +1,8 @@
 import { Text } from "@/src/components/AppText";
 import { Icon } from "@/src/components/Icon";
 import { BrandMark } from "@/src/components/BrandMark";
-import { useAccount, useReaderAccount } from "@/src/context/AppState";
+import { ProfileMenu } from "@/src/components/ProfileMenu";
+import { useReaderAccount } from "@/src/context/AppState";
 import { useSession } from "@/src/context/SessionContext";
 import { RECITERS, reciterById } from "@/src/data/reciters";
 import { READER_THEMES, type ReaderTheme } from "@/src/lib/reader-themes";
@@ -83,7 +84,6 @@ export function DesktopReaderExperience({
   onBack,
 }: Props) {
   const router = useRouter();
-  const { account } = useAccount();
   const { account: readerAccount, updateSettings } = useReaderAccount();
   const { seconds } = useSession();
   const [menu, setMenu] = useState<MenuKey>(null);
@@ -118,16 +118,7 @@ export function DesktopReaderExperience({
         </View>
 
         <View style={styles.navRight}>
-        <Pressable
-          onPress={() => navigate("/preferences")}
-          style={({ pressed }) => [styles.profilePill, pressed && styles.pressed]}
-          accessibilityRole="button"
-          accessibilityLabel="Open profile settings"
-        >
-          <Icon name="account-circle-outline" size={26} color="#FFFFFF" />
-          <Text numberOfLines={1} style={styles.profileName}>{account.username || account.fullName || "Reader"}</Text>
-          <Icon name="chevron-down" size={18} color="#E9E2D5" />
-        </Pressable>
+          <ProfileMenu accent={theme.accent} onBeforeAction={onStopAudio} />
         </View>
       </View>
 
@@ -562,7 +553,6 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 12,
   },
-  profileName: { color: "#FFFFFF", maxWidth: 155, fontSize: 15, fontWeight: "800" },
   pageScroll: { flex: 1, minHeight: 0 },
   pageContent: { width: "100%", maxWidth: 1520, alignSelf: "center", paddingHorizontal: 40, paddingTop: 24, paddingBottom: 28, gap: 16 },
   progressRibbon: {

@@ -1,7 +1,7 @@
 import { Text } from "@/src/components/AppText";
 import { BrandMark } from "@/src/components/BrandMark";
 import { Icon, type IconName } from "@/src/components/Icon";
-import { ProfileAvatar } from "@/src/components/ProfileAvatar";
+import { ProfileMenu } from "@/src/components/ProfileMenu";
 import { ReaderBackdrop } from "@/src/components/ReaderBackdrop";
 import { StreakBadge } from "@/src/components/StreakBadge";
 import { WebPageBackdrop } from "@/src/components/WebPageBackdrop";
@@ -209,19 +209,7 @@ export default function Home() {
               celebrateToken={crownCelebrationToken}
               onPressProgress={() => router.push("/settings/progress")}
             />
-            <Pressable
-              onPress={() => router.push(user ? "/settings/profile" : "/auth")}
-              accessibilityRole="button"
-              accessibilityLabel={user ? "Open profile" : "Sign in"}
-              style={({ pressed }) => [styles.profileAction, pressed && styles.pressed]}
-            >
-              <ProfileAvatar value={user ? account.photoURL : undefined} size={38} />
-              <View style={styles.profileCopy}>
-                <Text style={styles.profileName}>{user ? account.username || "Reader" : "Guest"}</Text>
-                <Text style={styles.profileMeta}>{user ? "Account" : "Sign in to save"}</Text>
-              </View>
-              <Icon name="chevron-down" size={17} color={colors.muted} />
-            </Pressable>
+            <ProfileMenu accent={colors.gold} compact />
           </View> : null}
         </View>
 

@@ -52,7 +52,7 @@ export default function Adhkar() {
 }
 
 const DESKTOP_CATEGORIES = [
-  { key: "all", label: "All", icon: "view-grid-outline" },
+  { key: "all", label: "All", icon: "magnify" },
   { key: "morning", label: "Morning", icon: "white-balance-sunny" },
   { key: "evening", label: "Evening", icon: "weather-night" },
   { key: "prayer", label: "Prayer", icon: "mosque" },
@@ -148,6 +148,7 @@ function DesktopAdhkar() {
   const { account, setAdhkarCount, setTasbeeh } = useAccount();
   const [category, setCategory] = useState<DesktopCategory>("all");
   const [query, setQuery] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
   const [index, setIndex] = useState(0);
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null);
@@ -235,11 +236,32 @@ function DesktopAdhkar() {
           </View>
 
           <View style={styles.categoryShell}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.desktopCategories}>
+            <ScrollView
+              horizontal
+              style={styles.categoryScroller}
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.desktopCategories}
+              keyboardShouldPersistTaps="handled"
+            >
               {DESKTOP_CATEGORIES.map((item) => {
                 const active = category === item.key;
                 return (
-                  <Pressable key={item.key} onPress={() => { setCategory(item.key); setQuery(""); setIndex(0); }} style={[styles.categoryButton, active && styles.categoryButtonActive]} testID={`adhkar-category-${item.key}`}>
+                  <Pressable
+                    key={item.key}
+                    onPress={() => {
+                      setIndex(0);
+                      if (item.key === "all") {
+                        setCategory("all");
+                        setSearchOpen(true);
+                        return;
+                      }
+                      setSearchOpen(false);
+                      setQuery("");
+                      setCategory(item.key);
+                    }}
+                    style={[styles.categoryButton, active && styles.categoryButtonActive]}
+                    testID={`adhkar-category-${item.key}`}
+                  >
                     <Icon name={item.icon as any} size={21} color={active ? colors.gold : colors.onSurface} />
                     <Text style={[styles.categoryText, active && styles.categoryTextActive]}>{item.label}</Text>
                     <Text style={[styles.categoryCount, active && styles.categoryCountActive]}>{categoryCounts.get(item.key) ?? 0}</Text>
@@ -247,15 +269,42 @@ function DesktopAdhkar() {
                 );
               })}
             </ScrollView>
-            <View style={styles.desktopSearch}>
-              <Icon name="magnify" size={22} color={colors.gold} />
-              <TextInput value={query} onChangeText={(value) => { setQuery(value); if (value.trim()) setCategory("all"); setIndex(0); }} placeholder="Search adhkar, source or category…" placeholderTextColor={colors.muted} style={styles.desktopSearchInput} testID="adhkar-search" />
-            </View>
+
+            {searchOpen ? (
+              <View style={styles.searchPopover} testID="adhkar-search-popover">
+                <Icon name="magnify" size={20} color={colors.gold} />
+                <TextInput
+                  autoFocus
+                  value={query}
+                  onChangeText={(value) => { setQuery(value); setCategory("all"); setIndex(0); }}
+                  placeholder="Search adhkar, source or category…"
+                  placeholderTextColor={colors.muted}
+                  style={styles.searchPopoverInput}
+                  testID="adhkar-search"
+                />
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Close search"
+                  onPress={() => { setSearchOpen(false); setQuery(""); setIndex(0); }}
+                  style={styles.searchClose}
+                >
+                  <Icon name="close" size={18} color={colors.onSurface} />
+                </Pressable>
+              </View>
+            ) : null}
           </View>
 
           <View style={styles.desktopContentRow}>
             {current ? (
               <View style={styles.featuredDhikr} testID={`dhikr-card-${current.id}`}>
+                <LinearGradient
+                  pointerEvents="none"
+                  colors={["rgba(236,202,105,0.085)", "rgba(7,10,10,0.035)", "rgba(0,0,0,0.12)"]}
+                  locations={[0, 0.48, 1]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={StyleSheet.absoluteFill}
+                />
                 <View style={styles.featuredHead}>
                   <View style={styles.featuredIcon}><Icon name={time === "morning" ? "white-balance-sunny" : "weather-night"} size={29} color={colors.gold} /></View>
                   <View style={styles.featuredHeadCopy}>
@@ -271,12 +320,17 @@ function DesktopAdhkar() {
 
                 <View style={styles.dhikrBody}>
                   <Pressable accessibilityRole="button" accessibilityLabel="Previous dhikr" onPress={() => move(-1)} style={styles.roundArrow}><Icon name="chevron-left" size={30} color={colors.gold} /></Pressable>
-                  <View style={styles.dhikrTextColumn}>
+                  <ScrollView
+                    style={styles.dhikrTextScroll}
+                    contentContainerStyle={styles.dhikrTextColumn}
+                    showsVerticalScrollIndicator
+                    nestedScrollEnabled
+                  >
                     <Text style={styles.featuredArabic}>{dhikrArabic(current, time)}</Text>
                     <View style={styles.ornamentRow}><View style={styles.ornamentLine} /><Icon name="star-four-points" size={22} color={colors.gold} /><View style={styles.ornamentLine} /></View>
                     <Text style={styles.featuredEnglish}>{dhikrEnglish(current, time)}</Text>
                     <Text style={styles.featuredSource}>{current.source} · {current.authenticity}</Text>
-                  </View>
+                  </ScrollView>
                   <Pressable accessibilityRole="button" accessibilityLabel="Next dhikr" onPress={() => move(1)} style={styles.roundArrow}><Icon name="chevron-right" size={30} color={colors.gold} /></Pressable>
                 </View>
 
@@ -287,6 +341,7 @@ function DesktopAdhkar() {
 
             <View style={styles.desktopSide}>
               <View style={styles.streakCard}>
+                <LinearGradient pointerEvents="none" colors={["rgba(236,202,105,0.10)", "rgba(255,255,255,0.018)", "transparent"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
                 <View style={styles.sideTitleRow}><Icon name="fire" size={25} color={colors.gold} /><Text style={styles.sideTitle}>Daily streak</Text></View>
                 <Text style={styles.streakNumber}>{streak}</Text>
                 <Text style={styles.streakDays}>days</Text>
@@ -294,12 +349,14 @@ function DesktopAdhkar() {
               </View>
               <View style={styles.sideBottomRow}>
                 <View style={styles.nextAdhkarCard}>
+                  <LinearGradient pointerEvents="none" colors={["rgba(236,202,105,0.08)", "rgba(255,255,255,0.015)", "transparent"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
                   <View style={styles.sideTitleRow}><Icon name="clock-outline" size={23} color={colors.gold} /><Text style={styles.sideTitle}>Next adhkar</Text></View>
                   <Text style={styles.nextTime}>{untilLabel}</Text>
                   <Text style={styles.sideNote}>{schedule.kind === "evening" ? "Until evening Adhkar" : "Until morning Adhkar"}</Text>
                   <Text style={styles.reminderHint}>{schedule.precise ? "Local sunrise/sunset timing" : "Allow location for local solar timing"}</Text>
                 </View>
                 <View style={styles.tasbeehCard}>
+                  <LinearGradient pointerEvents="none" colors={["rgba(236,202,105,0.08)", "rgba(255,255,255,0.015)", "transparent"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
                   <View style={styles.sideTitleRow}><Icon name="counter" size={23} color={colors.gold} /><Text style={styles.sideTitle}>Tasbeeh</Text></View>
                   <View style={styles.tasbeehPhrasePill}><Text style={styles.tasbeehPhrase}>{selectedPhrase.label}</Text></View>
                   <Pressable accessibilityRole="button" accessibilityLabel="Increase Tasbeeh count" onPress={() => setTasbeeh((value) => ({ count: value.count + 1 }))} style={({ pressed }) => [styles.tasbeehRing, pressed && styles.desktopPressed]}>
@@ -593,17 +650,21 @@ const useStyles = makeStyles((colors) => ({
   desktopSubtitle: { color: colors.onSurfaceSecondary, fontSize: 18, lineHeight: 27, marginTop: 4 },
   desktopQuote: { color: colors.gold, fontFamily: serifFont, fontSize: 17, lineHeight: 27, maxWidth: 420, textAlign: "right", opacity: 0.92 },
   categoryShell: {
-    minHeight: 88,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 14,
-    padding: 10,
+    minHeight: 86,
+    position: "relative",
+    padding: 8,
     borderRadius: 22,
     borderWidth: 1,
-    borderColor: colors.borderStrong,
-    backgroundColor: colors.surfaceSecondary,
+    borderColor: colors.goldBorder,
+    backgroundColor: "rgba(8,10,10,0.62)",
+    shadowColor: colors.gold,
+    shadowOpacity: 0.08,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 6 },
+    overflow: "visible",
   },
-  desktopCategories: { flexDirection: "row", alignItems: "center", gap: 7, paddingRight: 12 },
+  categoryScroller: { width: "100%" },
+  desktopCategories: { flexDirection: "row", alignItems: "center", gap: 7, paddingRight: 18 },
   categoryButton: {
     minWidth: 86,
     minHeight: 70,
@@ -622,24 +683,43 @@ const useStyles = makeStyles((colors) => ({
   categoryTextActive: { color: colors.gold },
   categoryCount: { color: colors.muted, fontSize: 9.5, lineHeight: 12, fontWeight: "800", opacity: 0.82 },
   categoryCountActive: { color: colors.gold, opacity: 1 },
-  desktopSearch: {
-    width: 320,
-    minHeight: 52,
+  searchPopover: {
+    position: "absolute",
+    left: 12,
+    top: 12,
+    right: 12,
+    minHeight: 58,
+    zIndex: 20,
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
     paddingHorizontal: 16,
-    borderRadius: 15,
+    borderRadius: 17,
     borderWidth: 1,
     borderColor: colors.goldBorder,
-    backgroundColor: colors.surfaceTertiary,
+    backgroundColor: "rgba(12,12,10,0.985)",
+    shadowColor: "#000000",
+    shadowOpacity: 0.4,
+    shadowRadius: 24,
+    shadowOffset: { width: 0, height: 10 },
   },
-  desktopSearchInput: { flex: 1, color: colors.onSurface, fontSize: 15, paddingVertical: 10 },
-  desktopContentRow: { flexDirection: "row", alignItems: "stretch", gap: 20 },
+  searchPopoverInput: { flex: 1, color: colors.onSurface, fontSize: 15, paddingVertical: 10 },
+  searchClose: {
+    width: 34,
+    height: 34,
+    borderRadius: 11,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surfaceTertiary,
+    cursor: "pointer",
+  },
+  desktopContentRow: { height: 540, flexDirection: "row", alignItems: "stretch", gap: 20 },
   featuredDhikr: {
     flex: 1,
     minWidth: 0,
-    minHeight: 552,
+    height: 540,
     borderRadius: 26,
     borderWidth: 1,
     borderColor: colors.goldBorder,
@@ -689,7 +769,7 @@ const useStyles = makeStyles((colors) => ({
   completionText: { color: colors.onSurface, fontSize: 12, fontWeight: "800" },
   dhikrBody: {
     flex: 1,
-    minHeight: 360,
+    minHeight: 0,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
@@ -709,7 +789,8 @@ const useStyles = makeStyles((colors) => ({
     backgroundColor: colors.surfaceTertiary,
     cursor: "pointer",
   },
-  dhikrTextColumn: { flex: 1, maxWidth: 820, alignItems: "center", justifyContent: "center", gap: 16 },
+  dhikrTextScroll: { flex: 1, maxWidth: 860, minWidth: 0 },
+  dhikrTextColumn: { flexGrow: 1, alignItems: "center", justifyContent: "center", gap: 16, paddingHorizontal: 10, paddingVertical: 8 },
   featuredArabic: {
     color: colors.onSurface,
     fontFamily: arabicFont,
@@ -778,52 +859,71 @@ const useStyles = makeStyles((colors) => ({
     backgroundColor: colors.surfaceSecondary,
   },
   desktopEmptyText: { color: colors.onSurface, fontFamily: serifFont, fontSize: 20 },
-  desktopSide: { width: 420, flexShrink: 0, gap: 18 },
+  desktopSide: { width: 420, height: 540, flexShrink: 0, gap: 14 },
   streakCard: {
-    minHeight: 220,
+    height: 168,
+    flexShrink: 0,
+    position: "relative",
+    overflow: "hidden",
     alignItems: "center",
-    padding: 22,
-    borderRadius: 24,
+    padding: 18,
+    borderRadius: 22,
     borderWidth: 1,
     borderColor: colors.goldBorder,
-    backgroundColor: colors.surfaceSecondary,
+    backgroundColor: "rgba(10,11,10,0.68)",
+    shadowColor: colors.gold,
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 6 },
   },
   sideTitleRow: { width: "100%", flexDirection: "row", alignItems: "center", gap: 9 },
   sideTitle: { color: colors.onSurface, fontFamily: serifFont, fontSize: 18, fontWeight: "700" },
-  streakNumber: { color: colors.gold, fontFamily: serifFont, fontSize: 72, lineHeight: 78, fontWeight: "700", marginTop: 12 },
+  streakNumber: { color: colors.gold, fontFamily: serifFont, fontSize: 52, lineHeight: 56, fontWeight: "700", marginTop: 4 },
   streakDays: { color: colors.onSurface, fontSize: 13, fontWeight: "800", letterSpacing: 1.5, textTransform: "uppercase" },
-  sideNote: { color: colors.muted, fontSize: 12, lineHeight: 18, textAlign: "center", marginTop: 8 },
-  sideBottomRow: { flex: 1, flexDirection: "row", gap: 14, alignItems: "stretch" },
+  sideNote: { color: colors.muted, fontSize: 11.5, lineHeight: 16, textAlign: "center", marginTop: 4 },
+  sideBottomRow: { flex: 1, minHeight: 0, flexDirection: "row", gap: 14, alignItems: "stretch" },
   nextAdhkarCard: {
     flex: 1,
     minWidth: 0,
-    minHeight: 250,
-    padding: 20,
+    minHeight: 0,
+    position: "relative",
+    overflow: "hidden",
+    padding: 17,
     justifyContent: "space-between",
     borderRadius: 22,
     borderWidth: 1,
     borderColor: colors.goldBorder,
-    backgroundColor: colors.surfaceSecondary,
+    backgroundColor: "rgba(10,11,10,0.68)",
+    shadowColor: colors.gold,
+    shadowOpacity: 0.07,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 5 },
   },
-  nextTime: { color: colors.gold, fontFamily: serifFont, fontSize: 34, lineHeight: 40, fontWeight: "800", marginTop: 18, textAlign: "center" },
+  nextTime: { color: colors.gold, fontFamily: serifFont, fontSize: 30, lineHeight: 35, fontWeight: "800", marginTop: 10, textAlign: "center" },
   reminderHint: { color: colors.gold, fontSize: 10, lineHeight: 15, textAlign: "center", marginTop: 13 },
   tasbeehCard: {
     flex: 1,
     minWidth: 0,
-    minHeight: 250,
+    minHeight: 0,
+    position: "relative",
+    overflow: "hidden",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: 20,
+    padding: 17,
     borderRadius: 22,
     borderWidth: 1,
     borderColor: colors.goldBorder,
-    backgroundColor: colors.surfaceSecondary,
+    backgroundColor: "rgba(10,11,10,0.68)",
+    shadowColor: colors.gold,
+    shadowOpacity: 0.07,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 5 },
   },
   tasbeehPhrasePill: { minHeight: 30, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, backgroundColor: colors.goldSoft, borderWidth: 1, borderColor: colors.goldBorder, alignItems: "center", justifyContent: "center", marginTop: 8, alignSelf: "stretch" },
   tasbeehPhrase: { color: colors.gold, fontSize: 13, fontWeight: "900" },
   tasbeehRing: {
-    width: 126,
-    height: 126,
+    width: 108,
+    height: 108,
     borderRadius: 999,
     alignItems: "center",
     justifyContent: "center",
@@ -832,7 +932,7 @@ const useStyles = makeStyles((colors) => ({
     borderColor: colors.gold,
     backgroundColor: colors.goldSoft,
   },
-  tasbeehCount: { color: colors.onSurface, fontFamily: serifFont, fontSize: 42, lineHeight: 46, fontWeight: "900" },
+  tasbeehCount: { color: colors.onSurface, fontFamily: serifFont, fontSize: 36, lineHeight: 40, fontWeight: "900" },
   tasbeehTarget: { color: colors.muted, fontSize: 10, fontWeight: "700" },
   tasbeehActions: { flexDirection: "row", alignItems: "center", gap: 8 },
   counterMini: {

@@ -1,8 +1,6 @@
 import { Text } from "@/src/components/AppText";
-import { Icon } from "@/src/components/Icon";
 import { BrandMark } from "@/src/components/BrandMark";
-import { ProfileAvatar } from "@/src/components/ProfileAvatar";
-import { useAccount, useAuth } from "@/src/context/AppState";
+import { ProfileMenu } from "@/src/components/ProfileMenu";
 import { serifFont } from "@/src/typography";
 import { usePathname, useRouter } from "expo-router";
 import { memo } from "react";
@@ -45,10 +43,7 @@ export const WebTopNav = memo(function WebTopNav({ active }: { active?: NavKey }
   const router = useRouter();
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
-  const { account } = useAccount();
-  const { user } = useAuth();
   const selected = active ?? activeFromPath(pathname);
-  const name = user ? account.username || account.fullName || "Reader" : "Guest";
 
   return (
     <View style={[styles.shell, { paddingTop: insets.top }]} testID="desktop-top-nav">
@@ -75,11 +70,7 @@ export const WebTopNav = memo(function WebTopNav({ active }: { active?: NavKey }
           })}
         </View>
         <View style={styles.accountZone}>
-          <Pressable accessibilityRole="button" accessibilityLabel={user ? "Open profile" : "Sign in"} onPress={() => router.push(user ? "/settings/profile" : "/auth")} style={({ pressed, hovered }: any) => [styles.accountButton, hovered && styles.glassHover, pressed && styles.pressed]}>
-            <ProfileAvatar value={user ? account.photoURL : undefined} size={40} />
-            <Text style={styles.accountName} numberOfLines={1}>{name}</Text>
-            <Icon name="chevron-down" size={18} color="#D8D1C2" />
-          </Pressable>
+          <ProfileMenu accent="#ECCA69" />
         </View>
       </View>
     </View>
@@ -105,8 +96,5 @@ const styles = StyleSheet.create({
   accountZone: { minWidth: 205, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 12 },
   searchButton: { width: 46, height: 46, borderRadius: 15, borderWidth: 1, borderColor: "transparent", alignItems: "center", justifyContent: "center", cursor: "pointer" },
   accountDivider: { width: 1, height: 38, backgroundColor: "rgba(255,255,255,0.22)" },
-  accountButton: { maxWidth: 190, minHeight: 54, paddingHorizontal: 10, borderRadius: 18, flexDirection: "row", alignItems: "center", gap: 9, cursor: "pointer", borderWidth: 1, borderColor: "transparent" },
-  accountName: { flexShrink: 1, color: "#FFFDF7", fontFamily: serifFont, fontSize: 15.5, lineHeight: 20 },
-  glassHover: { backgroundColor: "rgba(236,202,105,0.10)", borderColor: "rgba(236,202,105,0.25)" },
   pressed: { opacity: 0.7, transform: [{ scale: 0.98 }] },
 });
