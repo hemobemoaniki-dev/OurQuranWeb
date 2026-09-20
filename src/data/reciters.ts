@@ -88,6 +88,26 @@ export function recitationUrl(reciterId: string, surah: number, ayah: number): s
   return everyAyahUrl(reciterId, surah, ayah);
 }
 
+/**
+ * Alternate network source for browser/CDN failures. Four supported reciters
+ * exist on both Islamic Network and EveryAyah, so normal ayahs and surah
+ * openings can retry on the other CDN before surfacing an error.
+ */
+export function recitationFallbackUrl(reciterId: string, surah: number, ayah: number): string | null {
+  const reciter = reciterById(reciterId);
+  const primary = recitationUrl(reciterId, surah, ayah);
+  const everyAyah = everyAyahUrl(reciterId, surah, ayah);
+
+  if (reciter.cleanIntro) {
+    const globalAyah = globalAyahNumber(surah, ayah);
+    const islamicNetwork =
+      `https://cdn.islamic.network/quran/audio/${reciter.cleanIntro.bitrate}/${reciter.cleanIntro.edition}/${globalAyah}.mp3`;
+    return primary === islamicNetwork ? everyAyah : islamicNetwork;
+  }
+
+  return everyAyah === primary ? null : everyAyah;
+}
+
 export function audioCacheVariant(reciterId: string, surah: number, ayah: number) {
   const reciter = reciterById(reciterId);
   return ayah === 1 && surah !== 1 && surah !== 9 && reciter.cleanIntro ? "nobasmala-v2" : "standard";
