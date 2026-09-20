@@ -125,7 +125,6 @@ const aliases: Record<string, string> = {
   "image-multiple-outline": "images",
   "heart-multiple-outline": "hearts",
   "description": "document",
-  "alert-circle-outline": "alert",
 };
 
 const nodes: Record<string, SvgNode[]> = {
