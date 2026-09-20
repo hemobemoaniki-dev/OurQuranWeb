@@ -691,10 +691,10 @@ test('desktop sidebar exposes privacy deletion account actions and a Tasbeeh Adh
 
 test('dashboard quick access complements rather than duplicates primary sidebar destinations', () => {
   const home = fs.readFileSync(path.join(root, 'app/(tabs)/index.tsx'), 'utf8');
-  assert.match(home, /label="Bookmarks"/);
-  assert.match(home, /label="Daily Goal"/);
-  assert.match(home, /label="Reciter"/);
-  assert.match(home, /label="Progress"/);
+  assert.match(home, /label:\s*"Bookmarks"/);
+  assert.match(home, /label:\s*"Daily Goal"/);
+  assert.match(home, /label:\s*"Reciter"/);
+  assert.match(home, /label:\s*"Progress"/);
   assert.doesNotMatch(home, /<QuickAction[^>]+label="Read Quran"/);
   assert.doesNotMatch(home, /<QuickAction[^>]+label="Adhkar"/);
   assert.doesNotMatch(home, /<QuickAction[^>]+label="99 Names"/);
@@ -819,18 +819,20 @@ test('web desktop shell uses premium top navigation, wide dashboard and cinemati
   assert.match(desktop, /updateSettings\(\{ speed \}\)/);
   assert.match(desktop, /updateSettings\(\{ autoplay: true \}\)/);
   assert.match(desktop, /updateSettings\(\{ autoplay: false \}\)/);
-  assert.match(brand, /name="mosque"/);
+  assert.match(brand, /BRAND_MARK_URI/);
+  assert.match(brand, /tone\?:\s*"white"\s*\|\s*"gold"/);
 });
 
-test('web favicon uses a validated export asset plus the versioned glowing browser icon', () => {
+test('web favicon uses the current OurQuran brand mark and a valid export fallback', () => {
   const config = fs.readFileSync(path.join(root, 'app.json'), 'utf8');
   const layout = fs.readFileSync(path.join(root, 'app/_layout.tsx'), 'utf8');
-  const manifest = fs.readFileSync(path.join(root, 'public/site.webmanifest'), 'utf8');
+  const brand = fs.readFileSync(path.join(root, 'src/components/BrandMark.tsx'), 'utf8');
   assert.match(config, /favicon-web-v3\.png/);
   assert.doesNotMatch(config, /"favicon": "\.\/assets\/images\/icon\.png"/);
-  assert.match(layout, /\/favicon-web-v5\.svg\?v=5/);
-  assert.match(manifest, /\/favicon-web-v5\.svg/);
-  assert.ok(fs.existsSync(path.join(root, 'public/favicon-web-v5.svg')));
+  assert.match(layout, /BRAND_FAVICON_URI/);
+  assert.match(layout, /rel="icon"/);
+  assert.match(brand, /export const BRAND_FAVICON_URI/);
+  assert.match(brand, /BRAND_MARK_URI/);
 });
 
 test('top streak badge avoids duplicate red-green week state and links progress metrics', () => {
@@ -930,8 +932,10 @@ test('home primary actions use the new compact web-native visual language', () =
   assert.match(home, /Quick access/);
   assert.match(home, /Weekly journey/);
   assert.match(home, /maxWidth:\s*1580/);
-  assert.match(home, /<BrandMark size=\{148\}/);
-  assert.match(home, /rgba\(212,175,55,0\.24\)/);
+  assert.match(home, /<BrandMark size=\{248\}/);
+  assert.match(home, /tone="gold"/);
+  assert.match(home, /heroTopEdge/);
+  assert.match(home, /heroRightBlend/);
 });
 
 test('reminder replacements serialize; disable cancels; denied permission rejects', async () => {
