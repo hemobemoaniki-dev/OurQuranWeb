@@ -77,7 +77,7 @@ const AuthContext = createContext<AuthApi | null>(null);
 const AccountContext = createContext<AccountApi | null>(null);
 
 type ReaderApi = Pick<AccountApi, "hydrated" | "saveReaderPosition" | "commitReward" | "addReadingSeconds" | "updateSettings" | "toggleBookmark" | "isBookmarked" | "flush"> & {
-  account: Pick<Account, "currentSurah" | "currentAyah"> & { settings: Pick<Account["settings"], "reciter" | "speed" | "autoplay" | "readerTheme"> };
+  account: Pick<Account, "currentSurah" | "currentAyah"> & { settings: Pick<Account["settings"], "reciter" | "speed" | "autoplay" | "readerTheme" | "readingSize"> };
 };
 const ReaderContext = createContext<ReaderApi | null>(null);
 
@@ -823,8 +823,8 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
   // Cloud status and reward counters do not need to redraw the Arabic reader.
   const bookmarkSignature = account.appState.bookmarks.map((b) => `${b.surah}:${b.ayah}`).sort().join(",");
   const readerAccount = useMemo(() => ({ currentSurah: account.currentSurah, currentAyah: account.currentAyah,
-    settings: { readerTheme: account.settings.readerTheme, reciter: account.settings.reciter, speed: account.settings.speed, autoplay: account.settings.autoplay },
-  }), [account.currentSurah, account.currentAyah, account.settings.readerTheme, account.settings.reciter, account.settings.speed, account.settings.autoplay]);
+    settings: { readerTheme: account.settings.readerTheme, reciter: account.settings.reciter, speed: account.settings.speed, autoplay: account.settings.autoplay, readingSize: account.settings.readingSize },
+  }), [account.currentSurah, account.currentAyah, account.settings.readerTheme, account.settings.reciter, account.settings.speed, account.settings.autoplay, account.settings.readingSize]);
   const readerApi = useMemo<ReaderApi>(() => ({ account: readerAccount, hydrated, saveReaderPosition, commitReward,
     addReadingSeconds, updateSettings, toggleBookmark, isBookmarked, flush,
     // Signature invalidates bookmark consumers only when membership changes.

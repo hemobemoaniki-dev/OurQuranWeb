@@ -13,7 +13,14 @@ import { useState } from "react";
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2] as const;
 
-type MenuKey = "reciter" | "speed" | "autoplay" | null;
+const TEXT_SIZES = [
+  { id: "small", label: "Small", scale: 0.85 },
+  { id: "standard", label: "Medium", scale: 1 },
+  { id: "large", label: "Large", scale: 1.18 },
+  { id: "xlarge", label: "Extra large", scale: 1.36 },
+] as const;
+
+type MenuKey = "reciter" | "speed" | "autoplay" | "textsize" | null;
 
 type Props = {
   theme: ReaderTheme;
@@ -81,6 +88,8 @@ export function DesktopReaderExperience({
   const [menu, setMenu] = useState<MenuKey>(null);
   const settings = readerAccount.settings;
   const reciter = reciterById(settings.reciter);
+  const textSize = TEXT_SIZES.find((size) => size.id === settings.readingSize) ?? TEXT_SIZES[1];
+  const textScale = textSize.scale;
 
   const toggleMenu = (key: Exclude<MenuKey, null>) => setMenu((current) => current === key ? null : key);
   const navigate = (href: string) => {
@@ -236,7 +245,7 @@ export function DesktopReaderExperience({
             ) : (
               <>
                 <ScrollView style={styles.arabicViewport} contentContainerStyle={styles.arabicContent} nestedScrollEnabled>
-                  <Text selectable maxFontSizeMultiplier={1} style={styles.arabic}>{arabic}</Text>
+                  <Text selectable maxFontSizeMultiplier={1} style={[styles.arabic, { fontSize: Math.round(46 * textScale), lineHeight: Math.round(78 * textScale) }]}>{arabic}</Text>
                 </ScrollView>
 
                 <View style={styles.translationSeparator}>
@@ -249,7 +258,7 @@ export function DesktopReaderExperience({
 
                 <Text style={[styles.translationLabel, { color: theme.accent }]}>TRANSLATION</Text>
                 <ScrollView style={styles.translationViewport} nestedScrollEnabled>
-                  <Text selectable maxFontSizeMultiplier={1.12} style={styles.english}>{english}</Text>
+                  <Text selectable maxFontSizeMultiplier={1.12} style={[styles.english, { fontSize: Math.round(25 * textScale), lineHeight: Math.round(37 * textScale) }]}>{english}</Text>
                 </ScrollView>
 
                 <View style={styles.textActions}>
@@ -389,6 +398,36 @@ export function DesktopReaderExperience({
               </View>
             ) : null}
 
+            <ControlRow
+              icon="format-size"
+              title="Text size"
+              value={textSize.label}
+              open={menu === "textsize"}
+              accent={theme.accent}
+              onPress={() => toggleMenu("textsize")}
+              testID="reader-desktop-textsize-control"
+            />
+            {menu === "textsize" ? (
+              <View style={[styles.dropdown, { borderColor: theme.border + "99" }]} testID="reader-desktop-textsize-menu">
+                {TEXT_SIZES.map((size) => {
+                  const selected = size.id === settings.readingSize;
+                  return (
+                    <Pressable
+                      key={size.id}
+                      onPress={() => {
+                        updateSettings({ readingSize: size.id });
+                        setMenu(null);
+                      }}
+                      style={({ pressed }) => [styles.dropdownRow, pressed && styles.pressed]}
+                    >
+                      <Text style={[styles.dropdownText, selected && { color: theme.accent }]}>{size.label}</Text>
+                      {selected ? <Icon name="check" size={18} color={theme.accent} /> : null}
+                    </Pressable>
+                  );
+                })}
+              </View>
+            ) : null}
+
             <View style={styles.sessionFooter}>
               <View style={styles.footerMetric}>
                 <Icon name="clock-outline" size={22} color={theme.accent} />
@@ -397,7 +436,7 @@ export function DesktopReaderExperience({
               </View>
               <View style={styles.footerMetric}>
                 <Icon name="book-open-page-variant-outline" size={22} color={theme.accent} />
-                <Text style={styles.footerLabel}>Ayah</Text>
+                <Text style={styles.footerLabel}>Ayahs read</Text>
                 <Text style={styles.footerValue}>{ayahNumber} / {totalAyahs}</Text>
               </View>
             </View>
