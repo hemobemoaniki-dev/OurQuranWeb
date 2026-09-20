@@ -184,10 +184,20 @@ export default function Home() {
               <Text style={styles.heroTitle}>{meta.name}</Text>
               <Text style={styles.heroMeta}>Ayah {account.currentAyah} of {meta.ayahs}</Text>
               <View style={styles.heroProgressTrack}>
-                <View style={[styles.heroProgressFill, { width: `${readingPct * 100}%` }]} />
+                <LinearGradient
+                  pointerEvents="none"
+                  colors={["#FFF08A", "#F6C73D", "#F0A82D"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={[styles.heroProgressFill, { width: `${Math.max(4, readingPct * 100)}%` }]}
+                >
+                  <View style={styles.heroProgressGlow} />
+                </LinearGradient>
+                <View pointerEvents="none" style={styles.heroProgressLabelWrap}>
+                  <Text style={styles.heroProgressText}>{Math.round(readingPct * 100)}% through this surah</Text>
+                </View>
               </View>
               <View style={styles.heroFoot}>
-                <Text style={styles.heroProgressText}>{Math.round(readingPct * 100)}% through this surah</Text>
                 <View style={styles.readButton}>
                   <Text style={styles.readButtonText}>Read now</Text>
                   <Icon name="arrow-right" size={18} color={colors.onBrandPrimary} />
@@ -605,10 +615,69 @@ const useStyles = makeStyles((c) => ({
   eyebrow: { color: c.gold, fontSize: 13, lineHeight: 17, fontWeight: "900", letterSpacing: 1.45 },
   heroTitle: { color: c.onSurface, fontFamily: serifFont, fontSize: 52, lineHeight: 59, fontWeight: "700", letterSpacing: -1.1, marginTop: 9 },
   heroMeta: { color: c.muted, fontSize: 17, lineHeight: 23, fontWeight: "600", marginTop: 4 },
-  heroProgressTrack: { width: "68%", maxWidth: 520, height: 5, borderRadius: 4, backgroundColor: c.surfaceTertiary, overflow: "hidden", marginTop: 22 },
-  heroProgressFill: { height: 5, borderRadius: 4, backgroundColor: c.gold },
-  heroFoot: { marginTop: 12, flexDirection: "row", alignItems: "center", gap: 18 },
-  heroProgressText: { color: c.muted, fontSize: 15, lineHeight: 20, fontWeight: "600" },
+  heroProgressTrack: {
+    width: "72%",
+    maxWidth: 590,
+    minWidth: 300,
+    height: 34,
+    borderRadius: 999,
+    backgroundColor: "rgba(8,8,8,0.46)",
+    borderWidth: 1,
+    borderColor: c.goldBorder,
+    overflow: "hidden",
+    marginTop: 22,
+    shadowColor: c.gold,
+    shadowOpacity: 0.18,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 0 },
+  },
+  heroProgressFill: {
+    position: "absolute",
+    left: 0,
+    top: 0,
+    bottom: 0,
+    minWidth: 22,
+    borderRadius: 999,
+    justifyContent: "center",
+    shadowColor: "#FFD95A",
+    shadowOpacity: 0.55,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 0 },
+  },
+  heroProgressGlow: {
+    position: "absolute",
+    right: 0,
+    top: 3,
+    bottom: 3,
+    width: 22,
+    borderRadius: 999,
+    backgroundColor: "rgba(255,246,171,0.88)",
+    shadowColor: "#FFE66D",
+    shadowOpacity: 0.95,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 0 },
+  },
+  heroProgressLabelWrap: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 16,
+  },
+  heroProgressText: {
+    color: "#FFF9E8",
+    fontSize: 13.5,
+    lineHeight: 18,
+    fontWeight: "900",
+    letterSpacing: 0.15,
+    textShadowColor: "rgba(0,0,0,0.72)",
+    textShadowRadius: 7,
+    textShadowOffset: { width: 0, height: 1 },
+  },
+  heroFoot: { marginTop: 14, flexDirection: "row", alignItems: "center", gap: 18 },
   heroQuote: { position: "absolute", right: 28, bottom: 31, maxWidth: 190, color: c.onSurface, fontFamily: serifFont, fontStyle: "italic", fontSize: 16, lineHeight: 23, textAlign: "right", opacity: 0.82 },
   readButton: {
     minWidth: 126,
