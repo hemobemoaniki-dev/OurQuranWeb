@@ -11,7 +11,7 @@ import { arabicFont, serifFont } from "@/src/typography";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { ActivityIndicator, Platform, Pressable, ScrollView, Share, StyleSheet, View } from "react-native";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2] as const;
 
@@ -278,9 +278,7 @@ export function DesktopReaderExperience({
             </View>
 
             <View style={styles.completionRow}>
-              <View style={[styles.percentRing, { borderColor: theme.accent }]}>
-                <Text style={styles.percentNumber}>{percent}%</Text>
-              </View>
+              <AnimatedProgressRing percent={percent} accent={theme.accent} end={theme.end} />
               <View style={styles.remainingWrap}>
                 <Text style={styles.remainingNumber}>{versesLeft}</Text>
                 <Text style={styles.remainingText}>{versesLeft === 1 ? "verse remaining" : "verses remaining"}</Text>
@@ -452,29 +450,144 @@ export function DesktopReaderExperience({
           </View>
         </View>
 
-        <View style={[styles.actionDock, webGlass, { borderColor: theme.border + "AA" }]}>
-          <Pressable onPress={onPrevious} style={({ pressed }) => [styles.previousAction, { borderColor: theme.border + "99" }, pressed && styles.pressed]} testID="reader-desktop-previous">
-            <Icon name="arrow-left" size={27} color={theme.accent} />
+        <View style={[styles.actionDock, webGlass, { borderColor: theme.border + "88" }]}>
+          <Pressable
+            onPress={onPrevious}
+            style={({ pressed, hovered }: any) => [
+              styles.glassAction,
+              styles.previousAction,
+              { borderColor: theme.border + "75" },
+              hovered && { borderColor: theme.accent + "66", backgroundColor: theme.accent + "0D" },
+              pressed && styles.pressed,
+            ]}
+            testID="reader-desktop-previous"
+          >
+            <LinearGradient
+              pointerEvents="none"
+              colors={[theme.accent + "10", "rgba(255,255,255,0.025)", "rgba(0,0,0,0.04)"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={StyleSheet.absoluteFill}
+            />
+            <View style={[styles.actionIconBubble, { borderColor: theme.accent + "38" }]}>
+              <Icon name="arrow-left" size={25} color={theme.accent} />
+            </View>
             <Text style={styles.previousText}>Previous ayah</Text>
           </Pressable>
 
-          <Pressable onPress={onDone} style={({ pressed }) => [styles.doneAction, pressed && styles.pressed]} testID="reader-desktop-im-done">
-            <LinearGradient pointerEvents="none" colors={["#FFE784", "#E7B53B"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={StyleSheet.absoluteFill} />
-            <View style={styles.doneIcon}>
-              <Icon name="check" size={23} color="#0C0A07" />
+          <Pressable
+            onPress={onDone}
+            style={({ pressed, hovered }: any) => [
+              styles.glassAction,
+              styles.doneAction,
+              { borderColor: theme.accent + "70", shadowColor: theme.accent },
+              hovered && { borderColor: theme.accent + "B5", backgroundColor: theme.accent + "11" },
+              pressed && styles.pressed,
+            ]}
+            testID="reader-desktop-im-done"
+          >
+            <LinearGradient
+              pointerEvents="none"
+              colors={[theme.accent + "24", theme.end + "12", "rgba(255,255,255,0.035)"]}
+              locations={[0, 0.62, 1]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={StyleSheet.absoluteFill}
+            />
+            <View style={[styles.doneIcon, { borderColor: theme.accent + "6E", backgroundColor: theme.accent + "16" }]}>
+              <Icon name="check" size={22} color={theme.accent} />
             </View>
             <Text style={styles.doneText}>I&apos;m Done</Text>
           </Pressable>
 
-          <Pressable onPress={onNext} style={({ pressed }) => [styles.nextAction, { borderColor: theme.border + "AA" }, pressed && styles.pressed]} testID="reader-desktop-next">
+          <Pressable
+            onPress={onNext}
+            style={({ pressed, hovered }: any) => [
+              styles.glassAction,
+              styles.nextAction,
+              { borderColor: theme.border + "75" },
+              hovered && { borderColor: theme.accent + "66", backgroundColor: theme.accent + "0D" },
+              pressed && styles.pressed,
+            ]}
+            testID="reader-desktop-next"
+          >
+            <LinearGradient
+              pointerEvents="none"
+              colors={["rgba(255,255,255,0.025)", theme.accent + "10", "rgba(0,0,0,0.04)"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={StyleSheet.absoluteFill}
+            />
             <View>
               <Text style={styles.nextTitle}>Next ayah</Text>
               <Text style={[styles.nextReward, { color: theme.accent }]}>+{reward} Hasanaat</Text>
             </View>
-            <Icon name="arrow-right" size={29} color={theme.accent} />
+            <View style={[styles.actionIconBubble, { borderColor: theme.accent + "38" }]}>
+              <Icon name="arrow-right" size={25} color={theme.accent} />
+            </View>
           </Pressable>
         </View>
       </ScrollView>
+    </View>
+  );
+}
+
+function AnimatedProgressRing({ percent, accent, end }: { percent: number; accent: string; end: string }) {
+  const target = Math.max(0, Math.min(100, percent));
+  const valueRef = useRef(0);
+  const frameRef = useRef<number | null>(null);
+  const [display, setDisplay] = useState(0);
+
+  useEffect(() => {
+    if (frameRef.current != null && typeof cancelAnimationFrame === "function") {
+      cancelAnimationFrame(frameRef.current);
+    }
+
+    const from = valueRef.current;
+    const delta = target - from;
+    const started = Date.now();
+    const duration = Math.min(720, Math.max(360, Math.abs(delta) * 9));
+
+    const tick = () => {
+      const raw = Math.min(1, (Date.now() - started) / duration);
+      const eased = 1 - Math.pow(1 - raw, 4);
+      const next = from + delta * eased;
+      valueRef.current = next;
+      setDisplay(next);
+
+      if (raw < 1) {
+        frameRef.current = requestAnimationFrame(tick);
+      } else {
+        valueRef.current = target;
+        setDisplay(target);
+        frameRef.current = null;
+      }
+    };
+
+    frameRef.current = requestAnimationFrame(tick);
+    return () => {
+      if (frameRef.current != null && typeof cancelAnimationFrame === "function") {
+        cancelAnimationFrame(frameRef.current);
+        frameRef.current = null;
+      }
+    };
+  }, [target]);
+
+  const angle = Math.max(0, Math.min(360, display * 3.6));
+  const ringBackground = Platform.OS === "web"
+    ? ({
+        backgroundImage: `conic-gradient(from -90deg, ${accent} 0deg, ${end} ${angle}deg, rgba(255,255,255,0.11) ${angle}deg, rgba(255,255,255,0.11) 360deg)`,
+      } as any)
+    : { borderColor: accent };
+
+  return (
+    <View style={[styles.percentRingShell, { shadowColor: accent }]}>
+      <View style={[styles.percentRingTrack, ringBackground]}>
+        <View style={styles.percentRingInner}>
+          <Text style={styles.percentNumber}>{Math.round(display)}%</Text>
+        </View>
+      </View>
+      <View pointerEvents="none" style={[styles.percentRingGlow, { borderColor: accent + "55", shadowColor: accent }]} />
     </View>
   );
 }
@@ -656,8 +769,54 @@ const styles = StyleSheet.create({
   sessionHeadingRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 4 },
   sessionHeading: { color: "#FFFFFF", fontFamily: serifFont, fontSize: 24, lineHeight: 29, fontWeight: "700" },
   completionRow: { flexDirection: "row", alignItems: "center", gap: 18, paddingVertical: 6 },
-  percentRing: { width: 92, height: 92, borderRadius: 46, borderWidth: 9, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(0,0,0,0.28)" },
-  percentNumber: { color: "#FFFFFF", fontFamily: serifFont, fontSize: 24, fontWeight: "800" },
+  percentRingShell: {
+    width: 104,
+    height: 104,
+    alignItems: "center",
+    justifyContent: "center",
+    position: "relative",
+    shadowOpacity: 0.34,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 0 },
+  },
+  percentRingTrack: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    padding: 9,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  percentRingInner: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 999,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(9,9,8,0.93)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+  },
+  percentRingGlow: {
+    position: "absolute",
+    width: 104,
+    height: 104,
+    borderRadius: 52,
+    borderWidth: 1,
+    opacity: 0.72,
+    shadowOpacity: 0.45,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 0 },
+  },
+  percentNumber: {
+    color: "#FFFFFF",
+    fontFamily: serifFont,
+    fontSize: 24,
+    fontWeight: "900",
+    textShadowColor: "rgba(255,255,255,0.16)",
+    textShadowRadius: 8,
+    textShadowOffset: { width: 0, height: 0 },
+  },
   remainingWrap: { flex: 1, minWidth: 0 },
   remainingNumber: { color: "#FFFFFF", fontFamily: serifFont, fontSize: 30, lineHeight: 32 },
   remainingText: { color: "#FFFFFF", fontFamily: serifFont, fontSize: 16 },
@@ -695,21 +854,70 @@ const styles = StyleSheet.create({
   footerValue: { color: "#FFFFFF", fontFamily: serifFont, fontSize: 15, fontWeight: "700" },
 
   actionDock: {
-    minHeight: 92,
-    borderRadius: 22,
+    minHeight: 96,
+    borderRadius: 24,
     borderWidth: 1,
-    backgroundColor: "rgba(18,15,9,0.62)",
+    backgroundColor: "rgba(7,8,8,0.46)",
     flexDirection: "row",
     alignItems: "center",
-    gap: 16,
-    padding: 10,
+    gap: 14,
+    padding: 11,
+    shadowColor: "#000000",
+    shadowOpacity: 0.28,
+    shadowRadius: 22,
+    shadowOffset: { width: 0, height: 9 },
   },
-  previousAction: { flex: 1, minHeight: 70, borderRadius: 18, borderWidth: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 14, backgroundColor: "rgba(255,255,255,0.035)" },
-  previousText: { color: "#FFFFFF", fontFamily: serifFont, fontSize: 17, fontWeight: "600" },
-  doneAction: { flex: 1.25, minHeight: 70, borderRadius: 19, borderWidth: 1, borderColor: "rgba(255,235,155,0.9)", overflow: "hidden", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 13, shadowColor: "#ECCA69", shadowOpacity: 0.22, shadowRadius: 16, shadowOffset: { width: 0, height: 5 } },
-  doneIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: "rgba(12,10,7,0.88)", alignItems: "center", justifyContent: "center" },
-  doneText: { color: "#0C0A07", fontFamily: serifFont, fontSize: 25, fontWeight: "900" },
-  nextAction: { flex: 1, minHeight: 70, borderRadius: 18, borderWidth: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 18, backgroundColor: "rgba(255,255,255,0.035)" },
-  nextTitle: { color: "#FFFFFF", fontFamily: serifFont, fontSize: 17, lineHeight: 20, fontWeight: "700", textAlign: "center" },
-  nextReward: { fontFamily: serifFont, fontSize: 13, fontWeight: "800", textAlign: "center", marginTop: 2 },
+  glassAction: {
+    minHeight: 72,
+    borderRadius: 20,
+    borderWidth: 1,
+    overflow: "hidden",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(9,10,10,0.46)",
+    shadowColor: "#000000",
+    shadowOpacity: 0.16,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 5 },
+    cursor: "pointer",
+  },
+  previousAction: { flex: 1, gap: 13 },
+  previousText: { color: "#F8F4EC", fontFamily: serifFont, fontSize: 17, fontWeight: "700" },
+  doneAction: {
+    flex: 1.24,
+    gap: 13,
+    shadowOpacity: 0.16,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 0 },
+  },
+  actionIconBubble: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255,255,255,0.028)",
+  },
+  doneIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  doneText: {
+    color: "#FFFDF7",
+    fontFamily: serifFont,
+    fontSize: 24,
+    fontWeight: "900",
+    textShadowColor: "rgba(0,0,0,0.55)",
+    textShadowRadius: 6,
+    textShadowOffset: { width: 0, height: 1 },
+  },
+  nextAction: { flex: 1, gap: 16 },
+  nextTitle: { color: "#F8F4EC", fontFamily: serifFont, fontSize: 17, lineHeight: 20, fontWeight: "800", textAlign: "center" },
+  nextReward: { fontFamily: serifFont, fontSize: 13, fontWeight: "900", textAlign: "center", marginTop: 2 },
 });
