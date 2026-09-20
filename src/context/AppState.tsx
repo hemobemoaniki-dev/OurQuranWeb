@@ -331,7 +331,8 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
         Object.keys(guest.history).length > 0 ||
         guest.currentSurah !== 1 ||
         guest.currentAyah !== 1 ||
-        guest.appState.bookmarks.length > 0
+        guest.appState.bookmarks.length > 0 ||
+        guest.appState.nameBookmarks.length > 0
       );
       if (hadGuest && guest) localAcc = absorbGuest(localAcc, guest);
       if (cancelled) return;
