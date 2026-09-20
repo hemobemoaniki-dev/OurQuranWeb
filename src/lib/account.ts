@@ -320,14 +320,22 @@ export function mergeAccounts(remote: Account | null, local: Account): Account {
     deviceProgress[key] = maxProgress(deviceProgress[key] ?? emptyProgress(), p);
   }
 
-  // Bookmarks: union by surah:ayah.
+  // Bookmarks: union by surah:ayah. Merge must tolerate legacy/partial
+  // appState objects created before Names favorites and tombstones existed.
+  const remoteAppState = remote.appState ?? { bookmarks: [], nameBookmarks: [], removedBookmarks: {}, removedNameBookmarks: {} };
+  const localAppState = local.appState ?? { bookmarks: [], nameBookmarks: [], removedBookmarks: {}, removedNameBookmarks: {} };
+  const remoteBookmarks = Array.isArray(remoteAppState.bookmarks) ? remoteAppState.bookmarks : [];
+  const localBookmarks = Array.isArray(localAppState.bookmarks) ? localAppState.bookmarks : [];
+  const remoteNameBookmarks = Array.isArray(remoteAppState.nameBookmarks) ? remoteAppState.nameBookmarks : [];
+  const localNameBookmarks = Array.isArray(localAppState.nameBookmarks) ? localAppState.nameBookmarks : [];
+
   const bmMap = new Map<string, Bookmark>();
-  for (const b of [...remote.appState.bookmarks, ...local.appState.bookmarks]) {
+  for (const b of [...remoteBookmarks, ...localBookmarks]) {
     const key = `${b.surah}:${b.ayah}`;
     if (!bmMap.has(key) || b.createdAt > bmMap.get(key)!.createdAt) bmMap.set(key, b);
   }
-  const removedBookmarks = { ...remote.appState.removedBookmarks };
-  for (const [key, date] of Object.entries(local.appState.removedBookmarks ?? {})) {
+  const removedBookmarks = { ...(remoteAppState.removedBookmarks ?? {}) };
+  for (const [key, date] of Object.entries(localAppState.removedBookmarks ?? {})) {
     if (!removedBookmarks[key] || date > removedBookmarks[key]) removedBookmarks[key] = date;
   }
   for (const [key, b] of bmMap) {
@@ -336,12 +344,12 @@ export function mergeAccounts(remote: Account | null, local: Account): Account {
 
   // 99 Names favorites use the same account-first merge semantics as Quran bookmarks.
   const nameBmMap = new Map<string, NameBookmark>();
-  for (const b of [...remote.appState.nameBookmarks, ...local.appState.nameBookmarks]) {
+  for (const b of [...remoteNameBookmarks, ...localNameBookmarks]) {
     const key = String(b.nameNumber);
     if (!nameBmMap.has(key) || b.createdAt > nameBmMap.get(key)!.createdAt) nameBmMap.set(key, b);
   }
-  const removedNameBookmarks = { ...remote.appState.removedNameBookmarks };
-  for (const [key, date] of Object.entries(local.appState.removedNameBookmarks ?? {})) {
+  const removedNameBookmarks = { ...(remoteAppState.removedNameBookmarks ?? {}) };
+  for (const [key, date] of Object.entries(localAppState.removedNameBookmarks ?? {})) {
     if (!removedNameBookmarks[key] || date > removedNameBookmarks[key]) removedNameBookmarks[key] = date;
   }
   for (const [key, b] of nameBmMap) {
