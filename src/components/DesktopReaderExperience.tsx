@@ -118,7 +118,7 @@ export function DesktopReaderExperience({
         </View>
 
         <View style={styles.navRight}>
-          <ProfileMenu accent={theme.accent} />
+          <ProfileMenu accent={theme.accent} onBeforeAction={onStopAudio} />
         </View>
       </View>
 
