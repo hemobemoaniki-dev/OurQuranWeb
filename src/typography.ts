@@ -1,8 +1,8 @@
 import { Platform } from "react-native";
 
-// Elegant serif for display/headings (system serif — no remote font needed,
-// works in Expo Go). Clean sans for body uses the platform default.
-export const serifFont = Platform.select({ web: 'ui-serif, Georgia, Cambria, "Times New Roman", serif', ios: "Georgia", android: "serif", default: "Georgia" });
+// A single bundled display face keeps desktop typography crisp and consistent
+// across browsers instead of falling back to mismatched system serifs.
+export const serifFont = Platform.select({ web: "LatoBold", ios: "LatoBold", android: "LatoBold", default: "LatoBold" });
 
 // Arabic script: rely on the platform's Arabic-capable system font. Large
 // line-height is applied at the component level.
