@@ -100,7 +100,16 @@ export function DesktopReaderExperience({
 
   return (
     <View style={styles.screen} testID="desktop-cinematic-reader">
-      <View style={[styles.topNav, webGlass, { borderColor: theme.border + "88" }]}>
+      <View style={[styles.topNav, webGlass, { borderColor: theme.border + "88", shadowColor: theme.accent }]}>
+        <LinearGradient
+          pointerEvents="none"
+          colors={["rgba(255,255,255,0.07)", theme.accent + "08", "rgba(0,0,0,0.08)"]}
+          locations={[0, 0.46, 1]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
+        <View pointerEvents="none" style={[styles.topNavSheen, { backgroundColor: theme.accent + "55", shadowColor: theme.accent }]} />
         <View style={styles.brandWrap}>
           <BrandMark size={54} tint={theme.accent} glow={theme.accent} intensity="medium" variant="mark" />
           <View>
@@ -640,21 +649,40 @@ const styles = StyleSheet.create({
   screen: { flex: 1, minHeight: 0 },
   pressed: { opacity: 0.68, transform: [{ scale: 0.985 }] },
   topNav: {
-    minHeight: 76,
+    minHeight: 72,
+    marginHorizontal: 18,
+    marginTop: 10,
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 42,
-    backgroundColor: "rgba(5,5,4,0.82)",
-    borderBottomWidth: 1,
+    paddingHorizontal: 24,
+    borderRadius: 23,
+    borderWidth: 1,
+    backgroundColor: "rgba(5,6,6,0.60)",
+    overflow: "visible",
+    shadowOpacity: 0.12,
+    shadowRadius: 22,
+    shadowOffset: { width: 0, height: 8 },
   },
-  brandWrap: { width: 315, flexDirection: "row", alignItems: "center", gap: 14 },
-  brandName: { color: "#FFFFFF", fontFamily: serifFont, fontSize: 26, lineHeight: 29, fontWeight: "700" },
-  brandTagline: { fontSize: 8, lineHeight: 11, letterSpacing: 2.2, fontWeight: "900" },
-  navLinks: { flex: 1, flexDirection: "row", justifyContent: "center", alignItems: "stretch", gap: 20 },
-  navButton: { minWidth: 76, height: 75, alignItems: "center", justifyContent: "center", position: "relative" },
-  navText: { color: "#FFFFFF", fontFamily: serifFont, fontSize: 17, lineHeight: 22, fontWeight: "600" },
-  navUnderline: { position: "absolute", height: 3, borderRadius: 3, left: 13, right: 13, bottom: 0 },
-  navRight: { width: 300, flexDirection: "row", alignItems: "center", justifyContent: "flex-end" },
+  topNavSheen: {
+    position: "absolute",
+    left: 22,
+    right: 22,
+    top: 1,
+    height: 1,
+    borderRadius: 999,
+    opacity: 0.82,
+    shadowOpacity: 0.65,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 0 },
+  },
+  brandWrap: { width: 292, flexDirection: "row", alignItems: "center", gap: 11, paddingLeft: 2 },
+  brandName: { color: "#FFFFFF", fontFamily: serifFont, fontSize: 25, lineHeight: 28, fontWeight: "700", letterSpacing: -0.45 },
+  brandTagline: { fontSize: 7.8, lineHeight: 10, letterSpacing: 2.1, fontWeight: "900" },
+  navLinks: { flex: 1, flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 8 },
+  navButton: { minWidth: 82, height: 46, borderRadius: 14, alignItems: "center", justifyContent: "center", position: "relative" },
+  navText: { color: "#F3EEE5", fontFamily: serifFont, fontSize: 16, lineHeight: 21, fontWeight: "600" },
+  navUnderline: { position: "absolute", height: 2, borderRadius: 3, width: 28, bottom: 4 },
+  navRight: { width: 270, flexDirection: "row", alignItems: "center", justifyContent: "flex-end" },
   searchButton: { width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center" },
   navRightDivider: { width: 1, height: 34, backgroundColor: "rgba(255,255,255,0.24)", marginHorizontal: 8 },
   profilePill: {
