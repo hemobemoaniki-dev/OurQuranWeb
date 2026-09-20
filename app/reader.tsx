@@ -256,7 +256,7 @@ export default function Reader() {
 
       setTimeout(() => {
         committing.current = false;
-      }, 180);
+      }, 70);
     },
     [data, ayah, surahNum, ayahIndex, numberInSurah, settings.autoplay, audio, commitReward, saveReaderPosition],
   );
@@ -307,41 +307,39 @@ export default function Reader() {
 
     if (withHaptic) impact(Haptics.ImpactFeedbackStyle.Medium);
 
-    setPendingAudio(null);
-    setQuickSettingsVisible(false);
-    setPickerVisible(false);
-
-    let deltas: Record<string, number> = {};
-    try {
-      deltas = stopSession();
-      if (surahNum != null) saveReaderPosition(surahNum, numberInSurah);
-    } catch {
-      // Navigation must never be blocked by persistence/session bookkeeping.
-    }
-
+    // Critical tap path: silence immediately and leave the Reader immediately.
+    // No storage, session math, Firestore queueing, or state cleanup is allowed
+    // to sit in front of navigation.
     exitReaderAudio();
-
-    // Navigate first; account aggregation and storage flushing are allowed to
-    // finish after the Reader has safely left the route.
     router.replace("/");
 
-    // Never leave the controls permanently locked if a stale browser route
-    // blocks the transition.
-    setTimeout(() => {
-      if (readerFocused.current) {
-        exitStartedRef.current = false;
-        exitingRef.current = false;
-      }
-    }, 800);
+    const exitSurah = surahNum;
+    const exitAyah = numberInSurah;
 
-    void Promise.resolve().then(() => {
+    // Persistence/session aggregation runs after navigation has been dispatched.
+    setTimeout(() => {
+      let deltas: Record<string, number> = {};
+      try {
+        deltas = stopSession();
+        if (exitSurah != null) saveReaderPosition(exitSurah, exitAyah);
+      } catch {}
+
       try {
         for (const [day, seconds] of Object.entries(deltas)) {
           if (seconds > 0) addReadingSeconds(seconds, day);
         }
       } catch {}
-      return Promise.resolve().then(flush).catch(() => {});
-    });
+
+      void Promise.resolve().then(flush).catch(() => {});
+    }, 0);
+
+    // Safety only: unlock if a browser/router failure leaves this screen mounted.
+    setTimeout(() => {
+      if (readerFocused.current) {
+        exitStartedRef.current = false;
+        exitingRef.current = false;
+      }
+    }, 450);
   }, [addReadingSeconds, flush, numberInSurah, router, saveReaderPosition, stopSession, surahNum]);
 
   const imDone = useCallback(() => {
@@ -356,27 +354,31 @@ export default function Reader() {
       exitingRef.current = true;
       exitReaderAudio();
 
-      let deltas: Record<string, number> = {};
-      try {
-        deltas = stopSession();
-        if (surahNum != null) saveReaderPosition(surahNum, numberInSurah);
-      } catch {}
+      const exitSurah = surahNum;
+      const exitAyah = numberInSurah;
 
-      void Promise.resolve().then(() => {
+      setTimeout(() => {
+        let deltas: Record<string, number> = {};
+        try {
+          deltas = stopSession();
+          if (exitSurah != null) saveReaderPosition(exitSurah, exitAyah);
+        } catch {}
+
         try {
           for (const [day, seconds] of Object.entries(deltas)) {
             if (seconds > 0) addReadingSeconds(seconds, day);
           }
         } catch {}
-        return Promise.resolve().then(flush).catch(() => {});
-      });
+
+        void Promise.resolve().then(flush).catch(() => {});
+      }, 0);
 
       setTimeout(() => {
         if (readerFocused.current) {
           exitStartedRef.current = false;
           exitingRef.current = false;
         }
-      }, 800);
+      }, 450);
     };
     window.addEventListener("popstate", handleBrowserBack);
     return () => window.removeEventListener("popstate", handleBrowserBack);
