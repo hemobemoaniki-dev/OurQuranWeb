@@ -234,7 +234,7 @@ export default function Home() {
               style={styles.fill}
             />
             <View style={styles.heroMark}>
-              <BrandMark size={148} tint={colors.gold} glow={colors.gold} intensity="strong" />
+              <BrandMark size={205} tint={colors.gold} glow={colors.gold} intensity="strong" />
             </View>
             <View style={styles.heroContent}>
               <Text style={styles.eyebrow}>CONTINUE READING</Text>
@@ -267,7 +267,6 @@ export default function Home() {
                 </View>
               </View>
             </View>
-            {desktopWeb ? <Text style={styles.heroQuote}>“A light for every step forward.”</Text> : null}
           </Pressable>
 
           <Pressable
@@ -294,16 +293,20 @@ export default function Home() {
             <View style={styles.goalCenter}>
               <View style={styles.goalRing}>
                 <Text style={styles.goalPercent}>{Math.round(goalPct * 100)}%</Text>
-                <Text style={styles.goalRingLabel}>complete</Text>
               </View>
               <View style={styles.goalNumbers}>
-                <Text style={styles.goalValue}>{todayAyat}</Text>
-                <Text style={styles.goalTotal}>of {goal} ayahs</Text>
-                <Text style={styles.goalHelper}>
-                  {goalReached ? "Alhamdulillah — keep going." : `${Math.max(0, goal - todayAyat)} remaining today`}
-                </Text>
+                <View style={styles.goalCountRow}>
+                  <Text style={styles.goalValue}>{todayAyat}</Text>
+                  <Text style={styles.goalDivider}>/</Text>
+                  <Text style={styles.goalTarget}>{goal}</Text>
+                </View>
+                <Text style={styles.goalTotal}>ayahs today</Text>
+                <View style={styles.goalRemainingPill}>
+                  <Text style={styles.goalRemainingText}>
+                    {goalReached ? "Goal reached" : `${Math.max(0, goal - todayAyat)} left`}
+                  </Text>
+                </View>
               </View>
-              {desktopWeb ? <Text style={styles.goalQuote}>“Small steps lead to great heights.”</Text> : null}
             </View>
             <View style={styles.track}>
               <View style={[styles.trackFill, { width: `${goalPct * 100}%` }]} />
@@ -912,12 +915,16 @@ const useStyles = makeStyles((c) => ({
   },
   heroMark: {
     position: "absolute",
-    right: 28,
-    top: 28,
-    opacity: 0.26,
-    transform: [{ rotate: "-4deg" }],
+    right: -10,
+    top: 18,
+    width: 300,
+    height: 215,
+    alignItems: "center",
+    justifyContent: "center",
+    opacity: 0.46,
+    transform: [{ scale: 1.22 }],
   },
-  heroContent: { flex: 1, justifyContent: "center", paddingHorizontal: 34, paddingVertical: 30, maxWidth: 760, zIndex: 1 },
+  heroContent: { flex: 1, justifyContent: "center", paddingHorizontal: 34, paddingVertical: 30, maxWidth: 690, zIndex: 1 },
   eyebrow: { color: c.gold, fontSize: 13, lineHeight: 17, fontWeight: "900", letterSpacing: 1.45 },
   heroTitle: { color: c.onSurface, fontFamily: serifFont, fontSize: 52, lineHeight: 59, fontWeight: "700", letterSpacing: -1.1, marginTop: 9 },
   heroMeta: { color: c.muted, fontSize: 17, lineHeight: 23, fontWeight: "600", marginTop: 4 },
@@ -974,7 +981,6 @@ const useStyles = makeStyles((c) => ({
     textShadowOffset: { width: 0, height: 0 },
   },
   heroFoot: { marginTop: 14, flexDirection: "row", alignItems: "center", gap: 18 },
-  heroQuote: { position: "absolute", right: 28, bottom: 31, maxWidth: 190, color: c.onSurface, fontFamily: serifFont, fontStyle: "italic", fontSize: 16, lineHeight: 23, textAlign: "right", opacity: 0.82 },
   readButton: {
     minWidth: 126,
     height: 42,
@@ -996,35 +1002,60 @@ const useStyles = makeStyles((c) => ({
     flex: 0.82,
     minWidth: 310,
     minHeight: 250,
-    padding: 25,
+    paddingHorizontal: 26,
+    paddingVertical: 24,
     borderRadius: 24,
     borderWidth: 1,
     borderColor: c.goldBorder,
     backgroundColor: c.surfaceSecondary,
     overflow: "hidden",
-    gap: 14,
+    gap: 16,
     cursor: "pointer",
   },
   goalTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
-  goalTitle: { color: c.onSurface, fontFamily: serifFont, fontSize: 25, lineHeight: 31, fontWeight: "700", marginTop: 6 },
-  goalCenter: { flex: 1, flexDirection: "row", alignItems: "center", gap: 20 },
+  goalTitle: { color: c.onSurface, fontFamily: serifFont, fontSize: 25, lineHeight: 30, fontWeight: "700", marginTop: 4 },
+  goalCenter: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-start",
+    gap: 24,
+    paddingVertical: 4,
+  },
   goalRing: {
-    width: 102,
-    height: 102,
-    borderRadius: 51,
+    width: 96,
+    height: 96,
+    borderRadius: 48,
     borderWidth: 7,
     borderColor: c.goldBorder,
-    backgroundColor: c.goldSoft,
+    backgroundColor: "rgba(212,175,55,0.07)",
     alignItems: "center",
     justifyContent: "center",
+    shadowColor: c.gold,
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 0 },
   },
-  goalPercent: { color: c.onSurface, fontFamily: serifFont, fontSize: 31, lineHeight: 36, fontWeight: "700", letterSpacing: -0.7 },
-  goalRingLabel: { color: c.muted, fontSize: 11.5, lineHeight: 15, fontWeight: "700" },
-  goalNumbers: { flex: 1, minWidth: 0 },
-  goalValue: { color: c.onSurface, fontFamily: serifFont, fontSize: 39, lineHeight: 44, fontWeight: "700" },
-  goalTotal: { color: c.muted, fontSize: 15.5, lineHeight: 20, fontWeight: "700" },
-  goalHelper: { color: c.muted, fontSize: 13.5, lineHeight: 18, fontWeight: "500", marginTop: 7 },
-  goalQuote: { flex: 1, maxWidth: 150, color: c.onSurface, fontFamily: serifFont, fontStyle: "italic", fontSize: 14.5, lineHeight: 21, textAlign: "center", opacity: 0.8 },
+  goalPercent: { color: c.onSurface, fontFamily: serifFont, fontSize: 30, lineHeight: 35, fontWeight: "800", letterSpacing: -0.6 },
+  goalNumbers: { flex: 1, minWidth: 0, justifyContent: "center" },
+  goalCountRow: { flexDirection: "row", alignItems: "baseline", gap: 7 },
+  goalValue: { color: c.onSurface, fontFamily: serifFont, fontSize: 38, lineHeight: 42, fontWeight: "800" },
+  goalDivider: { color: c.gold, fontFamily: serifFont, fontSize: 25, lineHeight: 30, fontWeight: "700", opacity: 0.78 },
+  goalTarget: { color: c.onSurface, fontFamily: serifFont, fontSize: 25, lineHeight: 30, fontWeight: "700", opacity: 0.88 },
+  goalTotal: { color: c.muted, fontSize: 13.5, lineHeight: 18, fontWeight: "700", marginTop: 1 },
+  goalRemainingPill: {
+    alignSelf: "flex-start",
+    minHeight: 28,
+    marginTop: 10,
+    paddingHorizontal: 11,
+    borderRadius: 999,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: c.goldSoft,
+    borderWidth: 1,
+    borderColor: c.goldBorder,
+  },
+  goalRemainingText: { color: c.gold, fontSize: 11.5, lineHeight: 15, fontWeight: "900" },
   track: { height: 5, borderRadius: 4, backgroundColor: c.surfaceTertiary, overflow: "hidden" },
   trackFill: { height: 5, borderRadius: 4, backgroundColor: c.gold },
 
