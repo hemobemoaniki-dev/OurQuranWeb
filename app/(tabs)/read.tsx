@@ -84,7 +84,7 @@ function MobileRead() {
 
 function DesktopRead() {
   const styles = useStyles();
-  const { colors, scheme } = useTheme();
+  const { colors } = useTheme();
   const router = useRouter();
   const { account } = useAccount();
   const [query, setQuery] = useState("");
