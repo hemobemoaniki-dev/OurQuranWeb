@@ -5,6 +5,7 @@ import { Pressable, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Icon } from "@/src/components/Icon";
+import { useAccount } from "@/src/context/AppState";
 import { NAMES_99 } from "@/src/data/names99";
 import { makeStyles, useTheme } from "@/src/theme";
 import { arabicFont, serifFont } from "@/src/typography";
@@ -19,7 +20,9 @@ export default function NameDetail() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { isNameBookmarked, toggleNameBookmark } = useAccount();
   const name = NAMES_99.find((n) => n.number === parseInt(String(id), 10)) ?? NAMES_99[0];
+  const saved = isNameBookmarked(name.number);
 
   return (
     <>
@@ -33,7 +36,9 @@ export default function NameDetail() {
           <Icon name="arrow-left" size={24} color={colors.onSurface} />
         </Pressable>
         <Text style={styles.headerTitle}>{name.number} of 99</Text>
-        <View style={styles.backBtn} />
+        <Pressable accessibilityRole="button" accessibilityLabel={saved ? "Remove from favorites" : "Add to favorites"} onPress={() => toggleNameBookmark(name.number)} hitSlop={10} style={styles.backBtn}>
+          <Icon name={saved ? "heart" : "heart-outline"} size={24} color={colors.gold} />
+        </Pressable>
       </View>
 
       <View style={styles.body}>
