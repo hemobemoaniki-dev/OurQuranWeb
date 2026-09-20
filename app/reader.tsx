@@ -8,10 +8,10 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 
 import { ReaderHeader } from "@/src/components/ReaderHeader";
+import { DesktopReaderExperience } from "@/src/components/DesktopReaderExperience";
 import { ReaderQuickSettings } from "@/src/components/ReaderQuickSettings";
 import { ReaderBackdrop } from "@/src/components/ReaderBackdrop";
 import { ReaderTextActions } from "@/src/components/ReaderTextActions";
-import { WebTopNav } from "@/src/components/WebTopNav";
 import { readerTheme } from "@/src/lib/reader-themes";
 import { Icon } from "@/src/components/Icon";
 import { useReaderAccount } from "@/src/context/AppState";
@@ -225,6 +225,8 @@ export default function Reader() {
       const earned = withReward ? computeReward(ayah.arabic) : 0;
 
       setPendingAudio(null);
+      // Keep visible text and audible verse locked together.
+      audio.stop();
 
       // Paint the new verse first. Native audio work, account aggregation and
       // persistence happen after the frame instead of sitting in the tap path.
@@ -262,6 +264,8 @@ export default function Reader() {
     if (exitingRef.current || !data || surahNum == null) return;
     const continueAudio = settings.autoplay;
     setPendingAudio(null);
+    // Silence the old ayah before the visible target changes.
+    audio.stop();
     impact(Haptics.ImpactFeedbackStyle.Light);
 
     if (ayahIndex > 0) {
@@ -388,6 +392,8 @@ export default function Reader() {
     const sameSurah = s === surahNum;
 
     setPendingAudio(null);
+    // Picker jumps must never leave the previous ayah speaking.
+    audio.stop();
     setAyahIndex(a - 1);
     if (!sameSurah) {
       setSurahNum(s);
@@ -414,8 +420,39 @@ export default function Reader() {
       <ReaderBackdrop id={t.id} />
       <LinearGradient pointerEvents="none" colors={[`${t.base}F2`, `${t.base}D8`, `${t.base}F5`]} locations={[0, 0.46, 1]} style={StyleSheet.absoluteFill} />
       {desktopReader ? (
-        <WebTopNav active="quran" />
+        <DesktopReaderExperience
+          theme={t}
+          surahName={meta.name}
+          surahNumber={surahNum ?? 1}
+          ayahNumber={numberInSurah}
+          totalAyahs={meta.ayahs}
+          juz={juz}
+          versesLeft={versesLeft}
+          percent={percent}
+          reward={reward}
+          arabic={ayah?.arabic}
+          english={ayah?.english}
+          loading={!isError && !ayah}
+          error={isError}
+          bookmarked={bookmarked}
+          audioPlaying={audio.isPlaying}
+          audioLoading={audio.isLoading}
+          audioError={audio.error}
+          onToggleAudio={() => {
+            if (surahNum != null) audio.toggle(surahNum, numberInSurah);
+          }}
+          onStopAudio={audio.stop}
+          onOpenPicker={openPicker}
+          onToggleBookmark={() => {
+            if (surahNum != null) toggleBookmark(surahNum, numberInSurah);
+          }}
+          onPrevious={goPrev}
+          onDone={imDone}
+          onNext={() => goNext(true)}
+          onBack={() => finishReaderAndGoHome(true)}
+        />
       ) : (
+        <>
         <ReaderHeader
           theme={t}
           surahName={meta.name}
@@ -424,7 +461,6 @@ export default function Reader() {
           onOpenSettings={() => setQuickSettingsVisible(true)}
           onBack={() => finishReaderAndGoHome(true)}
         />
-      )}
       <ReaderQuickSettings
         visible={quickSettingsVisible}
         onClose={() => setQuickSettingsVisible(false)}
@@ -626,6 +662,9 @@ export default function Reader() {
           <Text style={styles.nextLabel}>+{reward} Hasanaat</Text>
         </Pressable>
       </View>
+
+        </>
+      )}
 
       {/* Surah / Ayah picker */}
       <Modal visible={pickerVisible} transparent animationType="slide" onRequestClose={() => setPickerVisible(false)}>
