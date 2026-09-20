@@ -11,7 +11,7 @@ import {
 import { useCallback, useEffect, useSyncExternalStore } from "react";
 
 import { getCachedAyahUri, queueAyahAudio, warmAudioNeighborhood } from "@/src/lib/audio-cache";
-import { recitationUrl } from "@/src/data/reciters";
+import { recitationFallbackUrl, recitationUrl } from "@/src/data/reciters";
 import { surahMeta } from "@/src/data/surahs";
 
 type AudioSnapshot = {
@@ -77,7 +77,7 @@ function waitUntilLoaded(request: number) {
   cancelPendingLoad();
   return new Promise<boolean>((resolve) => {
     let settled = false;
-    const timer = setTimeout(() => finish(false), 15000);
+    const timer = setTimeout(() => finish(false), 8000);
     function finish(value: boolean) {
       if (settled) return;
       settled = true;
@@ -95,6 +95,21 @@ async function sourceFor(reciterId: string, surah: number, ayah: number) {
   } catch {
     return recitationUrl(reciterId, surah, ayah);
   }
+}
+
+async function playbackSources(reciterId: string, surah: number, ayah: number) {
+  const sources: string[] = [];
+  try {
+    const cached = await getCachedAyahUri(reciterId, surah, ayah);
+    if (cached) sources.push(cached);
+  } catch {}
+
+  const primary = recitationUrl(reciterId, surah, ayah);
+  if (!sources.includes(primary)) sources.push(primary);
+
+  const fallback = recitationFallbackUrl(reciterId, surah, ayah);
+  if (fallback && !sources.includes(fallback)) sources.push(fallback);
+  return sources;
 }
 
 function adjacentAyah(surah: number, ayah: number) {
@@ -153,9 +168,15 @@ function ensurePlayer() {
     if (player !== nextPlayer) return;
 
     if (status.error) {
+      // Treat a source error as a failed attempt while a load is pending so
+      // the controller can immediately try the alternate CDN.
+      if (pendingLoad) {
+        pendingLoad.settle(false);
+        publish({ isPlaying: false, isLoading: true, error: false });
+        return;
+      }
       wantsPlayback = false;
       activeTarget = null;
-      pendingLoad?.settle(false);
       publish({ isPlaying: false, isLoading: false, error: true });
       return;
     }
@@ -290,19 +311,30 @@ function playExactAyah(reciterId: string, surah: number, ayah: number) {
       }
       if (thisRequest !== requestId) return;
 
-      const source = await sourceFor(reciterId, surah, ayah);
+      const sources = await playbackSources(reciterId, surah, ayah);
       if (thisRequest !== requestId) return;
 
       const nextPlayer = ensurePlayer();
       try { nextPlayer.pause(); } catch {}
 
-      const loaded = waitUntilLoaded(thisRequest);
-      nextPlayer.replace({ uri: source });
-      const didLoad = await loaded;
+      let didLoad = false;
+      for (const source of sources) {
+        if (thisRequest !== requestId || player !== nextPlayer) return;
+        const loaded = waitUntilLoaded(thisRequest);
+        try {
+          nextPlayer.replace({ uri: source });
+          didLoad = await loaded;
+        } catch {
+          pendingLoad?.settle(false);
+          didLoad = false;
+        }
+        if (didLoad) break;
+      }
 
       if (thisRequest !== requestId || player !== nextPlayer) return;
       if (!didLoad) {
         wantsPlayback = false;
+        activeTarget = null;
         publish({ isPlaying: false, isLoading: false, error: true, key: null });
         return;
       }
