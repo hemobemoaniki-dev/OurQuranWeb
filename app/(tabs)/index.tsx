@@ -113,7 +113,7 @@ export default function Home() {
 
   return (
     <View style={styles.root}>
-      {Platform.OS === "web" && scheme === "dark" ? <WebPageBackdrop intensity="strong" /> : null}
+      {Platform.OS === "web" ? <WebPageBackdrop intensity="strong" /> : null}
       <ScrollView
         contentContainerStyle={[styles.content, { paddingTop: insets.top + 24 }]}
         showsVerticalScrollIndicator={false}
