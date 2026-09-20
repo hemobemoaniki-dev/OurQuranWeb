@@ -21,7 +21,7 @@ import { serifFont } from "@/src/typography";
 import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Platform, Pressable, ScrollView, View, useWindowDimensions } from "react-native";
+import { Animated, Platform, Pressable, ScrollView, View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const PERIODS: { key: Period; label: string }[] = [
@@ -63,6 +63,7 @@ export default function Home() {
   const metricsRef = useRef<ScrollView>(null);
   const metricsOffsetRef = useRef(0);
   const metricsMotionRef = useRef<number | null>(null);
+  const metricsScrollX = useRef(new Animated.Value(0)).current;
   const [metricsWidth, setMetricsWidth] = useState(0);
   const streak = useMemo(() => computeStreak(account.history, localDay), [account.history, localDay]);
   const crownActive = crownActiveForStreak(streak);
@@ -109,15 +110,16 @@ export default function Home() {
       cancelMetricsMotion();
       const from = metricsOffsetRef.current;
       const distance = target - from;
-      const duration = 360;
+      const duration = 300;
       const startedAt = performance.now();
 
       const frame = (now: number) => {
         const raw = Math.min(1, (now - startedAt) / duration);
-        // Fast premium ease: decisive movement with a soft landing.
-        const eased = 1 - Math.pow(1 - raw, 4);
+        // Fast, modern ease-out: the cards move decisively, then settle softly.
+        const eased = raw === 1 ? 1 : 1 - Math.pow(2, -10 * raw);
         const x = from + distance * eased;
         metricsOffsetRef.current = x;
+        metricsScrollX.setValue(x);
         metricsRef.current?.scrollTo({ x, animated: false });
 
         if (raw < 1) {
@@ -133,6 +135,7 @@ export default function Home() {
     }
 
     metricsOffsetRef.current = target;
+    metricsScrollX.setValue(target);
     metricsRef.current?.scrollTo({ x: target, animated });
   }, [cancelMetricsMotion, metricsWidth]);
 
@@ -342,41 +345,102 @@ export default function Home() {
             if (width > 0 && index >= 0) {
               const target = index * width;
               metricsOffsetRef.current = target;
+              metricsScrollX.setValue(target);
               requestAnimationFrame(() => metricsRef.current?.scrollTo({ x: target, animated: false }));
             }
           }}
           testID="hasanaat-tracker"
         >
-          <ScrollView
-            ref={metricsRef}
+          <Animated.ScrollView
+            ref={metricsRef as any}
             horizontal
             pagingEnabled
+            decelerationRate="fast"
             showsHorizontalScrollIndicator={false}
             scrollEventThrottle={16}
             onScroll={(event) => {
-              metricsOffsetRef.current = event.nativeEvent.contentOffset.x;
+              const x = event.nativeEvent.contentOffset.x;
+              metricsOffsetRef.current = x;
+              metricsScrollX.setValue(x);
             }}
             onScrollBeginDrag={cancelMetricsMotion}
             onMomentumScrollEnd={(event) => {
               if (!metricsWidth) return;
               const index = Math.max(0, Math.min(PERIODS.length - 1, Math.round(event.nativeEvent.contentOffset.x / metricsWidth)));
-              metricsOffsetRef.current = index * metricsWidth;
+              const settled = index * metricsWidth;
+              metricsOffsetRef.current = settled;
+              metricsScrollX.setValue(settled);
               setPeriod(PERIODS[index].key);
             }}
             contentContainerStyle={styles.metricsCarouselTrack}
           >
-            {PERIODS.map((item) => {
+            {PERIODS.map((item, pageIndex) => {
               const pageStats = periodStats[item.key];
+              const inputRange = metricsWidth > 0
+                ? [(pageIndex - 1) * metricsWidth, pageIndex * metricsWidth, (pageIndex + 1) * metricsWidth]
+                : [-1, 0, 1];
+              const pageOpacity = metricsScrollX.interpolate({
+                inputRange,
+                outputRange: [0.42, 1, 0.42],
+                extrapolate: "clamp",
+              });
+              const pageScale = metricsScrollX.interpolate({
+                inputRange,
+                outputRange: [0.965, 1, 0.965],
+                extrapolate: "clamp",
+              });
+              const pageShift = metricsScrollX.interpolate({
+                inputRange,
+                outputRange: [metricsWidth * 0.085, 0, -metricsWidth * 0.085],
+                extrapolate: "clamp",
+              });
+              const metricDefs = [
+                { label: "Hasanaat", value: formatK(pageStats.hasanaat), icon: "heart" as IconName, tint: palette[0] },
+                { label: "Ayahs read", value: formatK(pageStats.ayat), icon: "book-open-page-variant" as IconName, tint: palette[1] },
+                { label: "Reading time", value: readingDuration(pageStats.seconds), icon: "clock-outline" as IconName, tint: palette[2] },
+                { label: "Reading days", value: String(pageStats.days), icon: "calendar-check-outline" as IconName, tint: palette[3] },
+              ];
+
               return (
-                <View key={item.key} style={[styles.metricsPage, metricsWidth ? { width: metricsWidth } : null]}>
-                  <JourneyMetric label="Hasanaat" value={formatK(pageStats.hasanaat)} icon="heart" tint={palette[0]} />
-                  <JourneyMetric label="Ayahs read" value={formatK(pageStats.ayat)} icon="book-open-page-variant" tint={palette[1]} />
-                  <JourneyMetric label="Reading time" value={readingDuration(pageStats.seconds)} icon="clock-outline" tint={palette[2]} />
-                  <JourneyMetric label="Reading days" value={String(pageStats.days)} icon="calendar-check-outline" tint={palette[3]} />
-                </View>
+                <Animated.View
+                  key={item.key}
+                  style={[
+                    styles.metricsPage,
+                    metricsWidth ? { width: metricsWidth } : null,
+                    {
+                      opacity: pageOpacity,
+                      transform: [{ translateX: pageShift }, { scale: pageScale }],
+                    },
+                  ]}
+                >
+                  {metricDefs.map((metric, cardIndex) => {
+                    const cardShift = metricsScrollX.interpolate({
+                      inputRange,
+                      outputRange: [34 + cardIndex * 13, 0, -(34 + cardIndex * 13)],
+                      extrapolate: "clamp",
+                    });
+                    const cardLift = metricsScrollX.interpolate({
+                      inputRange,
+                      outputRange: [8 + cardIndex * 2, 0, 8 + cardIndex * 2],
+                      extrapolate: "clamp",
+                    });
+
+                    return (
+                      <Animated.View
+                        key={metric.label}
+                        style={[
+                          styles.metricCardShell,
+                          { transform: [{ translateX: cardShift }, { translateY: cardLift }] },
+                        ]}
+                      >
+                        <JourneyMetric {...metric} />
+                      </Animated.View>
+                    );
+                  })}
+                </Animated.View>
               );
             })}
-          </ScrollView>
+          </Animated.ScrollView>
         </View>
 
         <View style={[styles.lowerRow, compact && styles.stackRow]}>
@@ -560,6 +624,7 @@ function QuickAccessCarousel() {
   const ref = useRef<ScrollView>(null);
   const offsetRef = useRef(0);
   const motionRef = useRef<number | null>(null);
+  const quickScrollX = useRef(new Animated.Value(0)).current;
   const [page, setPage] = useState(0);
   const [pageWidth, setPageWidth] = useState(0);
   const totalPages = Math.ceil(QUICK_ACCESS_ITEMS.length / 4);
@@ -585,15 +650,16 @@ function QuickAccessCarousel() {
       cancelMotion();
       const from = offsetRef.current;
       const distance = target - from;
-      const duration = 340;
+      const duration = 290;
       const startedAt = Date.now();
 
       const frame = () => {
         const elapsed = Date.now() - startedAt;
         const raw = Math.min(1, elapsed / duration);
-        const eased = 1 - Math.pow(1 - raw, 4);
+        const eased = raw === 1 ? 1 : 1 - Math.pow(2, -10 * raw);
         const x = from + distance * eased;
         offsetRef.current = x;
+        quickScrollX.setValue(x);
         ref.current?.scrollTo({ x, animated: false });
 
         if (raw < 1) {
@@ -609,6 +675,7 @@ function QuickAccessCarousel() {
     }
 
     offsetRef.current = target;
+    quickScrollX.setValue(target);
     ref.current?.scrollTo({ x: target, animated });
   }, [cancelMotion, pageWidth, totalPages]);
 
@@ -637,34 +704,98 @@ function QuickAccessCarousel() {
       </View>
       <View
         style={styles.quickCarouselViewport}
-        onLayout={(event) => setPageWidth(Math.round(event.nativeEvent.layout.width))}
+        onLayout={(event) => {
+          const width = Math.round(event.nativeEvent.layout.width);
+          setPageWidth(width);
+          const target = page * width;
+          offsetRef.current = target;
+          quickScrollX.setValue(target);
+          requestAnimationFrame(() => ref.current?.scrollTo({ x: target, animated: false }));
+        }}
       >
-        <ScrollView
-          ref={ref}
+        <Animated.ScrollView
+          ref={ref as any}
           horizontal
           pagingEnabled
+          decelerationRate="fast"
           showsHorizontalScrollIndicator={false}
           scrollEventThrottle={16}
           onScroll={(event) => {
-            offsetRef.current = event.nativeEvent.contentOffset.x;
+            const x = event.nativeEvent.contentOffset.x;
+            offsetRef.current = x;
+            quickScrollX.setValue(x);
           }}
           onScrollBeginDrag={cancelMotion}
           onMomentumScrollEnd={(event) => {
             if (!pageWidth) return;
             const settled = Math.max(0, Math.min(totalPages - 1, Math.round(event.nativeEvent.contentOffset.x / pageWidth)));
-            offsetRef.current = settled * pageWidth;
+            const target = settled * pageWidth;
+            offsetRef.current = target;
+            quickScrollX.setValue(target);
             setPage(settled);
           }}
           contentContainerStyle={styles.quickCarouselTrack}
         >
-          {pages.map((items, pageIndex) => (
-            <View key={pageIndex} style={[styles.quickPage, pageWidth ? { width: pageWidth } : null]}>
-              {items.map((item) => (
-                <QuickAction key={item.label} icon={item.icon} label={item.label} hint={item.hint} onPress={() => router.push(item.href as any)} />
-              ))}
-            </View>
-          ))}
-        </ScrollView>
+          {pages.map((items, pageIndex) => {
+            const inputRange = pageWidth > 0
+              ? [(pageIndex - 1) * pageWidth, pageIndex * pageWidth, (pageIndex + 1) * pageWidth]
+              : [-1, 0, 1];
+            const pageOpacity = quickScrollX.interpolate({
+              inputRange,
+              outputRange: [0.32, 1, 0.32],
+              extrapolate: "clamp",
+            });
+            const pageScale = quickScrollX.interpolate({
+              inputRange,
+              outputRange: [0.95, 1, 0.95],
+              extrapolate: "clamp",
+            });
+            const pageShift = quickScrollX.interpolate({
+              inputRange,
+              outputRange: [pageWidth * 0.11, 0, -pageWidth * 0.11],
+              extrapolate: "clamp",
+            });
+
+            return (
+              <Animated.View
+                key={pageIndex}
+                style={[
+                  styles.quickPage,
+                  pageWidth ? { width: pageWidth } : null,
+                  {
+                    opacity: pageOpacity,
+                    transform: [{ translateX: pageShift }, { scale: pageScale }],
+                  },
+                ]}
+              >
+                {items.map((item, cardIndex) => {
+                  const cardShift = quickScrollX.interpolate({
+                    inputRange,
+                    outputRange: [42 + cardIndex * 15, 0, -(42 + cardIndex * 15)],
+                    extrapolate: "clamp",
+                  });
+                  const cardLift = quickScrollX.interpolate({
+                    inputRange,
+                    outputRange: [10 + cardIndex * 2, 0, 10 + cardIndex * 2],
+                    extrapolate: "clamp",
+                  });
+
+                  return (
+                    <Animated.View
+                      key={item.label}
+                      style={[
+                        styles.quickActionShell,
+                        { transform: [{ translateX: cardShift }, { translateY: cardLift }] },
+                      ]}
+                    >
+                      <QuickAction icon={item.icon} label={item.label} hint={item.hint} onPress={() => router.push(item.href as any)} />
+                    </Animated.View>
+                  );
+                })}
+              </Animated.View>
+            );
+          })}
+        </Animated.ScrollView>
       </View>
     </View>
   );
@@ -937,10 +1068,10 @@ const useStyles = makeStyles((c) => ({
   metricsCarouselViewport: { width: "100%", overflow: "hidden" },
   metricsCarouselTrack: { alignItems: "stretch" },
   metricsPage: { flexDirection: "row", flexWrap: "nowrap", gap: 14 },
+  metricCardShell: { flex: 1, flexBasis: 0, minWidth: 190 },
   statCard: {
     flex: 1,
-    flexBasis: 0,
-    minWidth: 190,
+    width: "100%",
     minHeight: 146,
     padding: 20,
     borderRadius: 24,
@@ -1041,6 +1172,7 @@ const useStyles = makeStyles((c) => ({
   quickCarouselViewport: { flex: 1, width: "100%", overflow: "hidden", marginTop: 14 },
   quickCarouselTrack: { alignItems: "stretch" },
   quickPage: { flexDirection: "row", flexWrap: "wrap", gap: 10, alignContent: "flex-start" },
+  quickActionShell: { width: "48%", flexGrow: 1, minHeight: 80 },
   quickPager: { flexDirection: "row", alignItems: "center", gap: 8 },
   quickPagerButton: {
     width: 34,
@@ -1061,8 +1193,8 @@ const useStyles = makeStyles((c) => ({
   quickDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: "rgba(255,255,255,0.22)" },
   quickDotActive: { width: 20, backgroundColor: c.gold, shadowColor: c.gold, shadowOpacity: 0.5, shadowRadius: 6, shadowOffset: { width: 0, height: 0 } },
   quickAction: {
-    width: "48%",
-    flexGrow: 1,
+    width: "100%",
+    height: "100%",
     minHeight: 80,
     flexDirection: "row",
     alignItems: "center",
