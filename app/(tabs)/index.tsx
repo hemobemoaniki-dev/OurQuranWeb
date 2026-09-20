@@ -241,6 +241,14 @@ export default function Home() {
               end={{ x: 0.9, y: 1 }}
               style={styles.heroGloss}
             />
+            <LinearGradient
+              pointerEvents="none"
+              colors={["transparent", "rgba(10,10,9,0.10)", "rgba(8,9,10,0.58)"]}
+              locations={[0, 0.54, 1]}
+              start={{ x: 0, y: 0.5 }}
+              end={{ x: 1, y: 0.5 }}
+              style={styles.heroRightBlend}
+            />
             <View pointerEvents="none" style={styles.heroTopEdge} />
             <View style={styles.heroMark}>
               <View pointerEvents="none" style={styles.heroMarkAura} />
@@ -935,6 +943,13 @@ const useStyles = makeStyles((c) => ({
     right: 0,
     bottom: 0,
     left: 0,
+  },
+  heroRightBlend: {
+    position: "absolute",
+    right: 0,
+    top: 0,
+    bottom: 0,
+    width: 190,
   },
   heroTopEdge: {
     position: "absolute",
