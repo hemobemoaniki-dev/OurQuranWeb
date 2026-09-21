@@ -9,7 +9,7 @@ import { SubHeader } from "@/src/components/SubHeader";
 import { Icon } from "@/src/components/Icon";
 import { WebPageBackdrop } from "@/src/components/WebPageBackdrop";
 import { useAccount } from "@/src/context/AppState";
-import { computeStreak, todayKey } from "@/src/lib/dates";
+import { todayKey } from "@/src/lib/dates";
 import { formatCountdown, nextAdhkarWindow } from "@/src/lib/adhkar-schedule";
 import { ADHKAR, adhkarFor, dhikrArabic, dhikrEnglish, TASBEEH_PHRASES, type Dhikr } from "@/src/data/adhkar";
 import { makeStyles, useTheme } from "@/src/theme";
@@ -144,7 +144,19 @@ function DesktopAdhkar() {
   const counts = account.adhkarProgress.date === todayKey() ? account.adhkarProgress.counts : {};
   const done = current ? counts[countKey] ?? 0 : 0;
   const complete = !!current && done >= current.count;
-  const streak = computeStreak(account.history, new Date());
+  const collectionCompleted = items.filter((item) => {
+    const itemTime: "morning" | "evening" = category === "evening"
+      ? "evening"
+      : item.times.includes("morning")
+        ? "morning"
+        : item.times.includes("evening")
+          ? "evening"
+          : "morning";
+    const scope = item.times.includes(itemTime) ? itemTime : "general";
+    return (counts[`${scope}:${item.id}`] ?? 0) >= item.count;
+  }).length;
+  const collectionPct = items.length ? Math.round((collectionCompleted / items.length) * 100) : 0;
+  const selectedCategory = DESKTOP_CATEGORIES.find((item) => item.key === category) ?? DESKTOP_CATEGORIES[0];
   const selectedPhrase = TASBEEH_PHRASES.find((item) => item.id === account.tasbeeh.phrase) ?? TASBEEH_PHRASES[0];
 
   const now = new Date(nowMs);
@@ -164,7 +176,7 @@ function DesktopAdhkar() {
 
   return (
     <>
-      <Head><title>Adhkar & Tasbeeh — OurQuran</title><meta name="description" content="Read authentic daily Adhkar, search by purpose, track completion and use a digital Tasbeeh counter." /></Head>
+      <Head><title>Adhkar & Tasbeeh — OurQuran</title><meta name="description" content="Read authentic daily Adhkar by collection, track completion and use a digital Tasbeeh counter." /></Head>
       <View style={styles.desktopRoot}>
         <WebPageBackdrop intensity="strong" />
         <ScrollView contentContainerStyle={styles.desktopPage} showsVerticalScrollIndicator={false}>
@@ -253,9 +265,9 @@ function DesktopAdhkar() {
                   style={StyleSheet.absoluteFill}
                 />
                 <View style={styles.featuredHead}>
-                  <View style={styles.featuredIcon}><Icon name={time === "morning" ? "white-balance-sunny" : "weather-night"} size={29} color={colors.gold} /></View>
+                  <View style={styles.featuredIcon}><Icon name={selectedCategory.icon as any} size={27} color={colors.gold} /></View>
                   <View style={styles.featuredHeadCopy}>
-                    <Text style={styles.featuredEyebrow}>{category === "all" ? "DAILY ADHKAR" : `${category.toUpperCase()} ADHKAR`}</Text>
+                    <Text style={styles.featuredEyebrow}>{selectedCategory.label.toUpperCase()}</Text>
                     <Text style={styles.featuredCount}>{index + 1} of {items.length} · {current.reference}</Text>
                   </View>
                   <Pressable accessibilityRole="button" accessibilityLabel={complete ? "Completed" : "Mark this dhikr completed"} onPress={markComplete} style={({ pressed }) => [styles.completionChip, complete && styles.completionChipDone, pressed && styles.desktopPressed]}>
@@ -288,10 +300,10 @@ function DesktopAdhkar() {
             <View style={styles.desktopSide}>
               <View style={styles.streakCard}>
                 <LinearGradient pointerEvents="none" colors={["rgba(236,202,105,0.10)", "rgba(255,255,255,0.018)", "transparent"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
-                <View style={styles.sideTitleRow}><Icon name="fire" size={25} color={colors.gold} /><Text style={styles.sideTitle}>Daily streak</Text></View>
-                <Text style={styles.streakNumber}>{streak}</Text>
-                <Text style={styles.streakDays}>days</Text>
-                <Text style={styles.sideNote}>Keep remembering. Every dhikr counts.</Text>
+                <View style={styles.sideTitleRow}><Icon name="progress-check" size={25} color={colors.gold} /><Text style={styles.sideTitle}>Today’s progress</Text></View>
+                <Text style={styles.streakNumber}>{collectionPct}%</Text>
+                <Text style={styles.streakDays}>{collectionCompleted} of {items.length}</Text>
+                <Text style={styles.sideNote}>{selectedCategory.label} collection completed today.</Text>
               </View>
               <View style={styles.sideBottomRow}>
                 <View style={styles.nextAdhkarCard}>
