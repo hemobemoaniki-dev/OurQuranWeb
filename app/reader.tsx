@@ -197,13 +197,13 @@ export default function Reader() {
   const ayah = data?.ayahs[ayahIndex];
   const numberInSurah = ayah?.numberInSurah ?? ayahIndex + 1;
   const prefetchAudio = audio.prefetch;
-  // Do not start network work while the user is rapidly jumping through Ayahs.
-  // Once the visible verse has been stable for 650 ms, warm only that verse.
+  // Give text navigation priority, then warm the visible Ayah almost
+  // immediately so Play rarely starts from a cold network request.
   useEffect(() => {
     if (exitingRef.current || !readerFocused.current || !surahNum || data?.number !== surahNum || !ayah || audio.isPlaying || audio.isLoading) return;
     const timer = setTimeout(() => {
       if (!exitingRef.current && readerFocused.current) prefetchAudio(surahNum, numberInSurah);
-    }, 650);
+    }, 250);
     return () => clearTimeout(timer);
   }, [surahNum, data?.number, ayah, numberInSurah, prefetchAudio, audio.isPlaying, audio.isLoading]);
   const meta = surahMeta(surahNum ?? 1);
