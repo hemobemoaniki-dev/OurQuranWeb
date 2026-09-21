@@ -17,6 +17,9 @@ function load(file, mocks = {}, globals = {}) {
     if (name.startsWith('@/') && name.endsWith('.json')) return require(path.join(root, name.slice(2)));
     if (name.startsWith('@/')) return load(name.slice(2) + '.ts', mocks, globals);
     if (name.startsWith('.') && name.endsWith('.json')) return require(path.resolve(path.dirname(path.join(root, file)), name));
+    // Metro turns static image imports into asset descriptors. Node's test VM
+    // cannot require JPG/PNG/SVG bytes, so preserve the module address instead.
+    if (/\.(?:png|jpe?g|webp|gif|svg)$/i.test(name)) return name;
     return require(name);
   }, console, setTimeout, clearTimeout, AbortController, ...globals }, { filename: file });
   return exports;
