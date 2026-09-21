@@ -15,8 +15,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 const PRIVACY_URL = "https://ourquran.web.app/privacy";
 const DELETE_ACCOUNT_URL = "https://ourquran.web.app/delete-account";
 
-const TABS: { name: string; label: string; icon: IconName; href: "/" | "/read" | "/adhkar" | "/names" | "/preferences" }[] = [
-  { name: "index", label: "Home", icon: "home-variant-outline", href: "/" },
+const TABS: { name: string; label: string; icon: IconName; href: string }[] = [
+  { name: "index", label: "Home", icon: "home-variant-outline", href: "/(tabs)" },
   { name: "read", label: "Quran", icon: "book-open-page-variant-outline", href: "/read" },
   { name: "adhkar", label: "Adhkar", icon: "counter", href: "/adhkar" },
   { name: "names", label: "Names", icon: "star-crescent", href: "/names" },
@@ -45,7 +45,7 @@ const TabItem = memo(function TabItem({
         pressed && styles.itemPressed,
       ]}
       onPress={() => {
-        if (!focused) router.push(meta.href);
+        if (!focused) router.replace(meta.href as any);
       }}
       accessibilityRole="tab"
       accessibilityLabel={meta.label}
