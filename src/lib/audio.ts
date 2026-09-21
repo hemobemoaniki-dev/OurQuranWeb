@@ -77,7 +77,7 @@ function waitUntilLoaded(request: number) {
   cancelPendingLoad();
   return new Promise<boolean>((resolve) => {
     let settled = false;
-    const timer = setTimeout(() => finish(false), 4500);
+    const timer = setTimeout(() => finish(false), 3000);
     function finish(value: boolean) {
       if (settled) return;
       settled = true;
@@ -167,7 +167,7 @@ function ensurePlayer() {
 
   const nextPlayer = createAudioPlayer(null, {
     updateInterval: 500,
-    preferredForwardBufferDuration: 8,
+    preferredForwardBufferDuration: 3,
   });
   player = nextPlayer;
   statusSubscription = nextPlayer.addListener("playbackStatusUpdate", (status) => {
