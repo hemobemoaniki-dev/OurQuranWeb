@@ -526,6 +526,16 @@ test('all reciter previews use Ayat al-Kursi and never a surah-opening intro', (
   }
 });
 
+test('reader warms selected audio before the click and keeps text local', () => {
+  const reader = fs.readFileSync(path.join(root, 'app/reader.tsx'), 'utf8');
+  const desktop = fs.readFileSync(path.join(root, 'src/components/DesktopReaderExperience.tsx'), 'utf8');
+  const quran = fs.readFileSync(path.join(root, 'src/lib/quran.ts'), 'utf8');
+  assert.match(desktop, /onPressIn=\{onWarmAudio\}/);
+  assert.match(reader, /onWarmAudio=\{\(\) =>/);
+  assert.match(reader, /350\)/);
+  assert.doesNotMatch(quran, /\bfetch\s*\(/);
+});
+
 test('reader audio controls apply live and stay isolated by reciter', () => {
   const audio = fs.readFileSync(path.join(root, 'src/lib/audio.ts'), 'utf8');
   const cache = fs.readFileSync(path.join(root, 'src/lib/audio-cache.ts'), 'utf8');
@@ -641,6 +651,8 @@ test("Reader exit always reaches Home and browser back cleanup avoids stale rout
   assert.match(reader, /window\.addEventListener\("popstate", handleBrowserBack\)/);
   assert.match(reader, /onBack=\{\(\) => finishReaderAndGoHome\(true\)\}/);
   assert.match(reader, /onPress=\{imDone\}/);
+  assert.match(exit, /commitReward\(resumeSurah, resumeAyah, completedReward\)/);
+  assert.match(exit, /resumeAyah = exitWasLastAyah \? 1 : exitAyah \+ 1/);
   assert.ok((reader.match(/runAfterPaint\(\(\) => \{\n\s*if \(exitingRef\.current\) return;/g) ?? []).length >= 4);
   const sessionStart = reader.indexOf('useFocusEffect(useCallback(() => {');
   const sessionEnd = reader.indexOf('// Quran text is bundled', sessionStart);
