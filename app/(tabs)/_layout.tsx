@@ -1,4 +1,3 @@
-import { useIsFocused } from "@react-navigation/native";
 import type { ReactNode } from "react";
 import { Text } from "@/src/components/AppText";
 import { BrandLockup } from "@/src/components/BrandLockup";
@@ -9,7 +8,7 @@ import { WebTopNav } from "@/src/components/WebTopNav";
 import { useAccount, useAuth } from "@/src/context/AppState";
 import { makeStyles, useTheme } from "@/src/theme";
 import { LinearGradient } from "expo-linear-gradient";
-import { Tabs, useRouter } from "expo-router";
+import { Tabs, useRouter, usePathname } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { memo } from "react";
 import { Platform, Pressable, View, useWindowDimensions } from "react-native";
@@ -186,9 +185,13 @@ function CustomTabBar({ state }: any) {
   );
 }
 
-function FocusedScene({ children }: { children: ReactNode }) {
-  const focused = useIsFocused();
-  return focused ? <>{children}</> : null;
+function FocusedScene({ children, name }: { children: ReactNode; name: string }) {
+  const pathname = usePathname();
+  const active = pathname.startsWith("/read") ? "read"
+    : pathname.startsWith("/adhkar") ? "adhkar"
+    : pathname.startsWith("/names") ? "names"
+    : pathname.startsWith("/preferences") ? "preferences" : "index";
+  return name === active ? <>{children}</> : null;
 }
 
 export default function TabsLayout() {
@@ -203,7 +206,7 @@ export default function TabsLayout() {
         <View style={{ flex: 1 }}>
           <Tabs
             detachInactiveScreens
-            screenLayout={({ children }) => <FocusedScene>{children}</FocusedScene>
+            screenLayout={({ children, route }) => <FocusedScene name={route.name}>{children}</FocusedScene>}
             screenOptions={{ sceneStyle: { backgroundColor: "transparent" }, headerShown: false, lazy: false, freezeOnBlur: true, animation: "none", tabBarHideOnKeyboard: true }}
             tabBar={() => null}
           >
