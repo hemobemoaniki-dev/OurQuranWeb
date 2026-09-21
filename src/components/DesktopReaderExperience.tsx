@@ -110,7 +110,7 @@ export function DesktopReaderExperience({
         </View>
 
         <View style={styles.navLinks}>
-          <NavButton label="Home" onPress={() => navigate("/")} />
+          <NavButton label="Home" onPress={() => navigate("/(tabs)")} />
           <NavButton label="Quran" active accent={theme.accent} onPress={() => navigate("/read")} />
           <NavButton label="Adhkar" onPress={() => navigate("/adhkar")} />
           <NavButton label="Names" onPress={() => navigate("/names")} />
