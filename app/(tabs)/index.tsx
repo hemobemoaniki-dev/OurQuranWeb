@@ -270,7 +270,7 @@ export default function Home() {
             />
             <View pointerEvents="none" style={styles.heroInnerEdge} />
             <View style={styles.heroMark}>
-              <BrandMark size={desktopWeb ? 208 : 238} tint="#F0C94F" glow="#FFD65A" intensity="strong" finish="gold" />
+              <BrandMark size={desktopWeb ? 155 : 238} tint="#F0C94F" glow="#FFD65A" intensity="strong" finish="gold" />
               {desktopWeb ? <><Text style={{ color: "#FFE68A", fontSize: 28, fontFamily: serifFont }}>وَاقْرَأْ وَارْتَقِ</Text><Text style={{ color: "#FFE68A", fontSize: 9, letterSpacing: 3, fontWeight: "900", marginTop: 5 }}>READ AND ASCEND</Text></> : null}
             </View>
             <View style={styles.heroContent}>

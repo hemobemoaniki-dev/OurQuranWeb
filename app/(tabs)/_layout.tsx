@@ -1,3 +1,5 @@
+import { useIsFocused } from "@react-navigation/native";
+import type { ReactNode } from "react";
 import { Text } from "@/src/components/AppText";
 import { BrandLockup } from "@/src/components/BrandLockup";
 import { Icon, type IconName } from "@/src/components/Icon";
@@ -184,6 +186,11 @@ function CustomTabBar({ state }: any) {
   );
 }
 
+function FocusedScene({ children }: { children: ReactNode }) {
+  const focused = useIsFocused();
+  return focused ? <>{children}</> : null;
+}
+
 export default function TabsLayout() {
   const { width } = useWindowDimensions();
   const desktopWeb = Platform.OS === "web" && width >= 900;
@@ -195,7 +202,8 @@ export default function TabsLayout() {
         <WebTopNav />
         <View style={{ flex: 1 }}>
           <Tabs
-            detachInactiveScreens={false}
+            detachInactiveScreens
+            screenLayout={({ children }) => <FocusedScene>{children}</FocusedScene>
             screenOptions={{ sceneStyle: { backgroundColor: "transparent" }, headerShown: false, lazy: false, freezeOnBlur: true, animation: "none", tabBarHideOnKeyboard: true }}
             tabBar={() => null}
           >
