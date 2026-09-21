@@ -818,7 +818,8 @@ test('web desktop shell uses premium top navigation, wide dashboard and cinemati
   assert.match(desktop, /updateSettings\(\{ speed \}\)/);
   assert.match(desktop, /updateSettings\(\{ autoplay: true \}\)/);
   assert.match(desktop, /updateSettings\(\{ autoplay: false \}\)/);
-  assert.match(brand, /name="mosque"/);
+  assert.match(brand, /BRAND_MARK_URI/);
+  assert.match(brand, /<Image/);
 });
 
 test('desktop navigation is edge-to-edge translucent glass with bold standard text', () => {
