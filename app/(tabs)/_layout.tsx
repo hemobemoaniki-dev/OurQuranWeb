@@ -194,7 +194,7 @@ export default function TabsLayout() {
         <View style={{ flex: 1 }}>
           <Tabs
             detachInactiveScreens={false}
-            screenOptions={{ headerShown: false, lazy: false, freezeOnBlur: true, animation: "none", tabBarHideOnKeyboard: true }}
+            screenOptions={{ headerShown: false, lazy: true, freezeOnBlur: true, animation: "none", tabBarHideOnKeyboard: true }}
             tabBar={() => null}
           >
             <Tabs.Screen name="index" />
@@ -213,7 +213,7 @@ export default function TabsLayout() {
       detachInactiveScreens={false}
       screenOptions={{
         headerShown: false,
-        lazy: false,
+        lazy: true,
         freezeOnBlur: true,
         animation: "none",
         tabBarHideOnKeyboard: true,
