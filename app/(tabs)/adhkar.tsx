@@ -120,6 +120,11 @@ function DesktopAdhkar() {
     return counts;
   }, []);
 
+  const visibleCategories = useMemo(
+    () => DESKTOP_CATEGORIES.filter((spec) => (categoryCounts.get(spec.key) ?? 0) > 0),
+    [categoryCounts],
+  );
+
   const items = useMemo(
     () => ADHKAR.filter((item) => belongsToCategory(item, category)),
     [category],
@@ -229,7 +234,7 @@ function DesktopAdhkar() {
                   categoryScrollX.current = event.nativeEvent.contentOffset.x;
                 }}
               >
-                {DESKTOP_CATEGORIES.map((item) => {
+                {visibleCategories.map((item) => {
                   const active = category === item.key;
                   return (
                     <Pressable
