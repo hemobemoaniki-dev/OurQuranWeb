@@ -65,7 +65,7 @@ export default function Home() {
   const metricsRef = useRef<ScrollView>(null);
   const metricsOffsetRef = useRef(0);
   const metricsMotionRef = useRef<number | null>(null);
-  const metricsScrollX = useRef(new Animated.Value(0)).current;
+  const [metricsScrollX] = useState(() => new Animated.Value(0));
   const [metricsWidth, setMetricsWidth] = useState(0);
   const streak = useMemo(() => computeStreak(account.history, localDay), [account.history, localDay]);
   const crownActive = crownActiveForStreak(streak);
@@ -162,7 +162,7 @@ export default function Home() {
     metricsOffsetRef.current = target;
     metricsScrollX.setValue(target);
     metricsRef.current?.scrollTo({ x: target, animated });
-  }, [cancelMetricsMotion, metricsWidth]);
+  }, [cancelMetricsMotion, metricsScrollX, metricsWidth]);
 
   useEffect(() => {
     if (!metricsWidth) return;
@@ -722,7 +722,7 @@ function QuickAccessCarousel() {
   const ref = useRef<ScrollView>(null);
   const offsetRef = useRef(0);
   const motionRef = useRef<number | null>(null);
-  const quickScrollX = useRef(new Animated.Value(0)).current;
+  const [quickScrollX] = useState(() => new Animated.Value(0));
   const [page, setPage] = useState(0);
   const [pageWidth, setPageWidth] = useState(0);
   const totalPages = Math.ceil(QUICK_ACCESS_ITEMS.length / 4);
@@ -775,7 +775,7 @@ function QuickAccessCarousel() {
     offsetRef.current = target;
     quickScrollX.setValue(target);
     ref.current?.scrollTo({ x: target, animated });
-  }, [cancelMotion, pageWidth, totalPages]);
+  }, [cancelMotion, pageWidth, quickScrollX, totalPages]);
 
   useEffect(() => {
     if (!pageWidth) return;
