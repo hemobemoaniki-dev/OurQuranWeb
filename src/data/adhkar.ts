@@ -206,7 +206,7 @@ export const ADHKAR: Dhikr[] = [
   },
   {
     id: "enter-mosque", title: "Entering the mosque", reference: "1 time", count: 1, times: [],
-    categories: ["prayer"],
+    categories: ["mosque", "prayer"],
     arabic: "اللَّهُمَّ افْتَحْ لِي أَبْوَابَ رَحْمَتِكَ",
     english: "O Allah, open for me the doors of Your mercy.",
     source: "Sahih Muslim 713a", authenticity: "Sahih",
