@@ -80,6 +80,7 @@ const AccountContext = createContext<AccountApi | null>(null);
 
 type ReaderApi = Pick<AccountApi, "hydrated" | "saveReaderPosition" | "commitReward" | "addReadingSeconds" | "updateSettings" | "toggleBookmark" | "isBookmarked" | "flush"> & {
   account: Pick<Account, "currentSurah" | "currentAyah"> & { settings: Pick<Account["settings"], "reciter" | "speed" | "autoplay" | "readerTheme" | "readingSize"> };
+  bookmarkSignature: string;
 };
 const ReaderContext = createContext<ReaderApi | null>(null);
 
