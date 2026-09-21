@@ -315,6 +315,10 @@ export default function Reader() {
 
     const exitSurah = surahNum;
     const exitAyah = numberInSurah;
+    const completedReward = ayah ? computeReward(ayah.arabic) : 0;
+    const exitWasLastAyah = !!data && ayahIndex >= data.ayahs.length - 1;
+    const resumeSurah = exitSurah == null ? null : exitWasLastAyah ? (exitSurah < 114 ? exitSurah + 1 : 1) : exitSurah;
+    const resumeAyah = exitWasLastAyah ? 1 : exitAyah + 1;
 
     // Let Home paint before any account/session persistence can trigger
     // provider rerenders. This keeps exit latency independent of storage/network.
@@ -322,7 +326,8 @@ export default function Reader() {
       let deltas: Record<string, number> = {};
       try {
         deltas = stopSession();
-        if (exitSurah != null) saveReaderPosition(exitSurah, exitAyah);
+        if (resumeSurah != null && completedReward > 0) commitReward(resumeSurah, resumeAyah, completedReward);
+        else if (exitSurah != null) saveReaderPosition(exitSurah, exitAyah);
       } catch {}
 
       try {
@@ -341,7 +346,7 @@ export default function Reader() {
         exitingRef.current = false;
       }
     }, 450);
-  }, [addReadingSeconds, flush, numberInSurah, router, saveReaderPosition, stopSession, surahNum]);
+  }, [addReadingSeconds, ayah, ayahIndex, commitReward, data, flush, numberInSurah, router, saveReaderPosition, stopSession, surahNum]);
 
   const imDone = useCallback(() => {
     finishReaderAndGoHome(true);
@@ -357,12 +362,17 @@ export default function Reader() {
 
       const exitSurah = surahNum;
       const exitAyah = numberInSurah;
+      const completedReward = ayah ? computeReward(ayah.arabic) : 0;
+      const exitWasLastAyah = !!data && ayahIndex >= data.ayahs.length - 1;
+      const resumeSurah = exitSurah == null ? null : exitWasLastAyah ? (exitSurah < 114 ? exitSurah + 1 : 1) : exitSurah;
+      const resumeAyah = exitWasLastAyah ? 1 : exitAyah + 1;
 
       runAfterPaint(() => {
         let deltas: Record<string, number> = {};
         try {
           deltas = stopSession();
-          if (exitSurah != null) saveReaderPosition(exitSurah, exitAyah);
+          if (resumeSurah != null && completedReward > 0) commitReward(resumeSurah, resumeAyah, completedReward);
+          else if (exitSurah != null) saveReaderPosition(exitSurah, exitAyah);
         } catch {}
 
         try {
@@ -383,7 +393,7 @@ export default function Reader() {
     };
     window.addEventListener("popstate", handleBrowserBack);
     return () => window.removeEventListener("popstate", handleBrowserBack);
-  }, [addReadingSeconds, flush, numberInSurah, saveReaderPosition, stopSession, surahNum]);
+  }, [addReadingSeconds, ayah, ayahIndex, commitReward, data, flush, numberInSurah, saveReaderPosition, stopSession, surahNum]);
 
   const openPicker = () => {
     setPickerSurah(surahNum ?? 1);
