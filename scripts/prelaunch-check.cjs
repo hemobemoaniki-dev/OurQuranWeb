@@ -579,6 +579,24 @@ test('settings normalization rejects unsupported reciters and playback speeds', 
   assert.equal(valid.settings.speed, 1.25);
 });
 
+test('interactive UI does not ship obvious no-op or hash-link controls', () => {
+  const roots = [path.join(root, 'app'), path.join(root, 'src')];
+  const files = [];
+  function walkUi(dir) {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) walkUi(full);
+      else if (/\.(?:ts|tsx)$/.test(entry.name)) files.push(full);
+    }
+  }
+  roots.forEach(walkUi);
+  for (const file of files) {
+    const source = fs.readFileSync(file, 'utf8');
+    assert.doesNotMatch(source, /onPress\s*=\s*\{\s*\(\s*\)\s*=>\s*\{\s*\}\s*\}/, `No-op press handler in ${path.relative(root, file)}`);
+    assert.doesNotMatch(source, /href\s*=\s*["']#["']/, `Hash-only link in ${path.relative(root, file)}`);
+  }
+});
+
 test('all static internal navigation targets resolve to an app route', () => {
   const appDir = path.join(root, 'app');
   const files = [];
