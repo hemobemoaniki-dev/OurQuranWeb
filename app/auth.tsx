@@ -96,10 +96,10 @@ export default function AuthScreen() {
 
   const close = () => {
     if (router.canGoBack()) router.back();
-    else router.replace("/");
+    else router.replace("/(tabs)" as any);
   };
 
-  const finishAuth = () => router.replace("/");
+  const finishAuth = () => router.replace("/(tabs)" as any);
 
   const submit = async () => {
     if (busy) return;
