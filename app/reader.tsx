@@ -311,13 +311,14 @@ export default function Reader() {
     // No storage, session math, Firestore queueing, or state cleanup is allowed
     // to sit in front of navigation.
     exitReaderAudio();
-    router.replace("/");
+    router.replace("/(tabs)" as any);
 
     const exitSurah = surahNum;
     const exitAyah = numberInSurah;
 
-    // Persistence/session aggregation runs after navigation has been dispatched.
-    setTimeout(() => {
+    // Let Home paint before any account/session persistence can trigger
+    // provider rerenders. This keeps exit latency independent of storage/network.
+    runAfterPaint(() => {
       let deltas: Record<string, number> = {};
       try {
         deltas = stopSession();
@@ -331,7 +332,7 @@ export default function Reader() {
       } catch {}
 
       void Promise.resolve().then(flush).catch(() => {});
-    }, 0);
+    });
 
     // Safety only: unlock if a browser/router failure leaves this screen mounted.
     setTimeout(() => {
@@ -357,7 +358,7 @@ export default function Reader() {
       const exitSurah = surahNum;
       const exitAyah = numberInSurah;
 
-      setTimeout(() => {
+      runAfterPaint(() => {
         let deltas: Record<string, number> = {};
         try {
           deltas = stopSession();
@@ -371,7 +372,7 @@ export default function Reader() {
         } catch {}
 
         void Promise.resolve().then(flush).catch(() => {});
-      }, 0);
+      });
 
       setTimeout(() => {
         if (readerFocused.current) {
