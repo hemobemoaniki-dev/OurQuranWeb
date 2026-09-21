@@ -24,6 +24,7 @@ const aliases: Record<string, string> = {
   "hands-pray": "pray",
   "star-crescent": "crescent",
   "tune-variant": "settings",
+  "cog-outline": "settings",
   "crown": "crown",
   "check": "check",
   "check-circle": "checkCircle",
