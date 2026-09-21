@@ -777,12 +777,12 @@ test('reader Quran text path is synchronous, fully offline and ships every bundl
   assert.equal(count, 6236);
 });
 
-test('bottom tabs stay mounted, switch without animation and load icon font before splash', () => {
+test('bottom tabs preserve state, lazy-mount heavy screens and switch without animation', () => {
   const tabs = fs.readFileSync(path.join(root, 'app/(tabs)/_layout.tsx'), 'utf8');
   const rootLayout = fs.readFileSync(path.join(root, 'app/_layout.tsx'), 'utf8');
   assert.match(tabs, /detachInactiveScreens=\{false\}/);
   assert.match(tabs, /freezeOnBlur:\s*true/);
-  assert.match(tabs, /lazy:\s*false/);
+  assert.match(tabs, /lazy:\s*true/);
   assert.match(tabs, /animation:\s*"none"/);
   assert.doesNotMatch(tabs, /Animated\./);
   assert.match(tabs, /<Icon name=\{meta\.icon\} size=\{29\}/);
@@ -815,6 +815,34 @@ test('web desktop shell uses premium top navigation, wide dashboard and cinemati
   assert.match(desktop, /updateSettings\(\{ autoplay: true \}\)/);
   assert.match(desktop, /updateSettings\(\{ autoplay: false \}\)/);
   assert.match(brand, /name="mosque"/);
+});
+
+test('desktop Adhkar uses explicit collections, real horizontal scrolling and no fake search UI', () => {
+  const adhkar = fs.readFileSync(path.join(root, 'app/(tabs)/adhkar.tsx'), 'utf8');
+  const data = fs.readFileSync(path.join(root, 'src/data/adhkar.ts'), 'utf8');
+  assert.doesNotMatch(adhkar, /CATEGORY_WORDS/);
+  assert.doesNotMatch(adhkar, /adhkar-search-popover/);
+  assert.doesNotMatch(adhkar, /placeholder="Search adhkar/);
+  assert.match(adhkar, /item\.categories\?\.includes\(category\)/);
+  assert.match(adhkar, /testID="adhkar-categories-left"/);
+  assert.match(adhkar, /testID="adhkar-categories-right"/);
+  assert.match(adhkar, /scrollTo\(\{ x: nextX, animated: true \}\)/);
+  assert.match(adhkar, /showsHorizontalScrollIndicator=\{false\}/);
+  assert.match(data, /id: "enter-mosque"[\s\S]*?categories: \["mosque", "prayer"\]/);
+});
+
+test('reader exit is navigation-first and recitation failover does not wait eight seconds', () => {
+  const reader = fs.readFileSync(path.join(root, 'app/reader.tsx'), 'utf8');
+  const audio = fs.readFileSync(path.join(root, 'src/lib/audio.ts'), 'utf8');
+  const start = reader.indexOf('const finishReaderAndGoHome = useCallback');
+  const end = reader.indexOf('const imDone = useCallback', start);
+  const exit = reader.slice(start, end);
+  assert.ok(start >= 0 && end > start);
+  assert.ok(exit.indexOf('router.replace("/")') < exit.indexOf('runAfterPaint(() =>'));
+  assert.match(audio, /export function exitReaderAudio\(\)[\s\S]*?snapshot = \{ isPlaying: false, isLoading: false, error: false, key: null \}/);
+  const exitAudio = audio.slice(audio.indexOf('export function exitReaderAudio'), audio.indexOf('function pauseAyahAudio'));
+  assert.doesNotMatch(exitAudio, /stopAllAyahAudio\(\)/);
+  assert.match(audio, /setTimeout\(\(\) => finish\(false\), 4500\)/);
 });
 
 test('web favicon uses a validated export asset plus the versioned glowing browser icon', () => {
