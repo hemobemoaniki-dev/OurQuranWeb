@@ -847,6 +847,8 @@ test('desktop Adhkar uses explicit collections, real horizontal scrolling and no
   assert.match(adhkar, /testID="adhkar-categories-right"/);
   assert.match(adhkar, /scrollTo\(\{ x: nextX, animated: true \}\)/);
   assert.match(adhkar, /showsHorizontalScrollIndicator=\{false\}/);
+  assert.match(adhkar, /visibleCategories/);
+  assert.match(adhkar, /categoryCounts\.get\(spec\.key\)/);
   assert.match(data, /id: "enter-mosque"[\s\S]*?categories: \["mosque", "prayer"\]/);
 });
 
@@ -861,7 +863,7 @@ test('reader exit is navigation-first and recitation failover does not wait eigh
   assert.match(audio, /export function exitReaderAudio\(\)[\s\S]*?snapshot = \{ isPlaying: false, isLoading: false, error: false, key: null \}/);
   const exitAudio = audio.slice(audio.indexOf('export function exitReaderAudio'), audio.indexOf('function pauseAyahAudio'));
   assert.doesNotMatch(exitAudio, /stopAllAyahAudio\(\)/);
-  assert.match(audio, /setTimeout\(\(\) => finish\(false\), 4500\)/);
+  assert.match(audio, /setTimeout\(\(\) => finish\(false\), 3000\)/);
 });
 
 test('web favicon uses a validated PNG fallback plus the current glowing browser icons', () => {
