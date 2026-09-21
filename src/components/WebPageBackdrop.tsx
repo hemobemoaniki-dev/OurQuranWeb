@@ -23,6 +23,15 @@ export const WebPageBackdrop = memo(function WebPageBackdrop({
   const { scheme } = useTheme();
   const preset = siteBackground(account.settings.siteBackground);
   const dark = scheme === "dark";
+  // The approved wallpaper already contains its dark center and lighting.
+  // Do not bury the architecture under the generic background scrims.
+  if (preset.id === "golden-sanctuary") return (
+    <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+      <Image source={preset.source} contentFit="cover" contentPosition="center" style={StyleSheet.absoluteFill} />
+      {!dark ? <View style={[StyleSheet.absoluteFill, { backgroundColor: "rgba(255,252,243,0.72)" }]} /> : null}
+    </View>
+  );
+
 
   const intensityFactor =
     intensity === "strong" ? 1 : intensity === "soft" ? 0.82 : 0.92;

@@ -7,7 +7,7 @@ const EMERALD_DUSK = require("../../assets/reader/emerald-dusk.jpg");
 const SAKURA_MIST = require("../../assets/reader/sakura-mist.jpg");
 
 export const SITE_BACKGROUNDS = [
-  { id: "golden-sanctuary", name: "Golden Sanctuary", category: "Islamic", source: SOLAR_EMBER, position: "center", opacity: 0.58, warmth: "gold" },
+  { id: "golden-sanctuary", name: "Golden Sanctuary", category: "Islamic", source: require("../../assets/images/sanctuary-wallpaper.webp"), position: "center", opacity: 1, warmth: "gold" },
   { id: "moonlit-minaret", name: "Moonlit Minaret", category: "Islamic", source: MOONLIT_ORCHID, position: "center", opacity: 0.54, warmth: "violet" },
   { id: "sapphire-mihrab", name: "Sapphire Mihrab", category: "Islamic", source: SAPPHIRE_TIDE, position: "center", opacity: 0.55, warmth: "blue" },
   { id: "emerald-courtyard", name: "Emerald Courtyard", category: "Islamic", source: EMERALD_DUSK, position: "center", opacity: 0.56, warmth: "green" },

@@ -1,12 +1,14 @@
+import type { ReactNode } from "react";
 import { Text } from "@/src/components/AppText";
 import { BrandLockup } from "@/src/components/BrandLockup";
 import { Icon, type IconName } from "@/src/components/Icon";
 import { TasbeehIcon } from "@/src/components/TasbeehIcon";
+import { WebPageBackdrop } from "@/src/components/WebPageBackdrop";
 import { WebTopNav } from "@/src/components/WebTopNav";
 import { useAccount, useAuth } from "@/src/context/AppState";
 import { makeStyles, useTheme } from "@/src/theme";
 import { LinearGradient } from "expo-linear-gradient";
-import { Tabs, useRouter } from "expo-router";
+import { Tabs, useRouter, usePathname } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { memo } from "react";
 import { Platform, Pressable, View, useWindowDimensions } from "react-native";
@@ -183,6 +185,15 @@ function CustomTabBar({ state }: any) {
   );
 }
 
+function FocusedScene({ children, name }: { children: ReactNode; name: string }) {
+  const pathname = usePathname();
+  const active = pathname.startsWith("/read") ? "read"
+    : pathname.startsWith("/adhkar") ? "adhkar"
+    : pathname.startsWith("/names") ? "names"
+    : pathname.startsWith("/preferences") ? "preferences" : "index";
+  return name === active ? <>{children}</> : null;
+}
+
 export default function TabsLayout() {
   const { width } = useWindowDimensions();
   const desktopWeb = Platform.OS === "web" && width >= 900;
@@ -190,11 +201,13 @@ export default function TabsLayout() {
   if (desktopWeb) {
     return (
       <View style={{ flex: 1, backgroundColor: "#030303" }}>
+        <WebPageBackdrop intensity="strong" />
         <WebTopNav />
         <View style={{ flex: 1 }}>
           <Tabs
-            detachInactiveScreens={false}
-            screenOptions={{ headerShown: false, lazy: false, freezeOnBlur: true, animation: "none", tabBarHideOnKeyboard: true }}
+            detachInactiveScreens
+            screenLayout={({ children, route }) => <FocusedScene name={route.name}>{children}</FocusedScene>}
+            screenOptions={{ sceneStyle: { backgroundColor: "transparent" }, headerShown: false, lazy: false, freezeOnBlur: true, animation: "none", tabBarHideOnKeyboard: true }}
             tabBar={() => null}
           >
             <Tabs.Screen name="index" />
