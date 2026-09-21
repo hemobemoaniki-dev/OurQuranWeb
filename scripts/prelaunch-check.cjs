@@ -830,7 +830,7 @@ test('desktop navigation is edge-to-edge translucent glass with bold standard te
   const nav = fs.readFileSync(path.join(root, 'src/components/WebTopNav.tsx'), 'utf8');
   const reader = fs.readFileSync(path.join(root, 'src/components/DesktopReaderExperience.tsx'), 'utf8');
   assert.match(nav, /paddingHorizontal:\s*0/);
-  assert.match(nav, /backgroundColor:\s*"rgba\(5,7,8,0\.12\)"/);
+  assert.match(nav, /backgroundColor:\s*"rgba\(255,255,255,0\.024\)"/);
   assert.match(nav, /backdropFilter:\s*"blur\(30px\) saturate\(1\.34\)"/);
   assert.match(nav, /fontFamily:\s*"LatoBold"/);
   assert.doesNotMatch(nav, /backgroundColor:\s*"rgba\(5,6,7,0\.58\)"/);
