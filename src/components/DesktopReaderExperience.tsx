@@ -43,6 +43,7 @@ type Props = {
   audioLoading: boolean;
   audioError: boolean;
   onToggleAudio: () => void;
+  onWarmAudio: () => void;
   onStopAudio: () => void;
   onOpenPicker: () => void;
   onToggleBookmark: () => void;
@@ -75,6 +76,7 @@ export function DesktopReaderExperience({
   audioLoading,
   audioError,
   onToggleAudio,
+  onWarmAudio,
   onStopAudio,
   onOpenPicker,
   onToggleBookmark,
@@ -186,6 +188,7 @@ export function DesktopReaderExperience({
 
             <View style={styles.panelTop}>
               <Pressable
+                onPressIn={onWarmAudio}
                 onPress={onToggleAudio}
                 style={({ pressed }) => [styles.listenButton, { borderColor: theme.accent + "AA" }, pressed && styles.pressed]}
                 accessibilityRole="button"
