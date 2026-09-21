@@ -237,7 +237,19 @@ export function stopAllAyahAudio() {
 /** Route-level Reader teardown. Kept explicit so navigation never depends on
  * hook cleanup timing or on a component still being mounted. */
 export function exitReaderAudio() {
-  stopAllAyahAudio();
+  // Reader exits are latency-sensitive. Tear down native audio synchronously,
+  // but do not publish an external-store update to a screen that is already
+  // navigating away. New Reader subscribers still receive the reset snapshot.
+  discardPreloads();
+  requestId += 1;
+  wantsPlayback = false;
+  activeTarget = null;
+  destroyPlayer();
+  snapshot = { isPlaying: false, isLoading: false, error: false, key: null };
+  if (audioSessionActive) {
+    audioSessionActive = false;
+    setIsAudioActiveAsync(false).catch(() => {});
+  }
 }
 
 function pauseAyahAudio() {
