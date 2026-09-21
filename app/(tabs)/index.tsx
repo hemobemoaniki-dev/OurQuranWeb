@@ -1,3 +1,4 @@
+import { Image } from "expo-image";
 import { Text } from "@/src/components/AppText";
 import { BrandMark } from "@/src/components/BrandMark";
 import { Icon, type IconName } from "@/src/components/Icon";
@@ -38,7 +39,7 @@ export default function Home() {
   const styles = useStyles();
   const { colors, scheme } = useTheme();
   const { width } = useWindowDimensions();
-  const compact = width < 1180;
+  const compact = width < 1100;
   const desktopWeb = Platform.OS === "web" && width >= 900;
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -65,7 +66,7 @@ export default function Home() {
   const metricsRef = useRef<ScrollView>(null);
   const metricsOffsetRef = useRef(0);
   const metricsMotionRef = useRef<number | null>(null);
-  const metricsScrollX = useRef(new Animated.Value(0)).current;
+  const [metricsScrollX] = useState(() => new Animated.Value(0));
   const [metricsWidth, setMetricsWidth] = useState(0);
   const streak = useMemo(() => computeStreak(account.history, localDay), [account.history, localDay]);
   const crownActive = crownActiveForStreak(streak);
@@ -162,7 +163,7 @@ export default function Home() {
     metricsOffsetRef.current = target;
     metricsScrollX.setValue(target);
     metricsRef.current?.scrollTo({ x: target, animated });
-  }, [cancelMetricsMotion, metricsWidth]);
+  }, [cancelMetricsMotion, metricsWidth, metricsScrollX]);
 
   useEffect(() => {
     if (!metricsWidth) return;
@@ -209,9 +210,9 @@ export default function Home() {
 
   return (
     <View style={styles.root}>
-      {Platform.OS === "web" ? <WebPageBackdrop intensity="strong" /> : null}
+      {Platform.OS === "web" && !desktopWeb ? <WebPageBackdrop intensity="strong" /> : null}
       <ScrollView
-        contentContainerStyle={[styles.content, { paddingTop: insets.top + 24 }]}
+        contentContainerStyle={[styles.content, { paddingTop: insets.top + (desktopWeb ? 14 : 24) }]}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.topBar}>
@@ -221,6 +222,7 @@ export default function Home() {
             <Text style={styles.topSub}>Continue your Quran journey with focus and consistency.</Text>
           </View>
 
+          {desktopWeb ? <View style={{ marginRight: 145, alignSelf: "center" }}><Text style={{ fontFamily: serifFont, fontStyle: "italic", color: colors.onSurface, fontSize: 20, lineHeight: 21 }}>{"Better\n   Muslims ─\n      A Brighter ─\n         Tomorrow"}</Text></View> : null}
           {!desktopWeb ? <View style={styles.topActions}>
             <Pressable
               accessibilityRole="button"
@@ -247,7 +249,7 @@ export default function Home() {
             onPress={() => router.push("/reader")}
             testID="continue-reading-card"
           >
-            {Platform.OS === "web" ? <ReaderBackdrop id="solar-ember" /> : null}
+            {desktopWeb ? <Image source={require("../../assets/images/sanctuary-hero.webp")} contentFit="cover" style={styles.fill} /> : Platform.OS === "web" ? <ReaderBackdrop id="solar-ember" /> : null}
             <LinearGradient
               pointerEvents="none"
               colors={scheme === "dark"
@@ -268,10 +270,11 @@ export default function Home() {
             />
             <View pointerEvents="none" style={styles.heroInnerEdge} />
             <View style={styles.heroMark}>
-              <BrandMark size={238} tint="#F0C94F" glow="#FFD65A" intensity="strong" finish="gold" />
+              <BrandMark size={desktopWeb ? 208 : 238} tint="#F0C94F" glow="#FFD65A" intensity="strong" finish="gold" />
+              {desktopWeb ? <><Text style={{ color: "#FFE68A", fontSize: 28, fontFamily: serifFont }}>وَاقْرَأْ وَارْتَقِ</Text><Text style={{ color: "#FFE68A", fontSize: 9, letterSpacing: 3, fontWeight: "900", marginTop: 5 }}>READ AND ASCEND</Text></> : null}
             </View>
             <View style={styles.heroContent}>
-              <Text style={styles.eyebrow}>CONTINUE READING</Text>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 16 }}><Icon name="book-open-page-variant-outline" size={25} color={colors.gold} /><Text style={styles.eyebrow}>CONTINUE READING</Text></View>
               <Text style={styles.heroTitle}>{meta.name}</Text>
               <Text style={styles.heroMeta}>Ayah {account.currentAyah} of {meta.ayahs}</Text>
               <View style={styles.heroProgressTrack}>
@@ -321,13 +324,14 @@ export default function Home() {
             <View pointerEvents="none" style={styles.cardInnerEdge} />
             <View style={styles.goalTop}>
               <View>
-                <Text style={styles.eyebrow}>DAILY GOAL</Text>
+                <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}><Icon name="target" size={25} color={colors.gold} /><Text style={styles.eyebrow}>DAILY GOAL</Text></View>
                 <Text style={styles.goalTitle}>{goalReached ? "Goal complete" : "Today’s target"}</Text>
               </View>
               <Icon name="pencil-outline" size={18} color={colors.gold} />
             </View>
             <View style={styles.goalCenter}>
-              <View style={styles.goalRing}>
+              <View style={[styles.goalRing, desktopWeb ? { borderWidth: 0, backgroundImage: `conic-gradient(#FFDA64 ${goalPct * 360}deg, rgba(230,218,164,0.23) 0deg)` } as any : null]}>
+                {desktopWeb ? <View style={{ position: "absolute", inset: 8, borderRadius: 99, backgroundColor: "#061015" } as any} /> : null}
                 <Text style={styles.goalPercent}>{Math.round(goalPct * 100)}%</Text>
               </View>
               <View style={styles.goalNumbers}>
@@ -348,6 +352,7 @@ export default function Home() {
               <View style={[styles.trackFill, { width: `${goalPct * 100}%` }]} />
             </View>
           </Pressable>
+          {desktopWeb && width >= 1100 ? <View accessibilityRole="image" accessibilityLabel="Discipline today, Jannah tomorrow. Mosque under a crescent moon." style={{ flex: 0.79, minWidth: 210, borderRadius: 16, overflow: "hidden", borderWidth: 1, borderColor: "#606C89" }}><Image source={require("../../assets/images/dashboard-reference.webp")} contentFit="fill" style={{ position: "absolute", width: "668.8%", height: "418.222%", left: "-492.4%", top: "-90.222%" }} /></View> : null}
         </View>
 
         {desktopWeb ? (
@@ -366,11 +371,11 @@ export default function Home() {
                 <View style={styles.todayTitleIcon}><Icon name="calendar-star" size={20} color={colors.gold} /></View>
                 <View>
                   <Text style={styles.todayTitle}>Today</Text>
-                  <Text style={styles.todaySub}>Everything you need for a focused day.</Text>
+                  <Text style={styles.todaySub}>Everything you need for a blessed day.</Text>
                 </View>
               </View>
               <Pressable
-                onPress={() => router.push("/quran")}
+                onPress={() => router.push("/read")}
                 style={({ pressed, hovered }: any) => [styles.todayViewAll, hovered && styles.todayViewAllHover, pressed && styles.pressed]}
               >
                 <Text style={styles.todayViewAllText}>View all</Text>
@@ -411,7 +416,7 @@ export default function Home() {
 
         <View style={styles.journeyHead}>
           <View>
-            <Text style={styles.sectionTitle}>Your journey</Text>
+            <View style={{ flexDirection: "row", gap: 16, alignItems: "center" }}><Icon name="chart-bar" size={27} color={colors.gold} /><Text style={styles.sectionTitle}>Your journey</Text></View>
             <Text style={styles.sectionSub}>A snapshot of your reading momentum.</Text>
           </View>
           <View style={styles.periods} accessibilityRole="tablist">
@@ -545,7 +550,7 @@ export default function Home() {
           <View style={styles.weekPanel} testID="home-week-strip">
             <View style={styles.panelHead}>
               <View>
-                <Text style={styles.panelTitle}>Weekly journey</Text>
+                <View style={{ flexDirection: "row", gap: 14, alignItems: "center" }}><Icon name="target" size={26} color={colors.gold} /><Text style={styles.panelTitle}>Weekly journey</Text></View>
                 <Text style={styles.panelSub}>Build a seven-day rhythm.</Text>
               </View>
               <View style={styles.streakPill}>
@@ -722,7 +727,7 @@ function QuickAccessCarousel() {
   const ref = useRef<ScrollView>(null);
   const offsetRef = useRef(0);
   const motionRef = useRef<number | null>(null);
-  const quickScrollX = useRef(new Animated.Value(0)).current;
+  const [quickScrollX] = useState(() => new Animated.Value(0));
   const [page, setPage] = useState(0);
   const [pageWidth, setPageWidth] = useState(0);
   const totalPages = Math.ceil(QUICK_ACCESS_ITEMS.length / 4);
@@ -775,7 +780,7 @@ function QuickAccessCarousel() {
     offsetRef.current = target;
     quickScrollX.setValue(target);
     ref.current?.scrollTo({ x: target, animated });
-  }, [cancelMotion, pageWidth, totalPages]);
+  }, [cancelMotion, pageWidth, totalPages, quickScrollX]);
 
   useEffect(() => {
     if (!pageWidth) return;
@@ -791,7 +796,7 @@ function QuickAccessCarousel() {
     <View style={styles.quickPanel}>
       <View style={styles.panelHead}>
         <View>
-          <Text style={styles.panelTitle}>Quick access</Text>
+          <View style={{ flexDirection: "row", gap: 14, alignItems: "center" }}><Icon name="view-grid-outline" size={26} color="#ECCA69" /><Text style={styles.panelTitle}>Quick access</Text></View>
           <Text style={styles.panelSub}>12 shortcuts · auto previews four at a time.</Text>
         </View>
         <View style={styles.quickPager}>
@@ -984,7 +989,7 @@ function QuickAction({
   );
 }
 
-const useStyles = makeStyles((c) => ({
+const useBaseStyles = makeStyles((c) => ({
   root: { flex: 1, backgroundColor: c.surface, position: "relative" },
   content: {
     width: "100%",
@@ -1557,3 +1562,81 @@ const useStyles = makeStyles((c) => ({
   syncAction: { flexDirection: "row", alignItems: "center", gap: 6, minHeight: 32, paddingHorizontal: 10, borderRadius: 11, backgroundColor: c.goldSoft },
   syncActionText: { color: c.gold, fontSize: 12.5, lineHeight: 16, fontWeight: "900" },
 }));
+
+
+// Match the supplied desktop composition while retaining the existing account,
+// reading, goals, shortcuts and local-day progress behavior.
+function useStyles() {
+  const base = useBaseStyles();
+  const { width } = useWindowDimensions();
+  const { scheme } = useTheme();
+  if (Platform.OS !== "web" || width < 900) return base;
+  const panel = scheme === "dark" ? "rgba(4,12,15,0.78)" : "rgba(255,252,244,0.92)";
+  const overrides: Record<string, object> = {
+    root: { backgroundColor: "transparent" },
+    content: { maxWidth: 1340, paddingHorizontal: 24, gap: 12, paddingBottom: 24 },
+    topBar: { minHeight: 106 },
+    salamLine: { fontSize: 19, lineHeight: 24 },
+    greetingName: { fontSize: 54, lineHeight: 56 },
+    topSub: { marginTop: 0, lineHeight: 22 },
+    primaryRow: { gap: 16 },
+    hero: { flex: 2.2, minHeight: 226, borderRadius: 16, borderColor: "rgba(255,213,99,0.78)" },
+    heroContent: { paddingHorizontal: 20, paddingVertical: 18, maxWidth: "66%" },
+    heroMark: { right: 10, top: 8, width: 220, height: 212, opacity: 1, transform: [] },
+    heroTitle: { fontSize: 40, lineHeight: 44, marginTop: 3, marginLeft: 49 },
+    heroMeta: { fontSize: 16, lineHeight: 21, marginTop: 0, marginLeft: 49 },
+    heroProgressTrack: { marginTop: 12, marginLeft: 49, width: "90%", minWidth: 190, height: 25 },
+    heroFoot: { marginLeft: 49, marginTop: 14 },
+    readButton: { height: 46, minWidth: 138, backgroundColor: "#FFD64E", shadowOpacity: 0.55, shadowRadius: 18 },
+    goalCard: { flex: 1, minWidth: 274, minHeight: 226, paddingHorizontal: 20, paddingVertical: 18, borderRadius: 16, gap: 12, backgroundColor: panel },
+    goalTitle: { fontFamily: undefined, fontSize: 16, lineHeight: 21, fontWeight: "500" },
+    goalCenter: { gap: 20, paddingVertical: 0 },
+    goalRing: { width: 108, height: 108, borderRadius: 54 },
+    goalValue: { fontSize: 34, lineHeight: 38 },
+    goalRemainingPill: { marginTop: 8 },
+    todayPanel: { padding: 14, borderRadius: 17, backgroundColor: panel },
+    todayHead: { marginBottom: 10 },
+    todayTitleWrap: { gap: 12 },
+    todayTitleIcon: { width: 30, height: 30, borderWidth: 0, backgroundColor: "transparent" },
+    todayTitle: { fontSize: 25, lineHeight: 28 },
+    todaySub: { fontSize: 12, lineHeight: 15 },
+    todayGrid: { gap: 22 },
+    todayShortcut: { minHeight: 66, borderRadius: 13, backgroundColor: panel },
+    todayShortcutHint: { fontSize: 13, lineHeight: 17 },
+    todayShortcutIcon: { width: 46, height: 46, borderRadius: 13 },
+    sectionTitle: { fontSize: 25, lineHeight: 28 },
+    sectionSub: { fontSize: 12, lineHeight: 16, marginTop: 1 },
+    journeyHead: { marginTop: 0 },
+    periods: { padding: 3, borderRadius: 18 },
+    period: { height: 28, minWidth: 85 },
+    periodActive: { backgroundColor: "rgba(245,196,49,0.32)", borderColor: "#F3D15C" },
+    metricsPage: { gap: 22 },
+    metricCardShell: { minWidth: 0 },
+    statCard: { minHeight: 108, padding: 12, paddingHorizontal: 16, borderRadius: 15, backgroundColor: panel },
+    metricIcon: { width: 34, height: 34, borderRadius: 11 },
+    statValue: { fontSize: 32, lineHeight: 34, marginTop: 3 },
+    statLabel: { fontSize: 14, lineHeight: 18, marginTop: 0 },
+    metricBars: { width: 82, height: 55, right: 19, bottom: 11, gap: 7 },
+    lowerRow: { gap: 16 },
+    weekPanel: { flex: 1.5, minHeight: 176, padding: 16, borderRadius: 18, borderColor: "rgba(236,202,105,0.46)", backgroundColor: panel },
+    quickPanel: { flex: 1, minWidth: 420, minHeight: 176, padding: 12, paddingHorizontal: 16, borderRadius: 18, backgroundColor: panel },
+    panelTitle: { fontSize: 23, lineHeight: 27 },
+    panelSub: { fontSize: 12, lineHeight: 16, marginTop: 0 },
+    streakValue: { fontSize: 14, lineHeight: 18 },
+    streakLabel: { fontSize: 13, lineHeight: 18 },
+    weekRow: { marginTop: 12 },
+    day: { minWidth: 0 },
+    dayNodeRow: { minHeight: 44 },
+    dayNode: { width: 44, height: 44, borderRadius: 22, borderWidth: 1.5 },
+    dayLetter: { fontSize: 13, lineHeight: 17, marginTop: 5 },
+    quickCarouselViewport: { marginTop: 7 },
+    quickPage: { gap: 6 },
+    quickActionShell: { minHeight: 53 },
+    quickAction: { minHeight: 53, paddingVertical: 5, paddingHorizontal: 10, borderRadius: 12, gap: 12, backgroundColor: panel },
+    quickIcon: { width: 40, height: 40, borderRadius: 11 },
+    quickLabel: { fontSize: 14, lineHeight: 17 },
+    quickHint: { fontSize: 12, lineHeight: 16, marginTop: 1 },
+    syncBanner: { minHeight: 52, backgroundColor: panel },
+  };
+  return Object.fromEntries(Object.entries(base).map(([key, value]) => [key, overrides[key] ? [value, overrides[key]] : value])) as typeof base;
+}

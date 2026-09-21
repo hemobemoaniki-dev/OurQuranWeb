@@ -2,6 +2,7 @@ import { Text } from "@/src/components/AppText";
 import { BrandLockup } from "@/src/components/BrandLockup";
 import { Icon, type IconName } from "@/src/components/Icon";
 import { TasbeehIcon } from "@/src/components/TasbeehIcon";
+import { WebPageBackdrop } from "@/src/components/WebPageBackdrop";
 import { WebTopNav } from "@/src/components/WebTopNav";
 import { useAccount, useAuth } from "@/src/context/AppState";
 import { makeStyles, useTheme } from "@/src/theme";
@@ -190,11 +191,12 @@ export default function TabsLayout() {
   if (desktopWeb) {
     return (
       <View style={{ flex: 1, backgroundColor: "#030303" }}>
+        <WebPageBackdrop intensity="strong" />
         <WebTopNav />
         <View style={{ flex: 1 }}>
           <Tabs
             detachInactiveScreens={false}
-            screenOptions={{ headerShown: false, lazy: false, freezeOnBlur: true, animation: "none", tabBarHideOnKeyboard: true }}
+            screenOptions={{ sceneStyle: { backgroundColor: "transparent" }, headerShown: false, lazy: false, freezeOnBlur: true, animation: "none", tabBarHideOnKeyboard: true }}
             tabBar={() => null}
           >
             <Tabs.Screen name="index" />
