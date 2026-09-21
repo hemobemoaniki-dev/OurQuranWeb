@@ -56,30 +56,30 @@ const DESKTOP_CATEGORIES = [
   { key: "morning", label: "Morning", icon: "white-balance-sunny" },
   { key: "evening", label: "Evening", icon: "weather-night" },
   { key: "prayer", label: "Prayer", icon: "mosque" },
-  { key: "after-prayer", label: "After Prayer", icon: "check-circle-outline" },
-  { key: "adhan", label: "Adhan", icon: "bullhorn-outline" },
-  { key: "wudu", label: "Wudu", icon: "water-outline" },
+  { key: "after-prayer", label: "After Prayer", icon: "check-circle" },
+  { key: "adhan", label: "Adhan", icon: "volume-high" },
+  { key: "wudu", label: "Wudu", icon: "sparkle" },
   { key: "mosque", label: "Mosque", icon: "mosque" },
   { key: "sleep", label: "Sleep", icon: "bed-outline" },
-  { key: "waking", label: "Waking", icon: "weather-sunset-up" },
+  { key: "waking", label: "Waking", icon: "white-balance-sunny" },
   { key: "protection", label: "Protection", icon: "shield-star-outline" },
   { key: "forgiveness", label: "Forgiveness", icon: "hand-back-right-outline" },
   { key: "guidance", label: "Guidance", icon: "compass-outline" },
   { key: "gratitude", label: "Gratitude", icon: "heart" },
   { key: "family", label: "Family", icon: "account-group" },
   { key: "anxiety", label: "Worry & Grief", icon: "heart-outline" },
-  { key: "provision", label: "Provision", icon: "hand-coin-outline" },
-  { key: "travel", label: "Travel", icon: "airplane" },
-  { key: "home", label: "Home", icon: "home-outline" },
-  { key: "food", label: "Food", icon: "food-apple-outline" },
-  { key: "rain", label: "Rain", icon: "weather-rainy" },
-  { key: "restroom", label: "Restroom", icon: "door" },
+  { key: "provision", label: "Provision", icon: "hand-back-right-outline" },
+  { key: "travel", label: "Travel", icon: "arrow-top-right" },
+  { key: "home", label: "Home", icon: "home-variant-outline" },
+  { key: "food", label: "Food", icon: "hand-heart-outline" },
+  { key: "rain", label: "Rain", icon: "cloud-sync-outline" },
+  { key: "restroom", label: "Restroom", icon: "circle-outline" },
   { key: "health", label: "Health", icon: "heart-pulse" },
-  { key: "illness", label: "Illness", icon: "medical-bag" },
-  { key: "knowledge", label: "Knowledge", icon: "book-education-outline" },
-  { key: "salawat", label: "Salawat", icon: "account-heart-outline" },
-  { key: "clothing", label: "Clothing", icon: "tshirt-crew-outline" },
-  { key: "faith", label: "Faith", icon: "book-open-variant" },
+  { key: "illness", label: "Illness", icon: "heart-pulse" },
+  { key: "knowledge", label: "Knowledge", icon: "book-open-page-variant-outline" },
+  { key: "salawat", label: "Salawat", icon: "hand-heart-outline" },
+  { key: "clothing", label: "Clothing", icon: "account-outline" },
+  { key: "faith", label: "Faith", icon: "book-open-page-variant-outline" },
 ] as const;
 type DesktopCategory = typeof DESKTOP_CATEGORIES[number]["key"];
 
@@ -282,7 +282,7 @@ function DesktopAdhkar() {
 
               </View>
             ) : (
-              <View style={styles.desktopEmpty}><Icon name="book-open-variant" size={30} color={colors.gold} /><Text style={styles.desktopEmptyText}>No adhkar are assigned to this collection yet.</Text></View>
+              <View style={styles.desktopEmpty}><Icon name="book-open-page-variant-outline" size={30} color={colors.gold} /><Text style={styles.desktopEmptyText}>No adhkar are assigned to this collection yet.</Text></View>
             )}
 
             <View style={styles.desktopSide}>
