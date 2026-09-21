@@ -316,8 +316,10 @@ export default function Reader() {
     const exitSurah = surahNum;
     const exitAyah = numberInSurah;
 
-    // Persistence/session aggregation runs after navigation has been dispatched.
-    setTimeout(() => {
+    // Let the Home route paint before any persistence, session aggregation or
+    // Firestore work. This keeps Back / I'm Done visually instant even on a
+    // slower browser or device.
+    runAfterPaint(() => {
       let deltas: Record<string, number> = {};
       try {
         deltas = stopSession();
@@ -331,7 +333,7 @@ export default function Reader() {
       } catch {}
 
       void Promise.resolve().then(flush).catch(() => {});
-    }, 0);
+    });
 
     // Safety only: unlock if a browser/router failure leaves this screen mounted.
     setTimeout(() => {
@@ -357,7 +359,7 @@ export default function Reader() {
       const exitSurah = surahNum;
       const exitAyah = numberInSurah;
 
-      setTimeout(() => {
+      runAfterPaint(() => {
         let deltas: Record<string, number> = {};
         try {
           deltas = stopSession();
@@ -371,7 +373,7 @@ export default function Reader() {
         } catch {}
 
         void Promise.resolve().then(flush).catch(() => {});
-      }, 0);
+      });
 
       setTimeout(() => {
         if (readerFocused.current) {
