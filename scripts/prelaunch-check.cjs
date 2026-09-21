@@ -730,6 +730,7 @@ test('every statically referenced web icon has a real SVG mapping', () => {
     }
   }
 
+  const missingIcons = [];
   function checkFile(file) {
     const code = fs.readFileSync(file, 'utf8');
     const ast = ts.createSourceFile(file, code, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
@@ -746,12 +747,15 @@ test('every statically referenced web icon has a real SVG mapping', () => {
       ts.forEachChild(node, walk);
     }
     walk(ast);
-    for (const name of names) assert.ok(supported.has(name), `Missing web icon mapping for "${name}" referenced by ${path.relative(root, file)}`);
+    for (const name of names) {
+      if (!supported.has(name)) missingIcons.push(`${name} @ ${path.relative(root, file)}`);
+    }
   }
 
   visit(path.join(root, 'app'));
   visit(path.join(root, 'src/components'));
 
+  assert.deepEqual(missingIcons, []);
   assert.doesNotMatch(iconSource, /M9 12h6M12 9v6/);
 });
 
