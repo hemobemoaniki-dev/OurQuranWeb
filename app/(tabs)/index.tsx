@@ -254,7 +254,7 @@ export default function Home() {
               pointerEvents="none"
               colors={scheme === "dark"
                 ? ["rgba(208,151,38,0.28)", "rgba(15,14,12,0.34)", "rgba(8,10,10,0.58)"]
-                : ["rgba(212,175,55,0.20)", "rgba(255,252,244,0.72)", "rgba(247,241,230,0.92)"]}
+                : ["rgba(255,252,244,0.96)", "rgba(255,252,244,0.85)", "rgba(247,241,230,0.72)"]}
               locations={[0, 0.55, 1]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
