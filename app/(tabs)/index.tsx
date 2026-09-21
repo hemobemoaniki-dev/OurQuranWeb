@@ -370,7 +370,7 @@ export default function Home() {
                 </View>
               </View>
               <Pressable
-                onPress={() => router.push("/quran")}
+                onPress={() => router.push("/read")}
                 style={({ pressed, hovered }: any) => [styles.todayViewAll, hovered && styles.todayViewAllHover, pressed && styles.pressed]}
               >
                 <Text style={styles.todayViewAllText}>View all</Text>
