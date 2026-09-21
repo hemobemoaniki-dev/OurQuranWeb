@@ -37,6 +37,7 @@ const aliases: Record<string, string> = {
   "pencil-outline": "pencil",
   "heart": "heartFill",
   "heart-outline": "heart",
+  "heart-multiple-outline": "heart",
   "clock-outline": "clock",
   "calendar-check-outline": "calendar",
   "calendar-check": "calendar",
