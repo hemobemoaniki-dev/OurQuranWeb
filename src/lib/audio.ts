@@ -77,7 +77,7 @@ function waitUntilLoaded(request: number) {
   cancelPendingLoad();
   return new Promise<boolean>((resolve) => {
     let settled = false;
-    const timer = setTimeout(() => finish(false), 8000);
+    const timer = setTimeout(() => finish(false), 4500);
     function finish(value: boolean) {
       if (settled) return;
       settled = true;
