@@ -247,7 +247,7 @@ function DesktopSettingsHome() {
             </SettingsPanel>
 
             <SettingsPanel icon="bell-outline" title="Notifications & reminders" description="A gentle invitation back to the Qur’an.">
-              <SettingToggle icon="bell-outline" label="Daily reminder" enabled={account.settings.notifications.enabled} onPress={() => updateSettings({ notifications: { ...account.settings.notifications, enabled: !account.settings.notifications.enabled } })} />
+              <SettingAction icon="bell-outline" label="Daily reminder" value={account.settings.notifications.enabled ? "Enabled" : "Off"} onPress={() => router.push("/settings/notifications")} />
               <SettingAction icon="clock-outline" label="Reminder time" value={account.settings.notifications.time} onPress={() => router.push("/settings/notifications")} />
               <SettingAction icon="tune-variant" label="Notification options" value="Manage" onPress={() => router.push("/settings/notifications")} last />
             </SettingsPanel>
