@@ -331,7 +331,7 @@ export default function Home() {
             </View>
             <View style={styles.goalCenter}>
               <View style={[styles.goalRing, desktopWeb ? { borderWidth: 0, backgroundImage: `conic-gradient(#FFDA64 ${goalPct * 360}deg, rgba(230,218,164,0.23) 0deg)` } as any : null]}>
-                {desktopWeb ? <View style={{ position: "absolute", inset: 8, borderRadius: 99, backgroundColor: "#061015" } as any} /> : null}
+                {desktopWeb ? <View style={{ position: "absolute", inset: 8, borderRadius: 99, backgroundColor: scheme === "dark" ? "#061015" : "#FFFCF4" } as any} /> : null}
                 <Text style={styles.goalPercent}>{Math.round(goalPct * 100)}%</Text>
               </View>
               <View style={styles.goalNumbers}>
