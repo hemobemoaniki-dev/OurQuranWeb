@@ -687,15 +687,16 @@ test('desktop sidebar exposes privacy deletion account actions and a Tasbeeh Adh
   assert.match(tabs, /router\.push\(meta\.href\)/);
 });
 
-test('dashboard quick access complements rather than duplicates primary sidebar destinations', () => {
+test('dashboard quick access complements rather than duplicates primary navigation', () => {
   const home = fs.readFileSync(path.join(root, 'app/(tabs)/index.tsx'), 'utf8');
-  assert.match(home, /label="Bookmarks"/);
-  assert.match(home, /label="Daily Goal"/);
-  assert.match(home, /label="Reciter"/);
-  assert.match(home, /label="Progress"/);
-  assert.doesNotMatch(home, /<QuickAction[^>]+label="Read Quran"/);
-  assert.doesNotMatch(home, /<QuickAction[^>]+label="Adhkar"/);
-  assert.doesNotMatch(home, /<QuickAction[^>]+label="99 Names"/);
+  assert.match(home, /label: "Bookmarks"/);
+  assert.match(home, /label: "Daily Goal"/);
+  assert.match(home, /label: "Reciter"/);
+  assert.match(home, /label: "Progress"/);
+  const quickBlock = home.slice(home.indexOf('const QUICK_ACCESS_ITEMS'), home.indexOf('function QuickAccessCarousel'));
+  assert.doesNotMatch(quickBlock, /label: "Read Quran"/);
+  assert.doesNotMatch(quickBlock, /label: "Adhkar"/);
+  assert.doesNotMatch(quickBlock, /label: "99 Names"/);
 });
 
 test('every statically referenced web icon has a real SVG mapping', () => {
@@ -801,7 +802,7 @@ test('web desktop shell uses premium top navigation, wide dashboard and cinemati
   const desktop = fs.readFileSync(path.join(root, 'src/components/DesktopReaderExperience.tsx'), 'utf8');
   const brand = fs.readFileSync(path.join(root, 'src/components/BrandMark.tsx'), 'utf8');
   assert.match(tabs, /<WebTopNav/);
-  assert.match(home, /maxWidth:\s*1580/);
+  assert.match(home, /maxWidth:\s*1740/);
   assert.match(home, /Quick access/);
   assert.match(home, /Weekly journey/);
   assert.match(reader, /<DesktopReaderExperience/);
@@ -818,6 +819,20 @@ test('web desktop shell uses premium top navigation, wide dashboard and cinemati
   assert.match(desktop, /updateSettings\(\{ autoplay: true \}\)/);
   assert.match(desktop, /updateSettings\(\{ autoplay: false \}\)/);
   assert.match(brand, /name="mosque"/);
+});
+
+test('desktop navigation is edge-to-edge translucent glass with bold standard text', () => {
+  const nav = fs.readFileSync(path.join(root, 'src/components/WebTopNav.tsx'), 'utf8');
+  const reader = fs.readFileSync(path.join(root, 'src/components/DesktopReaderExperience.tsx'), 'utf8');
+  assert.match(nav, /paddingHorizontal:\s*0/);
+  assert.match(nav, /backgroundColor:\s*"rgba\(5,7,8,0\.12\)"/);
+  assert.match(nav, /backdropFilter:\s*"blur\(30px\) saturate\(1\.34\)"/);
+  assert.match(nav, /fontFamily:\s*"LatoBold"/);
+  assert.doesNotMatch(nav, /backgroundColor:\s*"rgba\(5,6,7,0\.58\)"/);
+  assert.match(reader, /marginHorizontal:\s*0/);
+  assert.match(reader, /borderRadius:\s*0/);
+  assert.match(reader, /fontFamily:\s*"LatoBold"/);
+  assert.doesNotMatch(reader, /backgroundColor:\s*"rgba\(5,6,7,0\.58\)"/);
 });
 
 test('desktop Adhkar uses explicit collections, real horizontal scrolling and no fake search UI', () => {
@@ -848,15 +863,17 @@ test('reader exit is navigation-first and recitation failover does not wait eigh
   assert.match(audio, /setTimeout\(\(\) => finish\(false\), 4500\)/);
 });
 
-test('web favicon uses a validated export asset plus the versioned glowing browser icon', () => {
+test('web favicon uses a validated PNG fallback plus the current glowing browser icons', () => {
   const config = fs.readFileSync(path.join(root, 'app.json'), 'utf8');
   const layout = fs.readFileSync(path.join(root, 'app/_layout.tsx'), 'utf8');
   const manifest = fs.readFileSync(path.join(root, 'public/site.webmanifest'), 'utf8');
   assert.match(config, /favicon-web-v3\.png/);
   assert.doesNotMatch(config, /"favicon": "\.\/assets\/images\/icon\.png"/);
-  assert.match(layout, /\/favicon-web-v5\.svg\?v=5/);
-  assert.match(manifest, /\/favicon-web-v5\.svg/);
-  assert.ok(fs.existsSync(path.join(root, 'public/favicon-web-v5.svg')));
+  assert.match(layout, /\/favicon-brand-dark-v7\.svg\?v=7/);
+  assert.match(layout, /\/favicon-brand-light-v7\.svg\?v=7/);
+  assert.match(manifest, /\/favicon-brand-v7\.svg/);
+  assert.ok(fs.existsSync(path.join(root, 'public/favicon-brand-v7.svg')));
+  assert.ok(fs.existsSync(path.join(root, 'public/favicon-web-v3.png')));
 });
 
 test('top streak badge avoids duplicate red-green week state and links progress metrics', () => {
@@ -948,16 +965,16 @@ test('account sync avoids Firestore Listen streams and refreshes only while acti
   assert.match(source, /15000/);
 });
 
-test('home primary actions use the new compact web-native visual language', () => {
+test('home primary actions use the wide premium web-native visual language', () => {
   const home = fs.readFileSync(path.join(root, 'app/(tabs)/index.tsx'), 'utf8');
   assert.match(home, /continue-reading-card/);
   assert.match(home, /Read now/);
   assert.match(home, /dashboard-period-/);
   assert.match(home, /Quick access/);
   assert.match(home, /Weekly journey/);
-  assert.match(home, /maxWidth:\s*1580/);
-  assert.match(home, /<BrandMark size=\{148\}/);
-  assert.match(home, /rgba\(212,175,55,0\.24\)/);
+  assert.match(home, /maxWidth:\s*1740/);
+  assert.match(home, /<BrandMark size=\{238\}/);
+  assert.match(home, /rgba\(212,175,55,0\.20\)|rgba\(208,151,38,0\.28\)/);
 });
 
 test('reminder replacements serialize; disable cancels; denied permission rejects', async () => {
