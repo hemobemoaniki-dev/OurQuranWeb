@@ -1,6 +1,6 @@
 import Head from "expo-router/head";
 import { Text, TextInput } from "@/src/components/AppText";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { FlatList, Modal, Platform, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
@@ -52,7 +52,7 @@ export default function Adhkar() {
 }
 
 const DESKTOP_CATEGORIES = [
-  { key: "all", label: "All", icon: "magnify" },
+  { key: "all", label: "All", icon: "view-grid-outline" },
   { key: "morning", label: "Morning", icon: "white-balance-sunny" },
   { key: "evening", label: "Evening", icon: "weather-night" },
   { key: "prayer", label: "Prayer", icon: "mosque" },
@@ -62,94 +62,41 @@ const DESKTOP_CATEGORIES = [
   { key: "mosque", label: "Mosque", icon: "mosque" },
   { key: "sleep", label: "Sleep", icon: "bed-outline" },
   { key: "waking", label: "Waking", icon: "weather-sunset-up" },
-  { key: "gratitude", label: "Gratitude", icon: "heart" },
-  { key: "praise", label: "Praise", icon: "star-four-points-outline" },
   { key: "protection", label: "Protection", icon: "shield-star-outline" },
   { key: "forgiveness", label: "Forgiveness", icon: "hand-back-right-outline" },
   { key: "guidance", label: "Guidance", icon: "compass-outline" },
-  { key: "faith", label: "Faith", icon: "book-open-variant" },
-  { key: "health", label: "Health", icon: "heart-pulse" },
-  { key: "illness", label: "Illness", icon: "medical-bag" },
+  { key: "gratitude", label: "Gratitude", icon: "heart" },
   { key: "family", label: "Family", icon: "account-group" },
-  { key: "anxiety", label: "Anxiety", icon: "heart-outline" },
+  { key: "anxiety", label: "Worry & Grief", icon: "heart-outline" },
   { key: "provision", label: "Provision", icon: "hand-coin-outline" },
   { key: "travel", label: "Travel", icon: "airplane" },
   { key: "home", label: "Home", icon: "home-outline" },
   { key: "food", label: "Food", icon: "food-apple-outline" },
   { key: "rain", label: "Rain", icon: "weather-rainy" },
   { key: "restroom", label: "Restroom", icon: "door" },
-  { key: "clothing", label: "Clothing", icon: "tshirt-crew-outline" },
+  { key: "health", label: "Health", icon: "heart-pulse" },
+  { key: "illness", label: "Illness", icon: "medical-bag" },
   { key: "knowledge", label: "Knowledge", icon: "book-education-outline" },
   { key: "salawat", label: "Salawat", icon: "account-heart-outline" },
+  { key: "clothing", label: "Clothing", icon: "tshirt-crew-outline" },
+  { key: "faith", label: "Faith", icon: "book-open-variant" },
 ] as const;
 type DesktopCategory = typeof DESKTOP_CATEGORIES[number]["key"];
-
-const CATEGORY_WORDS: Record<Exclude<DesktopCategory, "all" | "morning" | "evening">, string[]> = {
-  prayer: ["prayer", "salah", "worship", "mosque", "adhan", "wudu"],
-  "after-prayer": ["after prayer", "finished his prayer", "remembrance after the prayer"],
-  adhan: ["adhan", "call to prayer"],
-  wudu: ["wudu", "ablution"],
-  mosque: ["mosque", "masjid"],
-  sleep: ["sleep", "bed", "night", "drowsiness"],
-  waking: ["waking", "wake", "upon waking", "resurrection"],
-  gratitude: ["praise", "thanks", "blessing", "favour", "favor", "grateful"],
-  praise: ["praise", "subhan", "alhamdulillah", "glory"],
-  protection: ["protect", "refuge", "harm", "evil", "guard", "sufficient"],
-  forgiveness: ["forgiv", "pardon", "sin", "istighfar", "ghufran"],
-  guidance: ["guidance", "guide", "good of the day", "set right", "light"],
-  faith: ["faith", "islam", "oneness", "testify", "fitrah"],
-  health: ["well-being", "body", "hearing", "sight", "health", "heal"],
-  illness: ["sick", "heal", "illness", "disease"],
-  family: ["family", "children", "household"],
-  anxiety: ["worry", "grief", "fear", "anxiety", "distress", "debt"],
-  provision: ["provision", "bounty", "wealth", "lawful", "fed me", "provided"],
-  travel: ["journey", "travel", "ride"],
-  home: ["home", "house"],
-  food: ["food", "eat", "eating", "fed me"],
-  rain: ["rain", "downpour"],
-  restroom: ["restroom", "toilet", "privy"],
-  clothing: ["garment", "clothed", "clothing"],
-  knowledge: ["knowledge", "learn"],
-  salawat: ["salawat", "prophet", "muhammad", "blessings upon"],
-};
-
-function adhkarCorpus(item: Dhikr) {
-  return [
-    item.id,
-    item.title,
-    item.reference,
-    item.english,
-    item.englishEvening ?? "",
-    item.source,
-    item.authenticity,
-    ...(item.categories ?? []),
-  ].join(" ").toLowerCase();
-}
 
 function belongsToCategory(item: Dhikr, category: DesktopCategory) {
   if (category === "all") return true;
   if (category === "morning" || category === "evening") return item.times.includes(category);
-  if (item.categories?.includes(category)) return true;
-  const corpus = adhkarCorpus(item);
-  return CATEGORY_WORDS[category].some((word) => corpus.includes(word));
-}
-
-function categoryMatchesSearch(category: typeof DESKTOP_CATEGORIES[number], needle: string) {
-  if (!needle) return false;
-  const label = `${category.key} ${category.label}`.toLowerCase();
-  if (label.includes(needle)) return true;
-  if (category.key === "all" || category.key === "morning" || category.key === "evening") return false;
-  return CATEGORY_WORDS[category.key].some((word) => word.includes(needle) || needle.includes(word));
+  return item.categories?.includes(category) ?? false;
 }
 
 function DesktopAdhkar() {
   const styles = useStyles();
   const { colors } = useTheme();
   const { account, setAdhkarCount, setTasbeeh } = useAccount();
-  const [category, setCategory] = useState<DesktopCategory>("all");
-  const [query, setQuery] = useState("");
-  const [searchOpen, setSearchOpen] = useState(false);
+  const [category, setCategory] = useState<DesktopCategory>("morning");
   const [index, setIndex] = useState(0);
+  const categoryScrollRef = useRef<ScrollView>(null);
+  const categoryScrollX = useRef(0);
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null);
 
@@ -173,32 +120,27 @@ function DesktopAdhkar() {
     return counts;
   }, []);
 
-  const items = useMemo(() => {
-    const rawQuery = query.trim();
-    const needle = rawQuery.toLowerCase();
+  const items = useMemo(
+    () => ADHKAR.filter((item) => belongsToCategory(item, category)),
+    [category],
+  );
 
-    // Search is global on purpose. Typing "sleep", "wudu", "protection",
-    // "Bukhari", an Arabic phrase, or any other category/source term searches
-    // the whole authenticated library rather than being trapped inside the
-    // currently selected chip.
-    if (needle) {
-      const categoryHits = DESKTOP_CATEGORIES
-        .filter((spec) => categoryMatchesSearch(spec, needle))
-        .map((spec) => spec.key);
-
-      return ADHKAR.filter((item) => {
-        const direct = adhkarCorpus(item).includes(needle) || item.arabic.includes(rawQuery) || (item.arabicEvening?.includes(rawQuery) ?? false);
-        const categoryHit = categoryHits.some((key) => belongsToCategory(item, key));
-        return direct || categoryHit;
-      });
-    }
-
-    return ADHKAR.filter((item) => belongsToCategory(item, category));
-  }, [category, query]);
+  const scrollCategories = (direction: -1 | 1) => {
+    const nextX = Math.max(0, categoryScrollX.current + direction * 420);
+    categoryScrollX.current = nextX;
+    categoryScrollRef.current?.scrollTo({ x: nextX, animated: true });
+  };
 
   const current = items[index] ?? null;
-  const time: "morning" | "evening" = category === "evening" ? "evening" : "morning";
-  const countKey = current ? `${time}:${current.id}` : "";
+  const time: "morning" | "evening" = category === "evening"
+    ? "evening"
+    : current?.times.includes("morning")
+      ? "morning"
+      : current?.times.includes("evening")
+        ? "evening"
+        : "morning";
+  const progressScope = current && current.times.includes(time) ? time : "general";
+  const countKey = current ? `${progressScope}:${current.id}` : "";
   const counts = account.adhkarProgress.date === todayKey() ? account.adhkarProgress.counts : {};
   const done = current ? counts[countKey] ?? 0 : 0;
   const complete = !!current && done >= current.count;
@@ -235,63 +177,68 @@ function DesktopAdhkar() {
             <Text style={styles.desktopQuote}>“Remember Allah often that you may be successful.”{`\n`}— Qur’an 62:10</Text>
           </View>
 
-          <View style={styles.categoryShell}>
-            <ScrollView
-              horizontal
-              style={styles.categoryScroller}
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.desktopCategories}
-              keyboardShouldPersistTaps="handled"
-            >
-              {DESKTOP_CATEGORIES.map((item) => {
-                const active = category === item.key;
-                return (
-                  <Pressable
-                    key={item.key}
-                    onPress={() => {
-                      setIndex(0);
-                      if (item.key === "all") {
-                        setCategory("all");
-                        setSearchOpen(true);
-                        return;
-                      }
-                      setSearchOpen(false);
-                      setQuery("");
-                      setCategory(item.key);
-                    }}
-                    style={[styles.categoryButton, active && styles.categoryButtonActive]}
-                    testID={`adhkar-category-${item.key}`}
-                  >
-                    <Icon name={item.icon as any} size={21} color={active ? colors.gold : colors.onSurface} />
-                    <Text style={[styles.categoryText, active && styles.categoryTextActive]}>{item.label}</Text>
-                    <Text style={[styles.categoryCount, active && styles.categoryCountActive]}>{categoryCounts.get(item.key) ?? 0}</Text>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-
-            {searchOpen ? (
-              <View style={styles.searchPopover} testID="adhkar-search-popover">
-                <Icon name="magnify" size={20} color={colors.gold} />
-                <TextInput
-                  autoFocus
-                  value={query}
-                  onChangeText={(value) => { setQuery(value); setCategory("all"); setIndex(0); }}
-                  placeholder="Search adhkar, source or category…"
-                  placeholderTextColor={colors.muted}
-                  style={styles.searchPopoverInput}
-                  testID="adhkar-search"
-                />
+          <View style={styles.categorySection}>
+            <View style={styles.categorySectionHead}>
+              <View>
+                <Text style={styles.categorySectionEyebrow}>BROWSE AUTHENTIC ADHKAR</Text>
+                <Text style={styles.categorySectionTitle}>Choose a collection</Text>
+              </View>
+              <View style={styles.categoryRailActions}>
                 <Pressable
                   accessibilityRole="button"
-                  accessibilityLabel="Close search"
-                  onPress={() => { setSearchOpen(false); setQuery(""); setIndex(0); }}
-                  style={styles.searchClose}
+                  accessibilityLabel="Scroll categories left"
+                  onPress={() => scrollCategories(-1)}
+                  style={({ pressed }) => [styles.categoryRailButton, pressed && styles.desktopPressed]}
+                  testID="adhkar-categories-left"
                 >
-                  <Icon name="close" size={18} color={colors.onSurface} />
+                  <Icon name="chevron-left" size={22} color={colors.gold} />
+                </Pressable>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Scroll categories right"
+                  onPress={() => scrollCategories(1)}
+                  style={({ pressed }) => [styles.categoryRailButton, pressed && styles.desktopPressed]}
+                  testID="adhkar-categories-right"
+                >
+                  <Icon name="chevron-right" size={22} color={colors.gold} />
                 </Pressable>
               </View>
-            ) : null}
+            </View>
+            <View style={styles.categoryShell}>
+              <ScrollView
+                ref={categoryScrollRef}
+                horizontal
+                style={styles.categoryScroller}
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.desktopCategories}
+                keyboardShouldPersistTaps="handled"
+                scrollEventThrottle={16}
+                onScroll={(event) => {
+                  categoryScrollX.current = event.nativeEvent.contentOffset.x;
+                }}
+              >
+                {DESKTOP_CATEGORIES.map((item) => {
+                  const active = category === item.key;
+                  return (
+                    <Pressable
+                      key={item.key}
+                      onPress={() => {
+                        setIndex(0);
+                        setCategory(item.key);
+                      }}
+                      style={[styles.categoryButton, active && styles.categoryButtonActive]}
+                      testID={`adhkar-category-${item.key}`}
+                    >
+                      <Icon name={item.icon as any} size={18} color={active ? colors.gold : colors.onSurfaceSecondary} />
+                      <Text style={[styles.categoryText, active && styles.categoryTextActive]}>{item.label}</Text>
+                      <View style={[styles.categoryCountBadge, active && styles.categoryCountBadgeActive]}>
+                        <Text style={[styles.categoryCount, active && styles.categoryCountActive]}>{categoryCounts.get(item.key) ?? 0}</Text>
+                      </View>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+            </View>
           </View>
 
           <View style={styles.desktopContentRow}>
@@ -310,7 +257,6 @@ function DesktopAdhkar() {
                   <View style={styles.featuredHeadCopy}>
                     <Text style={styles.featuredEyebrow}>{category === "all" ? "DAILY ADHKAR" : `${category.toUpperCase()} ADHKAR`}</Text>
                     <Text style={styles.featuredCount}>{index + 1} of {items.length} · {current.reference}</Text>
-                    {query.trim() ? <Text style={styles.searchScope}>Global search · {items.length} of {ADHKAR.length} authenticated entries</Text> : null}
                   </View>
                   <Pressable accessibilityRole="button" accessibilityLabel={complete ? "Completed" : "Mark this dhikr completed"} onPress={markComplete} style={({ pressed }) => [styles.completionChip, complete && styles.completionChipDone, pressed && styles.desktopPressed]}>
                     <Icon name={complete ? "check-circle" : "progress-check"} size={18} color={complete ? colors.success : colors.gold} />
@@ -336,7 +282,7 @@ function DesktopAdhkar() {
 
               </View>
             ) : (
-              <View style={styles.desktopEmpty}><Icon name="magnify-close" size={30} color={colors.gold} /><Text style={styles.desktopEmptyText}>No adhkar match this category and search.</Text></View>
+              <View style={styles.desktopEmpty}><Icon name="book-open-variant" size={30} color={colors.gold} /><Text style={styles.desktopEmptyText}>No adhkar are assigned to this collection yet.</Text></View>
             )}
 
             <View style={styles.desktopSide}>
@@ -649,78 +595,83 @@ const useStyles = makeStyles((colors) => ({
   desktopTitle: { color: colors.onSurface, fontFamily: serifFont, fontSize: 52, lineHeight: 58, fontWeight: "700", letterSpacing: -1.4 },
   desktopSubtitle: { color: colors.onSurfaceSecondary, fontSize: 18, lineHeight: 27, marginTop: 4 },
   desktopQuote: { color: colors.gold, fontFamily: serifFont, fontSize: 17, lineHeight: 27, maxWidth: 420, textAlign: "right", opacity: 0.92 },
-  categoryShell: {
-    minHeight: 86,
-    position: "relative",
-    padding: 8,
-    borderRadius: 22,
-    borderWidth: 1,
-    borderColor: colors.goldBorder,
-    backgroundColor: "rgba(8,10,10,0.62)",
-    shadowColor: colors.gold,
-    shadowOpacity: 0.08,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 6 },
-    overflow: "visible",
+  categorySection: {
+    gap: 10,
+    paddingHorizontal: 2,
   },
-  categoryScroller: { width: "100%" },
-  desktopCategories: { flexDirection: "row", alignItems: "center", gap: 7, paddingRight: 18 },
-  categoryButton: {
-    minWidth: 86,
-    minHeight: 70,
+  categorySectionHead: {
+    minHeight: 52,
+    flexDirection: "row",
+    alignItems: "flex-end",
+    justifyContent: "space-between",
+    gap: 18,
+    paddingHorizontal: 8,
+  },
+  categorySectionEyebrow: { color: colors.gold, fontSize: 10, lineHeight: 14, fontWeight: "900", letterSpacing: 1.8 },
+  categorySectionTitle: { color: colors.onSurface, fontFamily: serifFont, fontSize: 22, lineHeight: 28, fontWeight: "700", marginTop: 2 },
+  categoryRailActions: { flexDirection: "row", alignItems: "center", gap: 8 },
+  categoryRailButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
-    gap: 5,
+    borderWidth: 1,
+    borderColor: colors.goldBorder,
+    backgroundColor: "rgba(11,12,11,0.78)",
+    cursor: "pointer",
+  },
+  categoryShell: {
+    minHeight: 62,
+    paddingVertical: 6,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: colors.goldBorder,
+    backgroundColor: "rgba(8,10,10,0.72)",
+    shadowColor: colors.gold,
+    shadowOpacity: 0.07,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 6 },
+    overflow: "hidden",
+  },
+  categoryScroller: { width: "100%" },
+  desktopCategories: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 8, paddingRight: 24 },
+  categoryButton: {
+    minWidth: 112,
+    minHeight: 48,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
     paddingHorizontal: 13,
-    paddingVertical: 9,
-    borderRadius: 15,
+    paddingVertical: 8,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: "transparent",
+    backgroundColor: "rgba(255,255,255,0.018)",
     cursor: "pointer",
   },
   categoryButtonActive: { backgroundColor: colors.goldSoft, borderColor: colors.goldBorder },
-  categoryText: { color: colors.onSurfaceSecondary, fontSize: 12, fontWeight: "800" },
+  categoryText: { color: colors.onSurfaceSecondary, fontSize: 12.5, fontWeight: "800" },
   categoryTextActive: { color: colors.gold },
-  categoryCount: { color: colors.muted, fontSize: 9.5, lineHeight: 12, fontWeight: "800", opacity: 0.82 },
-  categoryCountActive: { color: colors.gold, opacity: 1 },
-  searchPopover: {
-    position: "absolute",
-    left: 12,
-    top: 12,
-    right: 12,
-    minHeight: 58,
-    zIndex: 20,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    paddingHorizontal: 16,
-    borderRadius: 17,
-    borderWidth: 1,
-    borderColor: colors.goldBorder,
-    backgroundColor: "rgba(12,12,10,0.985)",
-    shadowColor: "#000000",
-    shadowOpacity: 0.4,
-    shadowRadius: 24,
-    shadowOffset: { width: 0, height: 10 },
-  },
-  searchPopoverInput: { flex: 1, color: colors.onSurface, fontSize: 15, paddingVertical: 10 },
-  searchClose: {
-    width: 34,
-    height: 34,
-    borderRadius: 11,
+  categoryCountBadge: {
+    minWidth: 24,
+    height: 22,
+    paddingHorizontal: 6,
+    borderRadius: 999,
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surfaceTertiary,
-    cursor: "pointer",
+    backgroundColor: "rgba(255,255,255,0.055)",
   },
-  desktopContentRow: { height: 540, flexDirection: "row", alignItems: "stretch", gap: 20 },
+  categoryCountBadgeActive: { backgroundColor: colors.goldSoft },
+  categoryCount: { color: colors.muted, fontSize: 9.5, lineHeight: 12, fontWeight: "900" },
+  categoryCountActive: { color: colors.gold },
+  desktopContentRow: { minHeight: 610, flexDirection: "row", alignItems: "flex-start", gap: 20 },
   featuredDhikr: {
     flex: 1,
     minWidth: 0,
-    height: 540,
-    borderRadius: 26,
+    height: 610,
+    borderRadius: 24,
     borderWidth: 1,
     borderColor: colors.goldBorder,
     backgroundColor: colors.surfaceSecondary,
@@ -789,19 +740,19 @@ const useStyles = makeStyles((colors) => ({
     backgroundColor: colors.surfaceTertiary,
     cursor: "pointer",
   },
-  dhikrTextScroll: { flex: 1, maxWidth: 860, minWidth: 0 },
-  dhikrTextColumn: { flexGrow: 1, alignItems: "center", justifyContent: "center", gap: 16, paddingHorizontal: 10, paddingVertical: 8 },
+  dhikrTextScroll: { flex: 1, maxWidth: 860, minWidth: 0, maxHeight: 470 },
+  dhikrTextColumn: { flexGrow: 1, alignItems: "center", justifyContent: "flex-start", gap: 18, paddingHorizontal: 16, paddingVertical: 14 },
   featuredArabic: {
     color: colors.onSurface,
     fontFamily: arabicFont,
-    fontSize: 37,
-    lineHeight: 64,
+    fontSize: 34,
+    lineHeight: 58,
     textAlign: "center",
     writingDirection: "rtl",
   },
   ornamentRow: { width: "62%", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 12 },
   ornamentLine: { height: 1, flex: 1, backgroundColor: colors.goldBorder },
-  featuredEnglish: { color: colors.onSurface, fontFamily: serifFont, fontSize: 22, lineHeight: 34, textAlign: "center", fontStyle: "italic" },
+  featuredEnglish: { color: colors.onSurface, fontFamily: serifFont, fontSize: 19, lineHeight: 31, textAlign: "center" },
   featuredSource: { color: colors.gold, fontSize: 12, lineHeight: 18, textAlign: "center", fontWeight: "700", letterSpacing: 0.35 },
   featuredActions: {
     minHeight: 84,
@@ -859,7 +810,7 @@ const useStyles = makeStyles((colors) => ({
     backgroundColor: colors.surfaceSecondary,
   },
   desktopEmptyText: { color: colors.onSurface, fontFamily: serifFont, fontSize: 20 },
-  desktopSide: { width: 420, height: 540, flexShrink: 0, gap: 14 },
+  desktopSide: { width: 400, height: 610, flexShrink: 0, gap: 14 },
   streakCard: {
     height: 168,
     flexShrink: 0,
