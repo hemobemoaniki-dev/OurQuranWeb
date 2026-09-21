@@ -198,12 +198,12 @@ export default function Reader() {
   const numberInSurah = ayah?.numberInSurah ?? ayahIndex + 1;
   const prefetchAudio = audio.prefetch;
   // Do not start network work while the user is rapidly jumping through Ayahs.
-  // Once the visible verse has been stable for 650 ms, warm only that verse.
+  // Once the visible verse has been stable briefly, warm only that verse.
   useEffect(() => {
     if (exitingRef.current || !readerFocused.current || !surahNum || data?.number !== surahNum || !ayah || audio.isPlaying || audio.isLoading) return;
     const timer = setTimeout(() => {
       if (!exitingRef.current && readerFocused.current) prefetchAudio(surahNum, numberInSurah);
-    }, 650);
+    }, 350);
     return () => clearTimeout(timer);
   }, [surahNum, data?.number, ayah, numberInSurah, prefetchAudio, audio.isPlaying, audio.isLoading]);
   const meta = surahMeta(surahNum ?? 1);
@@ -462,6 +462,9 @@ export default function Reader() {
           onToggleAudio={() => {
             if (surahNum != null) audio.toggle(surahNum, numberInSurah);
           }}
+          onWarmAudio={() => {
+            if (surahNum != null && !audio.isPlaying && !audio.isLoading) prefetchAudio(surahNum, numberInSurah);
+          }}
           onStopAudio={audio.stop}
           onOpenPicker={openPicker}
           onToggleBookmark={() => {
@@ -530,7 +533,7 @@ export default function Reader() {
                 <LinearGradient pointerEvents="none" colors={[`${t.accent}34`, `${t.accent}12`, `${t.end}28`]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.cardSheen} />
                 {desktopReader ? (
                   <View style={styles.desktopCardTop}>
-                    <Pressable accessibilityRole="button" style={({ pressed }) => [styles.desktopListen, pressed && styles.pressed]} onPress={() => audio.toggle(surahNum!, numberInSurah)} accessibilityLabel={audio.isPlaying ? "Pause recitation" : "Play recitation"} testID="reader-desktop-listen">
+                    <Pressable accessibilityRole="button" style={({ pressed }) => [styles.desktopListen, pressed && styles.pressed]} onPressIn={() => { if (!audio.isPlaying && !audio.isLoading) prefetchAudio(surahNum!, numberInSurah); }} onPress={() => audio.toggle(surahNum!, numberInSurah)} accessibilityLabel={audio.isPlaying ? "Pause recitation" : "Play recitation"} testID="reader-desktop-listen">
                       {audio.isLoading ? <ActivityIndicator color={colors.gold} size="small" /> : <Icon name={audio.isPlaying ? "pause" : "volume-high"} size={24} color={colors.gold} />}
                       <Text style={styles.desktopListenText}>{audio.isPlaying ? "Pause" : "Listen"}</Text>
                     </Pressable>
@@ -548,7 +551,7 @@ export default function Reader() {
                 ) : (
                   <>
                     <View style={styles.cardTop}>
-                      <Pressable style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]} accessibilityRole="button" accessibilityLabel={audio.isPlaying ? "Pause recitation" : "Play recitation"} onPress={() => audio.toggle(surahNum!, numberInSurah)} hitSlop={4} testID="reader-speaker">
+                      <Pressable style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]} accessibilityRole="button" accessibilityLabel={audio.isPlaying ? "Pause recitation" : "Play recitation"} onPressIn={() => { if (!audio.isPlaying && !audio.isLoading) prefetchAudio(surahNum!, numberInSurah); }} onPress={() => audio.toggle(surahNum!, numberInSurah)} hitSlop={4} testID="reader-speaker">
                         {audio.isLoading ? <ActivityIndicator color={colors.gold} size="small" /> : <Icon name={audio.isPlaying ? "pause-circle" : "volume-high"} size={26} color={colors.gold} />}
                       </Pressable>
                       <Pressable style={styles.surahTitleBtn} onPress={openPicker} testID="reader-surah-picker-open">
