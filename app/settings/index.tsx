@@ -151,7 +151,7 @@ function MobileSettingsHome({ inTab = false }: { inTab?: boolean }) {
 
 function DesktopSettingsHome() {
   const styles = useStyles();
-  const { colors, scheme } = useTheme();
+  const { colors } = useTheme();
   const router = useRouter();
   const { account, isGuest, syncStatus, updateSettings, syncNow } = useAccount();
   const { user, signOut } = useAuth();
