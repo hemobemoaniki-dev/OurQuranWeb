@@ -659,7 +659,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 40,
-    backgroundColor: "rgba(5,7,8,0.12)",
+    backgroundColor: "rgba(255,255,255,0.024)",
     shadowColor: "#000000",
     shadowOpacity: 0.14,
     shadowRadius: 18,
