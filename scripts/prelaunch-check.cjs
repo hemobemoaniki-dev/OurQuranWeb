@@ -634,8 +634,10 @@ test("Reader exit always reaches Home and browser back cleanup avoids stale rout
   const exit = reader.slice(start, end);
   assert.match(exit, /stopSession\(\)/);
   assert.match(exit, /exitReaderAudio\(\)/);
-  assert.match(exit, /router\.replace\("\/"\)/);
-  assert.ok(exit.indexOf('router.replace("/")') < exit.indexOf('addReadingSeconds(seconds, day)'));
+  assert.match(exit, /router\.replace\("\/\(tabs\)" as any\)/);
+  assert.ok(exit.indexOf('router.replace("/(tabs)" as any)') < exit.indexOf('addReadingSeconds(seconds, day)'));
+  assert.match(exit, /runAfterPaint\(\(\) => \{/);
+  assert.doesNotMatch(exit, /setTimeout\(\(\) => \{[\s\S]*?stopSession\(\)/);
   assert.match(reader, /window\.addEventListener\("popstate", handleBrowserBack\)/);
   assert.match(reader, /onBack=\{\(\) => finishReaderAndGoHome\(true\)\}/);
   assert.match(reader, /onPress=\{imDone\}/);
@@ -681,7 +683,27 @@ test('desktop sidebar exposes privacy deletion account actions and a Tasbeeh Adh
   assert.match(tabs, /label="Privacy"/);
   assert.match(tabs, /label="Delete"/);
   assert.match(tabs, /<TasbeehIcon/);
-  assert.match(tabs, /router\.push\(meta\.href\)/);
+  assert.match(tabs, /router\.replace\(meta\.href as any\)/);
+});
+
+test('primary navigation skips the root redirect and Home has no dead Quran link', () => {
+  const tabs = fs.readFileSync(path.join(root, 'app/(tabs)/_layout.tsx'), 'utf8');
+  const topNav = fs.readFileSync(path.join(root, 'src/components/WebTopNav.tsx'), 'utf8');
+  const reader = fs.readFileSync(path.join(root, 'app/reader.tsx'), 'utf8');
+  const home = fs.readFileSync(path.join(root, 'app/(tabs)/index.tsx'), 'utf8');
+  assert.match(tabs, /href: "\/\(tabs\)"/);
+  assert.match(topNav, /href: "\/\(tabs\)"/);
+  assert.match(reader, /router\.replace\("\/\(tabs\)" as any\)/);
+  assert.doesNotMatch(home, /router\.push\("\/quran"\)/);
+  assert.match(home, /router\.push\("\/read"\)/);
+});
+
+test('settings do not expose controls that only look functional', () => {
+  const settings = fs.readFileSync(path.join(root, 'app/settings/index.tsx'), 'utf8');
+  assert.doesNotMatch(settings, /label="Language"/);
+  assert.doesNotMatch(settings, /label="Translation"/);
+  assert.doesNotMatch(settings, /Daily reminder" enabled=.*updateSettings\(\{ notifications/);
+  assert.match(settings, /Daily reminder" value=.*\/settings\/notifications/);
 });
 
 test('dashboard quick access complements rather than duplicates primary sidebar destinations', () => {
