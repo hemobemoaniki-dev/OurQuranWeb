@@ -197,13 +197,13 @@ export default function Reader() {
   const ayah = data?.ayahs[ayahIndex];
   const numberInSurah = ayah?.numberInSurah ?? ayahIndex + 1;
   const prefetchAudio = audio.prefetch;
-  // Do not start network work while the user is rapidly jumping through Ayahs.
-  // Once the visible verse has been stable for 650 ms, warm only that verse.
+  // Give text navigation priority, then warm the visible Ayah almost
+  // immediately so Play rarely starts from a cold network request.
   useEffect(() => {
     if (exitingRef.current || !readerFocused.current || !surahNum || data?.number !== surahNum || !ayah || audio.isPlaying || audio.isLoading) return;
     const timer = setTimeout(() => {
       if (!exitingRef.current && readerFocused.current) prefetchAudio(surahNum, numberInSurah);
-    }, 650);
+    }, 250);
     return () => clearTimeout(timer);
   }, [surahNum, data?.number, ayah, numberInSurah, prefetchAudio, audio.isPlaying, audio.isLoading]);
   const meta = surahMeta(surahNum ?? 1);
@@ -316,8 +316,10 @@ export default function Reader() {
     const exitSurah = surahNum;
     const exitAyah = numberInSurah;
 
-    // Persistence/session aggregation runs after navigation has been dispatched.
-    setTimeout(() => {
+    // Let the Home route paint before any persistence, session aggregation or
+    // Firestore work. This keeps Back / I'm Done visually instant even on a
+    // slower browser or device.
+    runAfterPaint(() => {
       let deltas: Record<string, number> = {};
       try {
         deltas = stopSession();
@@ -331,7 +333,7 @@ export default function Reader() {
       } catch {}
 
       void Promise.resolve().then(flush).catch(() => {});
-    }, 0);
+    });
 
     // Safety only: unlock if a browser/router failure leaves this screen mounted.
     setTimeout(() => {
@@ -357,7 +359,7 @@ export default function Reader() {
       const exitSurah = surahNum;
       const exitAyah = numberInSurah;
 
-      setTimeout(() => {
+      runAfterPaint(() => {
         let deltas: Record<string, number> = {};
         try {
           deltas = stopSession();
@@ -371,7 +373,7 @@ export default function Reader() {
         } catch {}
 
         void Promise.resolve().then(flush).catch(() => {});
-      }, 0);
+      });
 
       setTimeout(() => {
         if (readerFocused.current) {

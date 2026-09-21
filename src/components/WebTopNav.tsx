@@ -1,7 +1,6 @@
 import { Text } from "@/src/components/AppText";
 import { BrandMark } from "@/src/components/BrandMark";
 import { ProfileMenu } from "@/src/components/ProfileMenu";
-import { serifFont } from "@/src/typography";
 import { LinearGradient } from "expo-linear-gradient";
 import { usePathname, useRouter } from "expo-router";
 import { memo } from "react";
@@ -49,10 +48,17 @@ export const WebTopNav = memo(function WebTopNav({ active }: { active?: NavKey }
   const selected = active ?? activeFromPath(pathname);
 
   return (
-    <View style={[styles.shell, { paddingTop: insets.top }]} testID="desktop-top-nav">
-      <View style={[styles.inner, compact && styles.innerCompact, Platform.OS === "web" ? styles.webGlass : null]}>
-        <LinearGradient pointerEvents="none" colors={["rgba(255,255,255,0.075)", "rgba(255,255,255,0.012)", "rgba(236,202,105,0.035)"]} locations={[0, 0.42, 1]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
-        <View pointerEvents="none" style={styles.glossLine} />
+    <View style={[styles.shell, { paddingTop: insets.top }, Platform.OS === "web" ? styles.webGlass : null]} testID="desktop-top-nav">
+      <LinearGradient
+        pointerEvents="none"
+        colors={["rgba(255,255,255,0.055)", "rgba(255,255,255,0.018)", "rgba(236,202,105,0.028)"]}
+        locations={[0, 0.48, 1]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
+      <View pointerEvents="none" style={styles.fullWidthGloss} />
+      <View style={[styles.inner, compact && styles.innerCompact]}>
         <View pointerEvents="none" style={styles.goldBloom} />
         <Pressable accessibilityRole="link" accessibilityLabel="OurQuran home" onPress={() => router.push("/")} style={[styles.brandButton, compact && styles.brandButtonCompact]}>
           <WebBrand compact={compact} />
@@ -84,25 +90,51 @@ export const WebTopNav = memo(function WebTopNav({ active }: { active?: NavKey }
 });
 
 const styles = StyleSheet.create({
-  shell: { width: "100%", minHeight: 92, zIndex: 100, paddingHorizontal: 20, paddingBottom: 10, backgroundColor: "transparent" },
-  inner: { width: "100%", maxWidth: 1540, minHeight: 72, alignSelf: "center", paddingHorizontal: 24, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 22, borderRadius: 24, borderWidth: 1, borderColor: "rgba(236,202,105,0.24)", backgroundColor: "rgba(5,6,7,0.58)", shadowColor: "#000000", shadowOpacity: 0.42, shadowRadius: 26, shadowOffset: { width: 0, height: 10 }, overflow: "visible" },
-  webGlass: { backdropFilter: "blur(22px) saturate(1.24)", WebkitBackdropFilter: "blur(22px) saturate(1.24)" } as any,
-  innerCompact: { minHeight: 66, paddingHorizontal: 16, gap: 12, borderRadius: 20 },
-  glossLine: { position: "absolute", left: 22, right: 22, top: 1, height: 1, borderRadius: 999, backgroundColor: "rgba(255,255,255,0.28)", opacity: 0.72 },
+  shell: {
+    width: "100%",
+    minHeight: 82,
+    zIndex: 100,
+    paddingHorizontal: 0,
+    paddingBottom: 0,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(236,202,105,0.18)",
+    backgroundColor: "rgba(255,255,255,0.024)",
+    shadowColor: "#000000",
+    shadowOpacity: 0.14,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 6 },
+    overflow: "visible",
+  },
+  inner: {
+    width: "100%",
+    maxWidth: 1740,
+    minHeight: 82,
+    alignSelf: "center",
+    paddingHorizontal: 34,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 24,
+    backgroundColor: "transparent",
+    overflow: "visible",
+  },
+  webGlass: { backdropFilter: "blur(30px) saturate(1.34)", WebkitBackdropFilter: "blur(30px) saturate(1.34)" } as any,
+  innerCompact: { minHeight: 74, paddingHorizontal: 20, gap: 12 },
+  fullWidthGloss: { position: "absolute", left: 0, right: 0, top: 0, height: 1, backgroundColor: "rgba(255,255,255,0.22)", opacity: 0.72 },
   goldBloom: { position: "absolute", width: 290, height: 110, left: -40, top: -58, borderRadius: 150, backgroundColor: "rgba(236,202,105,0.08)", shadowColor: "#ECCA69", shadowOpacity: 0.26, shadowRadius: 46, shadowOffset: { width: 0, height: 0 } },
   brandButton: { minWidth: 244, cursor: "pointer", zIndex: 2 },
   brandButtonCompact: { minWidth: 190 },
   brand: { flexDirection: "row", alignItems: "center", gap: 11 },
   brandIcon: { width: 66, height: 48, alignItems: "center", justifyContent: "center", position: "relative" },
   brandIconCompact: { width: 54, height: 40 },
-  brandName: { color: "#FFFDF7", fontFamily: serifFont, fontSize: 28, lineHeight: 31, letterSpacing: -0.65, textShadowColor: "rgba(255,255,255,0.10)", textShadowRadius: 8 },
+  brandName: { color: "#FFFDF7", fontFamily: "LatoBlack", fontSize: 27, lineHeight: 31, fontWeight: "900", letterSpacing: -0.35, textShadowColor: "rgba(255,255,255,0.10)", textShadowRadius: 8 },
   brandNameCompact: { fontSize: 23, lineHeight: 26 },
   brandTag: { color: "#F2C94C", fontSize: 8.5, lineHeight: 10, fontWeight: "900", letterSpacing: 2.25, marginTop: 1 },
   nav: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 7, minHeight: 64, zIndex: 2 },
   navItem: { minWidth: 84, minHeight: 44, paddingHorizontal: 14, borderRadius: 14, alignItems: "center", justifyContent: "center", position: "relative", cursor: "pointer", borderWidth: 1, borderColor: "transparent" },
   navItemCompact: { minWidth: 68, paddingHorizontal: 9 },
-  navItemActive: { backgroundColor: "rgba(236,202,105,0.085)", borderColor: "rgba(236,202,105,0.20)", shadowColor: "#ECCA69", shadowOpacity: 0.16, shadowRadius: 12, shadowOffset: { width: 0, height: 0 } },
-  navText: { color: "#F1ECE3", fontFamily: serifFont, fontSize: 16.5, lineHeight: 22, fontWeight: "600" },
+  navItemActive: { backgroundColor: "rgba(236,202,105,0.055)", borderColor: "rgba(236,202,105,0.14)", shadowColor: "#ECCA69", shadowOpacity: 0.12, shadowRadius: 10, shadowOffset: { width: 0, height: 0 } },
+  navText: { color: "#F7F3EA", fontFamily: "LatoBold", fontSize: 15.5, lineHeight: 21, fontWeight: "800", letterSpacing: 0.1 },
   navTextActive: { color: "#F5D15A" },
   navUnderline: { position: "absolute", left: 17, right: 17, bottom: 3, height: 2, borderRadius: 2, backgroundColor: "#F2CE52", shadowColor: "#FFD760", shadowOpacity: 0.95, shadowRadius: 9, shadowOffset: { width: 0, height: 0 } },
   accountZone: { minWidth: 224, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", zIndex: 20, paddingRight: 2 },

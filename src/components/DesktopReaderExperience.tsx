@@ -100,7 +100,16 @@ export function DesktopReaderExperience({
 
   return (
     <View style={styles.screen} testID="desktop-cinematic-reader">
-      <View style={[styles.topNav, webGlass, { borderColor: theme.border + "88" }]}>
+      <View style={[styles.topNav, webGlass, { borderBottomColor: theme.border + "66" }]}>
+        <LinearGradient
+          pointerEvents="none"
+          colors={["rgba(255,255,255,0.052)", "rgba(255,255,255,0.014)", "rgba(236,202,105,0.024)"]}
+          locations={[0, 0.5, 1]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
+        <View pointerEvents="none" style={styles.topNavGloss} />
         <View style={styles.brandWrap}>
           <BrandMark size={54} tint={theme.accent} glow={theme.accent} intensity="medium" variant="mark" />
           <View>
@@ -640,41 +649,42 @@ const styles = StyleSheet.create({
   screen: { flex: 1, minHeight: 0 },
   pressed: { opacity: 0.68, transform: [{ scale: 0.985 }] },
   topNav: {
-    minHeight: 72,
-    marginHorizontal: 20,
-    marginTop: 10,
-    borderRadius: 24,
-    borderWidth: 1,
+    width: "100%",
+    minHeight: 82,
+    marginHorizontal: 0,
+    marginTop: 0,
+    borderRadius: 0,
+    borderWidth: 0,
+    borderBottomWidth: 1,
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 24,
-    backgroundColor: "rgba(5,6,7,0.58)",
+    paddingHorizontal: 40,
+    backgroundColor: "rgba(255,255,255,0.024)",
     shadowColor: "#000000",
-    shadowOpacity: 0.36,
-    shadowRadius: 24,
-    shadowOffset: { width: 0, height: 9 },
+    shadowOpacity: 0.14,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 6 },
     overflow: "visible",
   },
   topNavWebGlass: {
-    backdropFilter: "blur(22px) saturate(1.22)",
-    WebkitBackdropFilter: "blur(22px) saturate(1.22)",
+    backdropFilter: "blur(30px) saturate(1.34)",
+    WebkitBackdropFilter: "blur(30px) saturate(1.34)",
   } as any,
   topNavGloss: {
     position: "absolute",
-    left: 22,
-    right: 22,
-    top: 1,
+    left: 0,
+    right: 0,
+    top: 0,
     height: 1,
-    borderRadius: 999,
-    backgroundColor: "rgba(255,255,255,0.26)",
+    backgroundColor: "rgba(255,255,255,0.22)",
     opacity: 0.72,
   },
   brandWrap: { width: 286, flexDirection: "row", alignItems: "center", gap: 12 },
-  brandName: { color: "#FFFFFF", fontFamily: serifFont, fontSize: 26, lineHeight: 29, fontWeight: "700" },
+  brandName: { color: "#FFFFFF", fontFamily: "LatoBlack", fontSize: 26, lineHeight: 30, fontWeight: "900", letterSpacing: -0.3 },
   brandTagline: { fontSize: 8, lineHeight: 11, letterSpacing: 2.2, fontWeight: "900" },
   navLinks: { flex: 1, flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 8 },
   navButton: { minWidth: 76, height: 44, paddingHorizontal: 12, borderRadius: 14, alignItems: "center", justifyContent: "center", position: "relative" },
-  navText: { color: "#FFFFFF", fontFamily: serifFont, fontSize: 17, lineHeight: 22, fontWeight: "600" },
+  navText: { color: "#F7F3EA", fontFamily: "LatoBold", fontSize: 15.5, lineHeight: 21, fontWeight: "800", letterSpacing: 0.1 },
   navUnderline: { position: "absolute", height: 2, borderRadius: 3, left: 16, right: 16, bottom: 3, shadowColor: "#FFD760", shadowOpacity: 0.85, shadowRadius: 8, shadowOffset: { width: 0, height: 0 } },
   navRight: { width: 250, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", zIndex: 20 },
   searchButton: { width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center" },

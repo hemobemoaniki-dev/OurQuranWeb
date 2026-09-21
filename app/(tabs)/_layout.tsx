@@ -3,6 +3,7 @@ import { BrandLockup } from "@/src/components/BrandLockup";
 import { Icon, type IconName } from "@/src/components/Icon";
 import { TasbeehIcon } from "@/src/components/TasbeehIcon";
 import { WebTopNav } from "@/src/components/WebTopNav";
+import { WebPageBackdrop } from "@/src/components/WebPageBackdrop";
 import { useAccount, useAuth } from "@/src/context/AppState";
 import { makeStyles, useTheme } from "@/src/theme";
 import { LinearGradient } from "expo-linear-gradient";
@@ -189,12 +190,13 @@ export default function TabsLayout() {
 
   if (desktopWeb) {
     return (
-      <View style={{ flex: 1, backgroundColor: "#030303" }}>
+      <View style={{ flex: 1, backgroundColor: "#030303", position: "relative" }}>
+        <WebPageBackdrop intensity="strong" />
         <WebTopNav />
-        <View style={{ flex: 1 }}>
+        <View style={{ flex: 1, position: "relative", zIndex: 1 }}>
           <Tabs
             detachInactiveScreens={false}
-            screenOptions={{ headerShown: false, lazy: false, freezeOnBlur: true, animation: "none", tabBarHideOnKeyboard: true }}
+            screenOptions={{ headerShown: false, lazy: true, freezeOnBlur: true, animation: "none", tabBarHideOnKeyboard: true }}
             tabBar={() => null}
           >
             <Tabs.Screen name="index" />
@@ -213,7 +215,7 @@ export default function TabsLayout() {
       detachInactiveScreens={false}
       screenOptions={{
         headerShown: false,
-        lazy: false,
+        lazy: true,
         freezeOnBlur: true,
         animation: "none",
         tabBarHideOnKeyboard: true,
