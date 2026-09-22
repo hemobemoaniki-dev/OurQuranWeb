@@ -43,6 +43,7 @@ type Props = {
   audioLoading: boolean;
   audioError: boolean;
   onToggleAudio: () => void;
+  onWarmAudio: () => void;
   onStopAudio: () => void;
   onOpenPicker: () => void;
   onToggleBookmark: () => void;
@@ -75,6 +76,7 @@ export function DesktopReaderExperience({
   audioLoading,
   audioError,
   onToggleAudio,
+  onWarmAudio,
   onStopAudio,
   onOpenPicker,
   onToggleBookmark,
@@ -110,7 +112,7 @@ export function DesktopReaderExperience({
         </View>
 
         <View style={styles.navLinks}>
-          <NavButton label="Home" onPress={() => navigate("/")} />
+          <NavButton label="Home" onPress={() => navigate("/(tabs)")} />
           <NavButton label="Quran" active accent={theme.accent} onPress={() => navigate("/read")} />
           <NavButton label="Adhkar" onPress={() => navigate("/adhkar")} />
           <NavButton label="Names" onPress={() => navigate("/names")} />
@@ -186,6 +188,7 @@ export function DesktopReaderExperience({
 
             <View style={styles.panelTop}>
               <Pressable
+                onPressIn={onWarmAudio}
                 onPress={onToggleAudio}
                 style={({ pressed }) => [styles.listenButton, { borderColor: theme.accent + "AA" }, pressed && styles.pressed]}
                 accessibilityRole="button"

@@ -526,6 +526,16 @@ test('all reciter previews use Ayat al-Kursi and never a surah-opening intro', (
   }
 });
 
+test('reader warms selected audio before the click and keeps text local', () => {
+  const reader = fs.readFileSync(path.join(root, 'app/reader.tsx'), 'utf8');
+  const desktop = fs.readFileSync(path.join(root, 'src/components/DesktopReaderExperience.tsx'), 'utf8');
+  const quran = fs.readFileSync(path.join(root, 'src/lib/quran.ts'), 'utf8');
+  assert.match(desktop, /onPressIn=\{onWarmAudio\}/);
+  assert.match(reader, /onWarmAudio=\{\(\) =>/);
+  assert.match(reader, /350\)/);
+  assert.doesNotMatch(quran, /\bfetch\s*\(/);
+});
+
 test('reader audio controls apply live and stay isolated by reciter', () => {
   const audio = fs.readFileSync(path.join(root, 'src/lib/audio.ts'), 'utf8');
   const cache = fs.readFileSync(path.join(root, 'src/lib/audio-cache.ts'), 'utf8');
@@ -567,6 +577,24 @@ test('settings normalization rejects unsupported reciters and playback speeds', 
   const valid = account.fromRemote('A', { settings: { reciter: 'minshawi', speed: 1.25, autoplay: false } });
   assert.equal(valid.settings.reciter, 'minshawi');
   assert.equal(valid.settings.speed, 1.25);
+});
+
+test('interactive UI does not ship obvious no-op or hash-link controls', () => {
+  const roots = [path.join(root, 'app'), path.join(root, 'src')];
+  const files = [];
+  function walkUi(dir) {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) walkUi(full);
+      else if (/\.(?:ts|tsx)$/.test(entry.name)) files.push(full);
+    }
+  }
+  roots.forEach(walkUi);
+  for (const file of files) {
+    const source = fs.readFileSync(file, 'utf8');
+    assert.doesNotMatch(source, /onPress\s*=\s*\{\s*\(\s*\)\s*=>\s*\{\s*\}\s*\}/, `No-op press handler in ${path.relative(root, file)}`);
+    assert.doesNotMatch(source, /href\s*=\s*["']#["']/, `Hash-only link in ${path.relative(root, file)}`);
+  }
 });
 
 test('all static internal navigation targets resolve to an app route', () => {
@@ -634,11 +662,15 @@ test("Reader exit always reaches Home and browser back cleanup avoids stale rout
   const exit = reader.slice(start, end);
   assert.match(exit, /stopSession\(\)/);
   assert.match(exit, /exitReaderAudio\(\)/);
-  assert.match(exit, /router\.replace\("\/"\)/);
-  assert.ok(exit.indexOf('router.replace("/")') < exit.indexOf('addReadingSeconds(seconds, day)'));
+  assert.match(exit, /router\.replace\("\/\(tabs\)" as any\)/);
+  assert.ok(exit.indexOf('router.replace("/(tabs)" as any)') < exit.indexOf('addReadingSeconds(seconds, day)'));
+  assert.match(exit, /runAfterPaint\(\(\) => \{/);
+  assert.doesNotMatch(exit, /setTimeout\(\(\) => \{[\s\S]*?stopSession\(\)/);
   assert.match(reader, /window\.addEventListener\("popstate", handleBrowserBack\)/);
   assert.match(reader, /onBack=\{\(\) => finishReaderAndGoHome\(true\)\}/);
   assert.match(reader, /onPress=\{imDone\}/);
+  assert.match(exit, /commitReward\(resumeSurah, resumeAyah, completedReward\)/);
+  assert.match(exit, /resumeAyah = exitWasLastAyah \? 1 : exitAyah \+ 1/);
   assert.ok((reader.match(/runAfterPaint\(\(\) => \{\n\s*if \(exitingRef\.current\) return;/g) ?? []).length >= 4);
   const sessionStart = reader.indexOf('useFocusEffect(useCallback(() => {');
   const sessionEnd = reader.indexOf('// Quran text is bundled', sessionStart);
@@ -681,7 +713,27 @@ test('desktop sidebar exposes privacy deletion account actions and a Tasbeeh Adh
   assert.match(tabs, /label="Privacy"/);
   assert.match(tabs, /label="Delete"/);
   assert.match(tabs, /<TasbeehIcon/);
-  assert.match(tabs, /router\.push\(meta\.href\)/);
+  assert.match(tabs, /router\.replace\(meta\.href as any\)/);
+});
+
+test('primary navigation skips the root redirect and Home has no dead Quran link', () => {
+  const tabs = fs.readFileSync(path.join(root, 'app/(tabs)/_layout.tsx'), 'utf8');
+  const topNav = fs.readFileSync(path.join(root, 'src/components/WebTopNav.tsx'), 'utf8');
+  const reader = fs.readFileSync(path.join(root, 'app/reader.tsx'), 'utf8');
+  const home = fs.readFileSync(path.join(root, 'app/(tabs)/index.tsx'), 'utf8');
+  assert.match(tabs, /href: "\/\(tabs\)"/);
+  assert.match(topNav, /href: "\/\(tabs\)"/);
+  assert.match(reader, /router\.replace\("\/\(tabs\)" as any\)/);
+  assert.doesNotMatch(home, /router\.push\("\/quran"\)/);
+  assert.match(home, /router\.push\("\/read"\)/);
+});
+
+test('settings do not expose controls that only look functional', () => {
+  const settings = fs.readFileSync(path.join(root, 'app/settings/index.tsx'), 'utf8');
+  assert.doesNotMatch(settings, /label="Language"/);
+  assert.doesNotMatch(settings, /label="Translation"/);
+  assert.doesNotMatch(settings, /Daily reminder" enabled=.*updateSettings\(\{ notifications/);
+  assert.match(settings, /Daily reminder" value=.*\/settings\/notifications/);
 });
 
 test('dashboard quick access complements rather than duplicates primary sidebar destinations', () => {

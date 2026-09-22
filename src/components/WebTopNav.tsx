@@ -14,8 +14,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type NavKey = "home" | "quran" | "adhkar" | "names" | "settings";
 
-const NAV: { key: NavKey; label: string; href: "/" | "/read" | "/adhkar" | "/names" | "/preferences" }[] = [
-  { key: "home", label: "Home", href: "/" },
+const NAV: { key: NavKey; label: string; href: string }[] = [
+  { key: "home", label: "Home", href: "/(tabs)" },
   { key: "quran", label: "Quran", href: "/read" },
   { key: "adhkar", label: "Adhkar", href: "/adhkar" },
   { key: "names", label: "Names", href: "/names" },
@@ -64,7 +64,7 @@ export const WebTopNav = memo(function WebTopNav({ active }: { active?: NavKey }
         <LinearGradient pointerEvents="none" colors={["rgba(255,255,255,0.075)", "rgba(255,255,255,0.012)", "rgba(236,202,105,0.035)"]} locations={[0, 0.42, 1]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
         <View pointerEvents="none" style={styles.glossLine} />
         <View pointerEvents="none" style={styles.goldBloom} />
-        <Pressable accessibilityRole="link" accessibilityLabel="OurQuran home" onPress={() => router.push("/")} style={[styles.brandButton, compact && styles.brandButtonCompact]}>
+        <Pressable accessibilityRole="link" accessibilityLabel="OurQuran home" onPress={() => router.replace("/(tabs)" as any)} style={[styles.brandButton, compact && styles.brandButtonCompact]}>
           <WebBrand compact={compact} />
         </Pressable>
         <View style={styles.nav} accessibilityRole="tablist">
@@ -75,7 +75,7 @@ export const WebTopNav = memo(function WebTopNav({ active }: { active?: NavKey }
                 key={item.key}
                 accessibilityRole="tab"
                 accessibilityState={{ selected: current }}
-                onPress={() => router.push(item.href)}
+                onPress={() => router.replace(item.href as any)}
                 style={({ pressed, hovered }: any) => [styles.navItem, compact && styles.navItemCompact, (current || hovered) && styles.navItemActive, pressed && styles.pressed]}
                 testID={`web-nav-${item.key}`}
               >

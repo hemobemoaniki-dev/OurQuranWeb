@@ -198,12 +198,12 @@ export default function Reader() {
   const numberInSurah = ayah?.numberInSurah ?? ayahIndex + 1;
   const prefetchAudio = audio.prefetch;
   // Do not start network work while the user is rapidly jumping through Ayahs.
-  // Once the visible verse has been stable for 650 ms, warm only that verse.
+  // Once the visible verse has been stable briefly, warm only that verse.
   useEffect(() => {
     if (exitingRef.current || !readerFocused.current || !surahNum || data?.number !== surahNum || !ayah || audio.isPlaying || audio.isLoading) return;
     const timer = setTimeout(() => {
       if (!exitingRef.current && readerFocused.current) prefetchAudio(surahNum, numberInSurah);
-    }, 650);
+    }, 350);
     return () => clearTimeout(timer);
   }, [surahNum, data?.number, ayah, numberInSurah, prefetchAudio, audio.isPlaying, audio.isLoading]);
   const meta = surahMeta(surahNum ?? 1);
@@ -311,17 +311,23 @@ export default function Reader() {
     // No storage, session math, Firestore queueing, or state cleanup is allowed
     // to sit in front of navigation.
     exitReaderAudio();
-    router.replace("/");
+    router.replace("/(tabs)" as any);
 
     const exitSurah = surahNum;
     const exitAyah = numberInSurah;
+    const completedReward = ayah ? computeReward(ayah.arabic) : 0;
+    const exitWasLastAyah = !!data && ayahIndex >= data.ayahs.length - 1;
+    const resumeSurah = exitSurah == null ? null : exitWasLastAyah ? (exitSurah < 114 ? exitSurah + 1 : 1) : exitSurah;
+    const resumeAyah = exitWasLastAyah ? 1 : exitAyah + 1;
 
-    // Persistence/session aggregation runs after navigation has been dispatched.
-    setTimeout(() => {
+    // Let Home paint before any account/session persistence can trigger
+    // provider rerenders. This keeps exit latency independent of storage/network.
+    runAfterPaint(() => {
       let deltas: Record<string, number> = {};
       try {
         deltas = stopSession();
-        if (exitSurah != null) saveReaderPosition(exitSurah, exitAyah);
+        if (resumeSurah != null && completedReward > 0) commitReward(resumeSurah, resumeAyah, completedReward);
+        else if (exitSurah != null) saveReaderPosition(exitSurah, exitAyah);
       } catch {}
 
       try {
@@ -331,7 +337,7 @@ export default function Reader() {
       } catch {}
 
       void Promise.resolve().then(flush).catch(() => {});
-    }, 0);
+    });
 
     // Safety only: unlock if a browser/router failure leaves this screen mounted.
     setTimeout(() => {
@@ -340,7 +346,7 @@ export default function Reader() {
         exitingRef.current = false;
       }
     }, 450);
-  }, [addReadingSeconds, flush, numberInSurah, router, saveReaderPosition, stopSession, surahNum]);
+  }, [addReadingSeconds, ayah, ayahIndex, commitReward, data, flush, numberInSurah, router, saveReaderPosition, stopSession, surahNum]);
 
   const imDone = useCallback(() => {
     finishReaderAndGoHome(true);
@@ -356,12 +362,17 @@ export default function Reader() {
 
       const exitSurah = surahNum;
       const exitAyah = numberInSurah;
+      const completedReward = ayah ? computeReward(ayah.arabic) : 0;
+      const exitWasLastAyah = !!data && ayahIndex >= data.ayahs.length - 1;
+      const resumeSurah = exitSurah == null ? null : exitWasLastAyah ? (exitSurah < 114 ? exitSurah + 1 : 1) : exitSurah;
+      const resumeAyah = exitWasLastAyah ? 1 : exitAyah + 1;
 
-      setTimeout(() => {
+      runAfterPaint(() => {
         let deltas: Record<string, number> = {};
         try {
           deltas = stopSession();
-          if (exitSurah != null) saveReaderPosition(exitSurah, exitAyah);
+          if (resumeSurah != null && completedReward > 0) commitReward(resumeSurah, resumeAyah, completedReward);
+          else if (exitSurah != null) saveReaderPosition(exitSurah, exitAyah);
         } catch {}
 
         try {
@@ -371,7 +382,7 @@ export default function Reader() {
         } catch {}
 
         void Promise.resolve().then(flush).catch(() => {});
-      }, 0);
+      });
 
       setTimeout(() => {
         if (readerFocused.current) {
@@ -382,7 +393,7 @@ export default function Reader() {
     };
     window.addEventListener("popstate", handleBrowserBack);
     return () => window.removeEventListener("popstate", handleBrowserBack);
-  }, [addReadingSeconds, flush, numberInSurah, saveReaderPosition, stopSession, surahNum]);
+  }, [addReadingSeconds, ayah, ayahIndex, commitReward, data, flush, numberInSurah, saveReaderPosition, stopSession, surahNum]);
 
   const openPicker = () => {
     setPickerSurah(surahNum ?? 1);
@@ -450,6 +461,9 @@ export default function Reader() {
           audioError={audio.error}
           onToggleAudio={() => {
             if (surahNum != null) audio.toggle(surahNum, numberInSurah);
+          }}
+          onWarmAudio={() => {
+            if (surahNum != null && !audio.isPlaying && !audio.isLoading) prefetchAudio(surahNum, numberInSurah);
           }}
           onStopAudio={audio.stop}
           onOpenPicker={openPicker}
@@ -519,7 +533,7 @@ export default function Reader() {
                 <LinearGradient pointerEvents="none" colors={[`${t.accent}34`, `${t.accent}12`, `${t.end}28`]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.cardSheen} />
                 {desktopReader ? (
                   <View style={styles.desktopCardTop}>
-                    <Pressable accessibilityRole="button" style={({ pressed }) => [styles.desktopListen, pressed && styles.pressed]} onPress={() => audio.toggle(surahNum!, numberInSurah)} accessibilityLabel={audio.isPlaying ? "Pause recitation" : "Play recitation"} testID="reader-desktop-listen">
+                    <Pressable accessibilityRole="button" style={({ pressed }) => [styles.desktopListen, pressed && styles.pressed]} onPressIn={() => { if (!audio.isPlaying && !audio.isLoading) prefetchAudio(surahNum!, numberInSurah); }} onPress={() => audio.toggle(surahNum!, numberInSurah)} accessibilityLabel={audio.isPlaying ? "Pause recitation" : "Play recitation"} testID="reader-desktop-listen">
                       {audio.isLoading ? <ActivityIndicator color={colors.gold} size="small" /> : <Icon name={audio.isPlaying ? "pause" : "volume-high"} size={24} color={colors.gold} />}
                       <Text style={styles.desktopListenText}>{audio.isPlaying ? "Pause" : "Listen"}</Text>
                     </Pressable>
@@ -537,7 +551,7 @@ export default function Reader() {
                 ) : (
                   <>
                     <View style={styles.cardTop}>
-                      <Pressable style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]} accessibilityRole="button" accessibilityLabel={audio.isPlaying ? "Pause recitation" : "Play recitation"} onPress={() => audio.toggle(surahNum!, numberInSurah)} hitSlop={4} testID="reader-speaker">
+                      <Pressable style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]} accessibilityRole="button" accessibilityLabel={audio.isPlaying ? "Pause recitation" : "Play recitation"} onPressIn={() => { if (!audio.isPlaying && !audio.isLoading) prefetchAudio(surahNum!, numberInSurah); }} onPress={() => audio.toggle(surahNum!, numberInSurah)} hitSlop={4} testID="reader-speaker">
                         {audio.isLoading ? <ActivityIndicator color={colors.gold} size="small" /> : <Icon name={audio.isPlaying ? "pause-circle" : "volume-high"} size={26} color={colors.gold} />}
                       </Pressable>
                       <Pressable style={styles.surahTitleBtn} onPress={openPicker} testID="reader-surah-picker-open">

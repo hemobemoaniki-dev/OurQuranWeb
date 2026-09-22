@@ -39,7 +39,7 @@ function MobileSettingsHome({ inTab = false }: { inTab?: boolean }) {
     setSignOutError("");
     try {
       await signOut();
-      router.replace("/");
+      router.replace("/(tabs)" as any);
     } catch {
       setSignOutError("Could not sign out. Please try again.");
     } finally {
@@ -124,8 +124,7 @@ function MobileSettingsHome({ inTab = false }: { inTab?: boolean }) {
           <Row icon="palette-outline" label="App Theme" onPress={() => router.push("/settings/theme")} />
           <Row icon="image-multiple-outline" label="Website Background" value={siteBackground(account.settings.siteBackground).name} onPress={() => router.push("/settings/background")} />
           <Row icon="target" label="Daily Quran Goal" onPress={() => router.push("/settings/goal")} />
-          <Row icon="bell-outline" label="Notifications" onPress={() => router.push("/settings/notifications")} />
-          <Row icon="web" label="Language" onPress={() => router.push("/settings/language")} last />
+          <Row icon="bell-outline" label="Notifications" onPress={() => router.push("/settings/notifications")} last />
         </Section>
 
 
@@ -181,7 +180,7 @@ function DesktopSettingsHome() {
     setMessage("");
     try {
       await signOut();
-      router.replace("/");
+      router.replace("/(tabs)" as any);
     } catch {
       setMessage("Could not sign out. Please try again.");
       setBusy("");
@@ -228,7 +227,6 @@ function DesktopSettingsHome() {
 
           <View style={styles.settingsGrid}>
             <SettingsPanel icon="book-open-page-variant" title="Reader settings" description="Make every ayah comfortable to read.">
-              <SettingAction icon="web" label="Translation" value={account.settings.language === "en" ? "English" : account.settings.language.toUpperCase()} onPress={() => router.push("/settings/language")} />
               <SettingAction icon="format-size" label="Text size" value={account.settings.readingSize} onPress={nextReadingSize} />
               <SettingAction icon="palette-outline" label="Reader appearance" value="Personalized" onPress={() => router.push("/settings/reader-theme")} last />
             </SettingsPanel>
@@ -249,7 +247,7 @@ function DesktopSettingsHome() {
             </SettingsPanel>
 
             <SettingsPanel icon="bell-outline" title="Notifications & reminders" description="A gentle invitation back to the Qur’an.">
-              <SettingToggle icon="bell-outline" label="Daily reminder" enabled={account.settings.notifications.enabled} onPress={() => updateSettings({ notifications: { ...account.settings.notifications, enabled: !account.settings.notifications.enabled } })} />
+              <SettingAction icon="bell-outline" label="Daily reminder" value={account.settings.notifications.enabled ? "Enabled" : "Off"} onPress={() => router.push("/settings/notifications")} />
               <SettingAction icon="clock-outline" label="Reminder time" value={account.settings.notifications.time} onPress={() => router.push("/settings/notifications")} />
               <SettingAction icon="tune-variant" label="Notification options" value="Manage" onPress={() => router.push("/settings/notifications")} last />
             </SettingsPanel>
